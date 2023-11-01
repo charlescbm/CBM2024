@@ -1,0 +1,67 @@
+#include "rwmake.ch"
+/*
++-------------------------------------------------------------------------------+
+!                             FICHA TECNICA DO PROGRAMA    	                 	!
++-------------------------------------------------------------------------------+
+!Programa          	! ICOMX040													!
++-------------------+-----------------------------------------------------------+
+!Descricao			! Gatilho na nota de entrada, campo TES						!
++-------------------+-----------------------------------------------------------+
+!Autor         		! GoOne Consultoria											!
++-------------------+-----------------------------------------------------------+
+!Data de Criacao  	! 21/09/2021							                	!
++-------------------+-----------------------------------------------------------+
+*/
+//DESENVOLVIDO POR INOVEN
+
+User Function ICOMX040()
+
+cLocRet := GDFieldGet("D1_LOCAL")
+lAtuEst := .F.
+
+If alltrim(funname()) == 'MATA103'
+
+	if alltrim(READVAR()) == "M->D1_TES"
+		cCdTes	:= M->D1_TES
+	else
+		cCdTes	:= GDFieldGet("D1_TES")
+	endif
+	cCdProd := GDFieldGet("D1_COD")
+
+	SF4->(DbSetOrder(1))
+	If SF4->(MsSeek(xFilial("SF4")+cCdTes))
+		If SF4->F4_ESTOQUE == "S"
+			lAtuEst	:= .T.
+		Else
+			lAtuEst	:= .F.
+		EndIf
+	EndIf
+
+	SB1->(dbSetOrder(1))
+	SB1->(msSeek(xFilial("SB1") + cCdProd))
+
+	If SB1->B1_TIPO == "ME" .and. lAtuEst .AND. substr(cTipo,1,1) == "N" .AND. SB1->B1_ORIGEM == "1" .And. cUfOrig == "EX" 
+		cLocRet	:= '90'
+	ELSEIF ( SB1->B1_TIPO == "ME" .and. lAtuEst .AND. substr(cTipo,1,1) == "N" .AND. SB1->B1_ORIGEM == "2" ) .Or. ( cUfOrig <> "EX" .And. lAtuEst .AND. substr(cTipo,1,1) == "N" )  
+		cLocRet	:= '80'
+	ELSEIF SB1->B1_TIPO == "ME" .and. lAtuEst .AND. substr(cTipo,1,1) == "D" 
+		cLocRet	:= '04'
+	ELSEIF SB1->B1_TIPO == "ME" .and. lAtuEst .AND. substr(cTipo,1,1) == "B"  .AND. cCdTes == '476' 
+		cLocRet	:= '05'
+	ELSEIF SB1->B1_TIPO == "MP" //.AND. cCdTes == '020' 
+		cLocRet	:= '80'
+	EndIf
+
+	if substr(cTipo,1,1) == "C"	//Nota Complementar
+		//D1_FILIAL+D1_DOC+D1_SERIE+D1_FORNECE+D1_LOJA+D1_COD+D1_ITEM
+
+		SD1->(dbSetOrder(1))
+		if msSeek(xFilial('SD1') + GDFieldGet("D1_NFORI") + GDFieldGet("D1_SERIORI") + GDFieldGet("D1_FORNECE") + GDFieldGet("D1_LOJA") + cCdProd + GDFieldGet("D1_ITEMORI"))
+			cLocRet	:= SD1->D1_LOCAL
+		endif
+	endif
+
+
+endif
+
+Return( cLocRet )

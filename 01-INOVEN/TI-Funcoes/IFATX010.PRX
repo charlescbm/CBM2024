@@ -1,0 +1,40 @@
+#include "rwmake.ch"
+/*
++-------------------------------------------------------------------------------+
+!                             FICHA TECNICA DO PROGRAMA    	                 	!
++-------------------------------------------------------------------------------+
+!Programa          	! IFATX010													!
++-------------------+-----------------------------------------------------------+
+!Descricao			! Gatilho no pedido de venda, campo TES						!
++-------------------+-----------------------------------------------------------+
+!Autor         		! GoOne Consultoria											!
++-------------------+-----------------------------------------------------------+
+!Data de Criacao  	! 05/04/2022							                	!
++-------------------+-----------------------------------------------------------+
+*/
+//DESENVOLVIDO POR INOVEN
+
+User Function IFATX010()
+
+Local cCodCtb := ""
+
+SB1->(dbSetOrder(1))
+SB1->(msSeek(xFilial("SB1") + GDFieldGet("C6_PRODUTO")))
+
+SF4->(dbSetOrder(1))
+SF4->(msSeek(xFilial("SF4") + M->C6_TES))
+
+if !empty(SF4->F4_TPCTB)
+
+	ZZB->(dbSetOrder(1))
+	if ZZB->(msSeek(xFilial('ZZB') + SF4->F4_TPCTB))
+		if ZZB->ZZB_TIPO == '1'	//Se DESPESA
+			cCodCtb := SB1->B1_CONTA
+		elseif ZZB->ZZB_TIPO == '2'	//Se RECEITA
+			cCodCtb := SB1->B1_XCONTAR
+		endif
+	ENDIF
+
+endif
+
+Return( cCodCtb )

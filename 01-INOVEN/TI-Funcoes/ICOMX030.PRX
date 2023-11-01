@@ -1,0 +1,33 @@
+#include "rwmake.ch"
+/*
++-------------------------------------------------------------------------------+
+!                             FICHA TECNICA DO PROGRAMA    	                 	!
++-------------------------------------------------------------------------------+
+!Programa          	! ICOMX030													!
++-------------------+-----------------------------------------------------------+
+!Descricao			! Gatilho na nota de entrada, campo TES						!
++-------------------+-----------------------------------------------------------+
+!Autor         		! GoOne Consultoria											!
++-------------------+-----------------------------------------------------------+
+!Data de Criacao  	! 21/09/2021							                	!
++-------------------+-----------------------------------------------------------+
+*/
+//DESENVOLVIDO POR INOVEN
+
+User Function ICOMX030()
+
+dRet := GDFieldGet("D1_DTVALID")
+
+SB1->(dbSetOrder(1))
+SB1->(msSeek(xFilial("SB1") + GDFieldGet("D1_COD")))
+
+SF4->(dbSetOrder(1))
+SF4->(msSeek(xFilial("SF4") + M->D1_TES))
+
+if !empty(GDFieldGet("D1_DFABRIC")) .and. SF4->F4_ESTOQUE == "S"
+
+	dRet := MonthSum(GDFieldGet("D1_DFABRIC"), SB1->B1_XDTVALI)
+	
+endif
+
+Return( dRet )

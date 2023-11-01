@@ -1,0 +1,40 @@
+User Function OMSM0115()
+ 
+    Local oModelNFS := PARAMIXB[1]
+    Local cChaveGW1 := ""
+     
+    cChaveGW1 := PadR(oModelNFS:GetValue('GFEA044_GW1','GW1_FILIAL'),TamSx3('GW1_FILIAL')[1]) + ;
+                 PadR(oModelNFS:GetValue('GFEA044_GW1','GW1_CDTPDC'),TamSx3('GW1_CDTPDC')[1]) + ;
+                 PadR(oModelNFS:GetValue('GFEA044_GW1','GW1_EMISDC'),TamSx3('GW1_EMISDC')[1]) + ;
+                 PadR(oModelNFS:GetValue('GFEA044_GW1','GW1_SERDC') ,TamSx3('GW1_SERDC')[1]) + ;
+                 PadR(oModelNFS:GetValue('GFEA044_GW1','GW1_NRDC')  ,TamSx3('GW1_NRDC')[1])
+                  
+    GW1->(dbSetOrder(1))
+    If !GW1->(dbSeek(cChaveGW1))
+        Return
+    EndIf
+     
+    GWU->(dbSetOrder(1))
+    If !GWU->(dbSeek(cChaveGW1))
+        Return
+    
+	else
+
+		While !GWU->(eof()) .and. xFilial('GWU') + GWU->GWU_CDTPDC + GWU->GWU_EMISDC + GWU->GWU_SERDC + GWU->GWU_NRDC == cChaveGW1
+		
+			if alltrim(GWU->GWU_CDTRP) == "000003095"
+				GWU->(recLock('GWU', .F.))
+				GWU->GWU_PAGAR := "2"	//Pagar = Nao
+				GWU->(msUnlock())
+			endif
+
+			GWU->(dbSkip())
+		End
+	EndIf
+
+     
+    oModelNFS:Deactivate()
+    oModelNFS:Destroy()
+    oModelNFS := Nil
+ 
+Return

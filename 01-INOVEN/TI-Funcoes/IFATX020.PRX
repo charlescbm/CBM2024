@@ -1,0 +1,39 @@
+#include "rwmake.ch"
+/*
++-------------------------------------------------------------------------------+
+!                             FICHA TECNICA DO PROGRAMA    	                 	!
++-------------------------------------------------------------------------------+
+!Programa          	! IFATX020													!
++-------------------+-----------------------------------------------------------+
+!Descricao			! Gatilho no pedido de venda, campo TES						!
++-------------------+-----------------------------------------------------------+
+!Autor         		! GoOne Consultoria											!
++-------------------+-----------------------------------------------------------+
+!Data de Criacao  	! 14/02/2023							                	!
++-------------------+-----------------------------------------------------------+
+*/
+//DESENVOLVIDO POR INOVEN
+
+User Function IFATX020()
+
+Local nPreco := GDFieldGet("C6_PRCVEN")
+
+xTES := SuperGetMv("IN_TESESPE", .F., "801")
+
+if IsInCallStack("MATA410") .and. !IsInCallStack("U_IVENA020") .and. M->C6_TES $ xTES
+
+	SB2->(dbSetOrder(1))
+	if !SB2->(msSeek(xFilial("SB2") + GDFieldGet("C6_PRODUTO") + GDFieldGet("C6_LOCAL")))
+		SB9->(dbSetOrder(1))
+		if !SB9->(msSeek(xFilial("SB9") + GDFieldGet("C6_PRODUTO") + GDFieldGet("C6_LOCAL")))
+			nPreco := 0
+		else
+			nPreco := SB9->B9_CM1
+		endif
+	else
+		nPreco := SB2->B2_CM1
+	endif
+
+endif
+
+Return( nPreco )

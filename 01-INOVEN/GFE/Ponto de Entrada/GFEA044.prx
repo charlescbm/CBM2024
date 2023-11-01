@@ -1,0 +1,61 @@
+#INCLUDE "PROTHEUS.CH"
+#INCLUDE "FWMVCDEF.CH"
+
+User Function GFEA044()
+	
+	Local aParam     := PARAMIXB
+	Local xRet       := .T.
+	Local oObj       := ""
+	Local cIdPonto   := ""
+	Local cIdModel   := ""
+	Local lIsGrid    := .F.
+	
+	Local nLinha     := 0
+	Local nQtdLinhas := 0
+	
+	Local nLineGWU	 := 0, _x
+	
+	If aParam <> NIL
+	
+		oObj       := aParam[1]
+		cIdPonto   := aParam[2]
+		cIdModel   := aParam[3]
+		lIsGrid    := oOBj:ClassName() == "FWFORMGRID"
+		
+		If lIsGrid
+			nQtdLinhas := oObj:Length()
+			nLinha     := oObj:GetLine()
+		EndIf
+		
+		If cIdPonto ==  'MODELPOS'
+
+			if IsInCallStack("OMSM011")	//Se rotina de integração
+				If oOBj:GetOperation() == MODEL_OPERATION_INSERT
+
+					//Trechos
+					oMDGWU := oOBj:GetModel("GFEA044_GWU")
+					
+					nLineGWU := oMDGWU:GetLine()
+					
+					For _x:= 1 to oMDGWU:Length()
+						oMDGWU:GoLine(_x)
+						
+						if alltrim(oMDGWU:GetValue("GWU_CDTRP")) == "000003095"
+							oMDGWU:SetValue("GWU_PAGAR", "2")	//Pagar = Nao
+						endif
+						
+					Next
+					
+					oMDGWU:GoLine(nLineGWU)
+
+				endif
+			endif
+
+		//ElseIf cIdPonto == 'MODELCOMMITTTS'
+			
+
+		EndIf
+		
+	EndIf
+	
+Return xRet

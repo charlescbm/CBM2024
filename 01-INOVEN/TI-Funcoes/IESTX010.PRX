@@ -1,0 +1,30 @@
+#include "rwmake.ch"
+/*
++-------------------------------------------------------------------------------+
+!                             FICHA TECNICA DO PROGRAMA    	                 	!
++-------------------------------------------------------------------------------+
+!Programa          	! IESTX010													!
++-------------------+-----------------------------------------------------------+
+!Descricao			! Gatilho na ordem de producao								!
++-------------------+-----------------------------------------------------------+
+!Autor         		! GoOne Consultoria											!
++-------------------+-----------------------------------------------------------+
+!Data de Criacao  	! 29/11/2021							                	!
++-------------------+-----------------------------------------------------------+
+*/
+//DESENVOLVIDO POR INOVEN
+
+User Function IESTX010()
+
+Local dRet := M->D3_DTVALID
+
+SC2->(dbSetOrder(1))
+SC2->(msSeek(xFilial("SC2") + M->D3_OP))
+
+SB1->(dbSetOrder(1))
+SB1->(msSeek(xFilial("SB1") + M->D3_COD))
+
+
+dRet := MonthSum(SC2->C2_DATPRI, SB1->B1_XDTVALI)
+
+Return( dRet )
