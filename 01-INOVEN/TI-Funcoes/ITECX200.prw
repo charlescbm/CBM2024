@@ -29,8 +29,8 @@ Return
 
 User Function WFTEC200()
 
-//Local dDataPro := dDataBase
-Local dDataPro := ctod('31/10/2023') // habilitar essa linha quando quiser rodar manual, compilar e executar no programa inicial 
+Local dDataPro := dDataBase
+//Local dDataPro := ctod('31/10/2023') // habilitar essa linha quando quiser rodar manual, compilar e executar no programa inicial 
 Local _x, _f
 
 //If File("\workflow\quadro_fat.htm") .and. dow(dDataBase) <> 7 .and. dow(dDataBase) <> 1
