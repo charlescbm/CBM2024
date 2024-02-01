@@ -1532,7 +1532,7 @@ If cTipo == "1"
 						SE1->(msSeek(cFilTit + cPrfTit + cNumDupl, .T.))
 						While SE1->(!eof()) .and. SE1->E1_FILIAL + SE1->E1_PREFIXO + SE1->E1_NUM == cFilTit + cPrfTit + cNumDupl
 							if (SE1->E1_TIPO == MVNOTAFIS) .or. (SE1->E1_TIPO == 'DP ') .or.;
-							   ((SE1->E1_ORGEM $ 'LOJA701|FATA701|LOJA010') .and. SE1->E1_TIPO $ SuperGetMV("MV_LJTPNFE", ," "))
+							   ((SE1->E1_ORIGEM $ 'LOJA701|FATA701|LOJA010') .and. SE1->E1_TIPO $ SuperGetMV("MV_LJTPNFE", ," "))
 							   SE1->(recLock('SE1', .F.))
 							    SE1->E1_ZVCTOOR:= SE1->E1_VENCREA
 								SE1->E1_VENCTO := SE1->E1_VENCTO + GETMV("TG_NDIASAI")

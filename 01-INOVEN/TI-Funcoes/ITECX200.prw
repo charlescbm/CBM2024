@@ -21,20 +21,40 @@ Default aParams := {"01","0102"}
 RpcSetType( 3 )
 RPCSetEnv(aParams[1],aParams[2],"","","","",{"SD2","SD1","SF2","SF1","SF4","SE4"})
 FwLogMsg("INFO", /*cTransactionId*/, "INOVLOG", FunName(), "", "01", "Valores de Faturamento - Empresa: " + aParams[1] + "/" + aParams[2] + " - " + DtoC(Date()), 0, 0, {})
-U_WFTEC200()
+U_WFTEC200(.T.)
 
 RpcClearEnv()
 
 Return
 
-User Function WFTEC200()
+User Function WFTEC200( lBat )
 
-Local dDataPro := dDataBase
+//Local dDataPro := dDataBase
 //Local dDataPro := ctod('31/10/2023') // habilitar essa linha quando quiser rodar manual, compilar e executar no programa inicial 
+Local dDataPro := ctod('')
 Local _x, _f
+Local aParam := {}
+Local xData := LastDate(dDataBase)
+Local lParam := .F.
+
+Default lBat := .F.
+
+if lBat 
+	dDataPro := dDataBase
+	//dDataPro := ctod('31/10/2023') // habilitar essa linha quando quiser rodar manual, compilar e executar no programa inicial 
+	lParam := .T.
+else
+	IF PARAMBOX( {	{1,"Processar Fat.Data", xData,"",".T.","","",60,.T.};
+				}, "Defina data de faturamento", @aParam,,,,,,,,.T.,.T.)
+		lParam := .T.
+
+		dDataPro	:= mv_par01
+
+	endif
+ENDIF
 
 //If File("\workflow\quadro_fat.htm") .and. dow(dDataBase) <> 7 .and. dow(dDataBase) <> 1
-If File("\workflow\quadro_fat_filial.htm") .and. dow(dDataBase) <> 7 .and. dow(dDataBase) <> 1
+If File("\workflow\quadro_fat_filial.htm") .and. dow(dDataBase) <> 7 .and. dow(dDataBase) <> 1 .and. lParam
 
 	oProcess := TWFProcess():New("000001", OemToAnsi("Valores de Faturamento"))
 	//oProcess:NewTask("000001", "\workflow\quadro_fat.htm")
@@ -56,7 +76,7 @@ If File("\workflow\quadro_fat_filial.htm") .and. dow(dDataBase) <> 7 .and. dow(d
 		//	SUM(SD2.D2_TOTAL-SD2.D2_VALIMP5-SD2.D2_VALIMP6) VLRLIQ, 
 		BEGINSQL ALIAS "QRYFDIA"
 			SELECT SUM(SD2.D2_VALBRUT) AS FATURA,
-			SUM(SD2.D2_TOTAL-SD2.D2_VALIMP5-SD2.D2_VALIMP6-SD2.D2_ZPRVFRE-SD2.D2_ZVCOMIS-SD2.D2_ZVCOMSS) VLRLIQ, 
+			SUM(SD2.D2_TOTAL-SD2.D2_VALIMP5-SD2.D2_VALIMP6-SD2.D2_ZVCOMIS-SD2.D2_ZVCOMSS) VLRLIQ, 
 			SUM(CASE WHEN D2_ZVALICM > 0 THEN D2_ZVALICM ELSE D2_VALICM END) ZVLRICM,
 			SUM(SD2.D2_CUSTO1) CUSTOM,
 			SUM(CASE WHEN E4_FORMA = 'BOL' THEN SD2.D2_VALBRUT ELSE 0 END ) AS FATBOL,
@@ -228,7 +248,7 @@ If File("\workflow\quadro_fat_filial.htm") .and. dow(dDataBase) <> 7 .and. dow(d
 		//	SUM(SD2.D2_TOTAL-SD2.D2_VALIMP5-SD2.D2_VALIMP6) VLRLIQ, 
 		BEGINSQL ALIAS "QRYFCLI"
 			SELECT D2_CLIENTE, D2_LOJA, A1_NOME, SUM(SD2.D2_VALBRUT) AS FATURA,
-			SUM(SD2.D2_TOTAL-SD2.D2_VALIMP5-SD2.D2_VALIMP6-SD2.D2_ZPRVFRE-SD2.D2_ZVCOMIS-SD2.D2_ZVCOMSS) VLRLIQ, 
+			SUM(SD2.D2_TOTAL-SD2.D2_VALIMP5-SD2.D2_VALIMP6-SD2.D2_ZVCOMIS-SD2.D2_ZVCOMSS) VLRLIQ, 
 			SUM(CASE WHEN D2_ZVALICM > 0 THEN D2_ZVALICM ELSE D2_VALICM END) ZVLRICM,
 			SUM(SD2.D2_CUSTO1) CUSTOM
 			FROM %table:SD2% SD2 

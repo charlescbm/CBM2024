@@ -221,7 +221,7 @@ Local cGrpAprv := GetMv("FS_GRPGPED",,"000000")
 
 If fValProg(SC5->C5_NUM,SC5->C5_FILIAL)
 	lRet := .F.
-	aDadosUsu := U_FSLogin("<b>Pedido já foi programado! Será necessário solicitar</n>aprovação do gerente para acesso a esta rotina.</b>", .F.)
+	aDadosUsu := U_FSLogin("<b>Pedido já foi programado! Será necessário solicitar aprovação do gerente para acesso a esta rotina.</b>", .F.)
 	If(aDadosUsu != Nil)//Achou o usuário
 		If (aDadosUsu[1] == .F. .or. !(aDadosUsu[3] $ cGrpAprv))   //Se o usuário for valido ainda deverá estar dentro do grupo de aprovadores
 			Alert("O usuário é inválido ou não pertence ao grupo de gerentes!!!")

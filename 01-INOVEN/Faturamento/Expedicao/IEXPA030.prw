@@ -45,6 +45,7 @@ Local oSayC1 		:= Nil
 Local oSayC2 		:= Nil
 Local oTBtnOk		:= Nil
 Local oTBtnExit		:= Nil
+Local oTBtnFt		:= Nil
 
 Local oFont1  		:= TFont():New("Arial",11,11,,.T.,,,,.T.,.F.)
 
@@ -176,6 +177,7 @@ aPosGet := MsObjGetPos(aSize[3]-aSize[1],315,{ 	{1.4,45,310.4}			,;	// Itens do 
 	
 	oTBtnOk 	:= TButton():New( aPosGet[4,1] - 06, aPosGet[4,2] 		, "Confirma",oPanel2,{|| IIF(u_TFat3ATdOk(),( nOpcA := 1,oDlg:End()),oGetEtq:SetFocus()) }	, 40,15,,,.F.,.T.,.F.,,.F.,,,.F. )
 	oTBtnExit  	:= TButton():New( aPosGet[4,1] - 06, aPosGet[4,2] + 50	, "Cancelar",oPanel2,{|| IIF(TFat3ASair(), oDlg:End(),nOpcA := 0 ) } ,40,15,,,.F.,.T.,.F.,,.F.,,,.F. )
+	oTBtnFt 	:= TButton():New( aPosGet[4,1] - 06, aPosGet[4,2] +100	, "OK Faltantes",oPanel2,{|| (u_TFat3AFlt(),oGetEtq:SetFocus()) }	, 40,15,,,.F.,.T.,.F.,,.F.,,,.F. )
 	
 	_oChkExbEr  :=  TCheckBox():New(aPosGet[1,2] + 10,aPosGet[4,2] + 60 ,'Parar Operação com Mensagem' ,{|u|If(Pcount()==0,_lExibErro,_lExibErro:=u)},oPanel2,100,210,,,,,,,,.T.,,,)
 	_oBmpInfo   :=  TBitmap():New(aPosGet[5,1],aPosGet[5,2], 30, 30, "", /*cBmpFile*/, /*lNoBorder*/, oPanel2, /*bLClicked*/, /*bRClicked*/, /*lScroll*/, .T., /*oCursor*/, /*uParam14*/, /*uParam15*/, /*bWhen*/, /*lPixel*/, /*bValid*/, /*uParam19*/, /*uParam20*/, /*uParam21*/ )
@@ -239,6 +241,8 @@ Local nPProd		:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "PRDCONF"})
 Local nPCaixa		:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "NCXCONF"})
 Local nPPallet		:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "PALCONF"})
 Local nPLote		:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "LOTCONF"})
+Local nPStatus		:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "D2STAT"})	
+
 
 Local _lMotorista	:= .F.
 Local nEtq
@@ -253,7 +257,7 @@ ZZA->( dbSetOrder(1) )
 // Marca etiquetas como lidas |
 //----------------------------+
 For nEtq := 1 To Len(oGetItConf:aCols)
-
+	
 	//-----------------------+
 	// Baixa etiqueta Pallet |
 	//-----------------------+
@@ -263,7 +267,7 @@ For nEtq := 1 To Len(oGetItConf:aCols)
 	// Baixa etiqueta caixa |
 	//----------------------+	
 	Else
-		IEXPA040xCx(oGetItConf:aCols[nEtq][nPProd],oGetItConf:aCols[nEtq][nPCaixa],oGetItConf:aCols[nEtq][nPLote],oGetItConf:aCols[nEtq][nPPallet],cNota,cSerie)
+		IEXPA040xCx(oGetItConf:aCols[nEtq][nPProd],oGetItConf:aCols[nEtq][nPCaixa],oGetItConf:aCols[nEtq][nPLote],oGetItConf:aCols[nEtq][nPPallet],cNota,cSerie,oGetItConf:aCols[nEtq][nPStatus])
 	EndIf
 	
 Next nEtq 
@@ -276,6 +280,7 @@ ZZE->( dbSetOrder(1) )
 If ZZE->( dbSeek(xFilial("ZZE") + cRomaneio + cNota + cSerie ) )
 	RecLock("ZZE",.F.)
 		ZZE->ZZE_STATUS := "3"
+		ZZE->ZZE_DTCONF := dDataBase
 	ZZE->( MsUnLock() )
 EndIf
 
@@ -798,7 +803,8 @@ While (cAlias)->( !Eof() )
 		EndIf
 		lContinua 	:= .F.
 		lEtqBaixa	:= .F.
-	ElseIf (cAlias)->ZZA_BAIXA == "2" .And. lContinua
+	//ElseIf (cAlias)->ZZA_BAIXA == "2" .And. lContinua
+	ElseIf (cAlias)->ZZA_BAIXA $ "2/3" .And. lContinua
 		lEtqBaixa	:= .T.
 		lContinua	:= .T.
 	EndIf
@@ -1245,6 +1251,7 @@ aAdd(aHeadConf,{"Num. Pallet"	,"PALCONF"	,PesqPict("ZZA","ZZA_PALLET")	,TamSx3("
 aAdd(aHeadConf,{"Lote"			,"LOTCONF"	,PesqPict("SD2","D2_LOTECTL")	,TamSx3("D2_LOTECTL")[1], TamSx3("D2_LOTECTL")[2]	,".T."			,"û","C",""," ","","" } )
 aAdd(aHeadConf,{"Item NF"		,"ITNCONF"	,PesqPict("SD1","D1_ITEM")		,TamSx3("D1_ITEM")[1]	, TamSx3("D1_ITEM")[2]		,".T."			,"û","C",""," ","","" } )
 aAdd(aHeadConf,{"Nota Etq."		,"NFECONF"	,PesqPict("SD1","D1_DOC")		,TamSx3("D1_DOC")[1]	, 0							,".T."			,"û","C",""," ","","" } )
+aAdd(aHeadConf,{"Status"		,"D2STAT"	,PesqPict("SD2","D2_COD")		,TamSx3("D2_TIPO")[1]	, TamSx3("D2_TIPO")[2]		,".T."			,"û","C",""," ","1=Nao Conferido;2=Conferido;3=Conf.Faltante","1",".F."} )
 
 //----------------------------+
 // Valida se nota já foi lida |
@@ -1392,6 +1399,7 @@ While (cAlias)->(!Eof() )
 		ZZA->ZZA_BAIXA := "2"
 		ZZA->ZZA_NFSAID:= cNota
 		ZZA->ZZA_SERSAI:= cSerie
+		ZZA->ZZA_DTCONF:= dDataBase
 	ZZA->( MsUnLock() )	
 	(cAlias)->( dbSkip() )
 EndDo
@@ -1417,7 +1425,7 @@ Return Nil
 @type function
 /*/
 /*******************************************************************************************/
-Static Function IEXPA040xCx(cCodProd,cNumCx,cLote,cPallet,cNota,cSerie)
+Static Function IEXPA040xCx(cCodProd,cNumCx,cLote,cPallet,cNota,cSerie,xStatus)
 Local aArea	:= GetArea()
 
 Local cAlias:= GetNextAlias()
@@ -1433,7 +1441,9 @@ cQuery += "		ZZA.ZZA_FILIAL  = '" + xFilial("ZZA") + "' AND " + CRLF
 cQuery += "		ZZA.ZZA_NUMCX = '" + cNumCx + "' AND " + CRLF 
 cQuery += "		ZZA.ZZA_CODPRO = '" + cCodProd + "' AND " + CRLF
 cQuery += "		ZZA.ZZA_NUMLOT = '" + cLote + "' AND " + CRLF
-cQuery += "		ZZA.ZZA_PALLET = '" + cPallet + "' AND " + CRLF
+if xStatus <> '3'
+	cQuery += "		ZZA.ZZA_PALLET = '" + cPallet + "' AND " + CRLF
+endif
 cQuery += "		ZZA.ZZA_BAIXA = '1' AND " + CRLF
 cQuery += "		ZZA.D_E_L_E_T_ = '' " + CRLF
 cQuery += "	GROUP BY ZZA.R_E_C_N_O_ "
@@ -1447,9 +1457,11 @@ If (cAlias)->( !Eof() )
 //While (cAlias)->( !Eof() )
 	ZZA->( dbGoTo((cAlias)->RECNOZZA) )
 	RecLock("ZZA",.F.)
-		ZZA->ZZA_BAIXA := "2"
+		//ZZA->ZZA_BAIXA := "2"
+		ZZA->ZZA_BAIXA := iif(empty(xStatus),"2",xStatus)
 		ZZA->ZZA_NFSAID:= cNota
 		ZZA->ZZA_SERSAI:= cSerie
+		ZZA->ZZA_DTCONF:= dDataBase
 	ZZA->( MsUnLock() )	
 //	(cAlias)->( dbSkip() )
 //EndDo
@@ -1634,3 +1646,126 @@ Local cCompArq	:= ""
 		EndIf	
 	EndIf	
 Return lRet
+
+
+
+User Function TFat3AFlt()
+Local nPCodPrd	:= aScan(oGetNF:aHeader,{|x| Alltrim(x[2]) == "D2PROD" })
+Local nPQtdNf	:= aScan(oGetNF:aHeader,{|x| Alltrim(x[2]) == "D2QTDV" })
+Local nPQtdConf	:= aScan(oGetNF:aHeader,{|x| Alltrim(x[2]) == "D2QTDC" })
+Local nPCodLot	:= aScan(oGetNF:aHeader,{|x| Alltrim(x[2]) == "D2LOTE" })
+Local nPStatus	:= aScan(oGetNF:aHeader,{|x| Alltrim(x[2]) == "D2STAT"})	
+
+Local iPItem	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "ITECONF"})
+Local iPProd	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "PRDCONF"})
+Local iPDesc	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "DESCONF"})
+Local iPQtd		:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "QTDCONF"})
+Local iPCaixa	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "NCXCONF"})
+Local iPPallet	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "PALCONF"})
+Local iPLote	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "LOTCONF"})
+Local iPItemNf	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "ITNCONF"})
+Local iPNFEtq	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "NFECONF"})
+Local iPStatus	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "D2STAT"})	
+
+Local nCols
+Local cAlias		:= GetNextAlias()
+
+//alert('oi Crele')
+
+//Leitura dos itens da nota
+For nCols := 1 To Len(oGetNf:aCols)
+	If !oGetNf:aCols[nCols][Len(oGetNf:aHeader) + 1]
+		if oGetNf:aCols[nCols][nPQtdNf] - oGetNf:aCols[nCols][nPQtdConf] > 0
+			nFltante := oGetNf:aCols[nCols][nPQtdNf] - oGetNf:aCols[nCols][nPQtdConf]	//qtde faltante a conferir
+
+
+			cQuery := "	SELECT ZZA.*, B1_DESC, ZZA.R_E_C_N_O_ ZZARECNO " + CRLF 
+			cQuery += "	FROM " + CRLF
+			cQuery += "		" + RetSqlName("ZZA") + " ZZA " + CRLF  
+			cQuery += "		INNER JOIN " + RetSqlName("SB1") + " B1 ON B1.B1_FILIAL = '" + xFilial("SB1") + "' AND B1.B1_COD = ZZA.ZZA_CODPRO AND B1.D_E_L_E_T_ = '' " + CRLF
+			cQuery += "	WHERE " + CRLF
+			cQuery += "		ZZA.ZZA_FILIAL  = '" + xFilial("ZZA") + "' AND " + CRLF 
+			cQuery += "		ZZA.ZZA_NUMLOT = '" + oGetNf:aCols[nCols][nPCodLot] + "' AND " + CRLF
+			cQuery += "		ZZA.ZZA_CODPRO = '" + oGetNf:aCols[nCols][nPCodPrd] + "' AND " + CRLF
+			cQuery += "		ZZA.ZZA_BAIXA = '1' AND " + CRLF
+			cQuery += "		ZZA_NFSAID = ' ' AND ZZA_SERSAI = ' ' AND " + CRLF
+			cQuery += "		ZZA.D_E_L_E_T_ = ' ' "
+
+			dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAlias,.T.,.T.)
+			nCt := 0
+			While (cAlias)->(!eof())
+				if nCt < nFltante
+
+					nTotIt	:= oGetNF:aCols[nCols][nPQtdConf] + 1
+					oGetNF:aCols[nCols][nPQtdConf]		:= nTotIt
+					oGetNF:aCols[nCols][nPStatus]		:= "2"
+					lColor								:= .T.
+
+					//Alimenta browse de itens conferidos
+					//---------------+
+					// Primeiro Item |
+					//---------------+
+					If Len(oGetItConf:aCols) <= 1 .And. Empty(oGetItConf:aCols[1][iPProd])
+
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPItem]				:= "0001"
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPProd]				:= (cAlias)->ZZA_CODPRO
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPDesc]				:= (cAlias)->B1_DESC
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPQtd]				:= 1
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPCaixa]			:= (cAlias)->ZZA_NUMCX
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPPallet]			:= ''	//(cAlias)->ZZA_PALLET
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPLote]				:= (cAlias)->ZZA_NUMLOT
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPItemNf]			:= (cAlias)->ZZA_ITEMNF
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPNFEtq]			:= (cAlias)->ZZA_NUMNF
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPStatus]			:= "3"
+						
+					Else
+						aAdd(oGetItConf:aCols,Array(Len(oGetItConf:aHeader)+1)) 
+						
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPItem]				:= StrZero(Len(oGetItConf:aCols),4)
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPProd]				:= (cAlias)->ZZA_CODPRO
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPDesc]				:= (cAlias)->B1_DESC
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPQtd]				:= 1
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPCaixa]			:= (cAlias)->ZZA_NUMCX
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPPallet]			:= ''	//(cAlias)->ZZA_PALLET
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPLote]				:= (cAlias)->ZZA_NUMLOT
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPItemNf]			:= (cAlias)->ZZA_ITEMNF
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPNFEtq]			:= (cAlias)->ZZA_NUMNF
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPStatus]			:= "3"
+						
+						oGetItConf:aCols[Len(oGetItConf:aCols)][Len(oGetItConf:aHeader)+1]	:= .F.
+					EndIf
+					nCt++
+
+				endif
+				(cAlias)->(dbSkip())
+			End
+			(cAlias)->(DBCLOSEAREA())
+
+		endif
+	endif
+Next nCols
+
+
+_oBmpInfo:cResname := ""
+_oBmpInfo:LVISIBLE := .F.
+_oBmpInfo:Refresh()	 
+_oSayInfo:SetText("")
+_oSayInfo:CtrlRefresh()	
+
+aColsNF := aClone(oGetNF:aCols)
+oGetNF:Refresh()
+
+If lColor
+	TFatA03Color()
+EndIf
+
+//-----------------+
+// Ordena Por item | 
+//-----------------+
+aColsConf := {}	
+aColsConf := aClone(oGetItConf:aCols)
+
+oGetItConf:GoTop()
+oGetItConf:Refresh()
+
+Return

@@ -218,8 +218,15 @@ Static Function BRPIMPRIME(_xDoc1,_xDoc2,_xSer,_xMail,_xMsgMail,_xAjuste,_xVcto)
 			_xBCOdia := SA1->A1_BCO1 
 			SA6->(DbSetOrder(1))
 			SA6->(DbSeek(xFilial("SA6") + _xBCOdia))
-	         _xAGEdia := SA6->A6_AGENCIA
-	         _xCONdia := SA6->A6_NUMCON
+			While SA6->(!eof()) .and. SA6->A6_COD == _xBCOdia
+				SEE->(DbSetOrder(1))
+				if SEE->(DbSeek(xFilial("SEE")+SA6->A6_COD+SA6->A6_AGENCIA+SA6->A6_NUMCON+"001"))
+					_xAGEdia := SA6->A6_AGENCIA
+					_xCONdia := SA6->A6_NUMCON
+					exit
+				endif
+				SA6->(dbSkip())
+			end
 		Else 
 			_xBCOdia        := Padr(Getmv("MV_BCODIA"),3)
 			_xAGEdia        := Padr(Getmv("MV_AGEDIA"),5)

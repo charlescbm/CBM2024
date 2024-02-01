@@ -11,6 +11,8 @@
 ±±ºDescricao ³ Gera agrupamento de titulos                                º±±
 ±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
 ±±ºUso       ³                                                            º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 /*/
 //DESENVOLVIDO POR INOVEN
@@ -24,6 +26,9 @@ cAgencia := Space(05)
 cConta   := Space(12)   
 cDesatu  := Space(30)
 cBante   := Getmv("MV_BCODIA")
+
+xAge  := PADR(Getmv("MV_AGEDIA"),5)
+xCta  := PADR(Getmv("MV_CONDIA"),12)
              
 nOk1 := 1
 DEFINE FONT oFntbt NAME "Arial" SIZE 7 ,-12 BOLD
@@ -31,7 +36,7 @@ DEFINE MSDIALOG oDlg FROM 86,32 TO 300,450 TITLE "- Selecionar Banco do Dia - Bo
 @ 013,015 SAY "Banco Anterior : " SIZE 60,10 OF oDlg  FONT oFntbt COLOR CLR_BLACK PIXEL
 @ 013,70 MSGET oBanco    VAR cBante When .F. SIZE 20,10 OF oDlg FONT oFntbt COLOR CLR_BLACK PIXEL
 dbSelectArea("SA6")
-dbSeek(xFilial("SA6")+cBante)
+dbSeek(xFilial("SA6")+cBante+xAge+xCta)
 cDescri := SA6->A6_NOME
 @ 013,110 MSGET oNome     VAR cDescri When .F. SIZE 100,10 OF oDlg FONT oFntbt COLOR CLR_BLACK PIXEL
 

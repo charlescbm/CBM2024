@@ -202,6 +202,7 @@ Static Function ProcQryTab(oProcpln)
         cQuery += "and e5_data between '" + dtos(mv_par01) + "' and '" + dtos(mv_par02) + "' "
         cQuery += "and e5_situaca <> 'C' and e5_dtcanbx = ' ' "
         cQuery += "and e5_tipodoc <> 'E2' "
+        cQuery += "and e5_naturez between '" + mv_par10 + "' and '" + mv_par11 + "' "
         //if mv_par07 == 2    //nao filtra por filial
             cQuery += "group by ed.ed_pai,ed2.ed_descric, ed2.ed_pai "
         //else
@@ -237,6 +238,7 @@ Static Function ProcQryTab(oProcpln)
         cQuery += "and e5_data between '" + dtos(mv_par01) + "' and '" + dtos(mv_par02) + "' "
         cQuery += "and e5_situaca <> 'C' and e5_dtcanbx = ' ' "
         cQuery += "and e5_tipodoc <> 'E2' "
+        cQuery += "and e5_naturez between '" + mv_par10 + "' and '" + mv_par11 + "' "
         //if mv_par07 == 2    //nao filtra por filial
             cQuery += "group by ed2.ed_pai,ed3.ed_descric, ed3.ed_pai "
         //else
@@ -273,6 +275,7 @@ Static Function ProcQryTab(oProcpln)
         cQuery += "and e5_data between '" + dtos(mv_par01) + "' and '" + dtos(mv_par02) + "' "
         cQuery += "and e5_situaca <> 'C' and e5_dtcanbx = ' ' "
         cQuery += "and e5_tipodoc <> 'E2' "
+        cQuery += "and e5_naturez between '" + mv_par10 + "' and '" + mv_par11 + "' "
         //if mv_par07 == 2    //nao filtra por filial
             cQuery += "group by ed3.ed_pai,ed4.ed_descric, ed4.ed_pai "
             cQuery += "order by e5_naturez, ed_descric, ed_pai"
@@ -316,6 +319,7 @@ Static Function ProcQryTab(oProcpln)
         cQuery += "and e5_data between '" + dtos(mv_par01) + "' and '" + dtos(mv_par02) + "' "
         cQuery += "and e5_situaca <> 'C' and e5_dtcanbx = ' ' "
         cQuery += "and e5_tipodoc <> 'E2' "
+        cQuery += "and e5_naturez between '" + mv_par10 + "' and '" + mv_par11 + "' "
         
         //if mv_par07 == 1
         //    cQuery += "order by e5_filorig, e5_naturez,ed_pai, e5_data "
@@ -343,6 +347,7 @@ Static Function ProcQryTab(oProcpln)
         if mv_par07 == 1
             cReceber += "and e1_filorig between '" + mv_par08 + "' and '" + mv_par09 + "' "
         endif
+        cReceber += "and e1_naturez between '" + mv_par10 + "' and '" + mv_par11 + "' "
         //if mv_par07 == 2    //nao filtra por filial
             cReceber += "group by ed.ed_pai,ed2.ed_descric, ed2.ed_pai "
         //else
@@ -364,6 +369,7 @@ Static Function ProcQryTab(oProcpln)
         if mv_par07 == 1
             cReceber += "and e1_filorig between '" + mv_par08 + "' and '" + mv_par09 + "' "
         endif
+        cReceber += "and e1_naturez between '" + mv_par10 + "' and '" + mv_par11 + "' "
         //if mv_par07 == 2    //nao filtra por filial
             cReceber += "group by ed2.ed_pai,ed3.ed_descric, ed3.ed_pai "
         //else
@@ -387,6 +393,7 @@ Static Function ProcQryTab(oProcpln)
         if mv_par07 == 1
             cReceber += "and e1_filorig between '" + mv_par08 + "' and '" + mv_par09 + "' "
         endif
+        cReceber += "and e5_naturez between '" + mv_par10 + "' and '" + mv_par11 + "' "
         //if mv_par07 == 2    //nao filtra por filial
             cReceber += "group by ed3.ed_pai,ed4.ed_descric, ed4.ed_pai "
         //else
@@ -407,6 +414,7 @@ Static Function ProcQryTab(oProcpln)
         if mv_par07 == 1
             cPagar += "and e2_filorig between '" + mv_par08 + "' and '" + mv_par09 + "' "
         endif
+        cPagar += "and e2_naturez between '" + mv_par10 + "' and '" + mv_par11 + "' "
         //if mv_par07 == 2    //nao filtra por filial
             cPagar += "group by ed.ed_pai,ed2.ed_descric, ed2.ed_pai "
         //else
@@ -428,6 +436,7 @@ Static Function ProcQryTab(oProcpln)
         if mv_par07 == 1
             cPagar += "and e2_filorig between '" + mv_par08 + "' and '" + mv_par09 + "' "
         endif
+        cPagar += "and e2_naturez between '" + mv_par10 + "' and '" + mv_par11 + "' "
         //if mv_par07 == 2    //nao filtra por filial
             cPagar += "group by ed2.ed_pai,ed3.ed_descric, ed3.ed_pai "
         //else
@@ -451,6 +460,7 @@ Static Function ProcQryTab(oProcpln)
         if mv_par07 == 1
             cPagar += "and e2_filorig between '" + mv_par08 + "' and '" + mv_par09 + "' "
         endif
+        cPagar += "and e2_naturez between '" + mv_par10 + "' and '" + mv_par11 + "' "
         //if mv_par07 == 2    //nao filtra por filial
             cPagar += "group by ed3.ed_pai,ed4.ed_descric, ed4.ed_pai "
         //else
@@ -509,6 +519,7 @@ Static Function ProcQryTab(oProcpln)
         if mv_par07 == 1
             cReceber += "and e1_filorig between '" + mv_par08 + "' and '" + mv_par09 + "' "
         endif
+        cReceber += "and e1_naturez between '" + mv_par10 + "' and '" + mv_par11 + "' "
 
         //if mv_par07 == 2    //nao filtra por filial
             cPagar := "select e2_naturez e5_naturez, ed_descric, ed_pai, e2_tipo e5_tipodoc, '' e5_motbx, 'P' e5_recpag, e2_fornece e5_clifor, e2_loja e5_loja, "
@@ -525,6 +536,7 @@ Static Function ProcQryTab(oProcpln)
         if mv_par07 == 1
             cPagar += "and e2_filorig between '" + mv_par08 + "' and '" + mv_par09 + "' "
         endif
+        cPagar += "and e2_naturez between '" + mv_par10 + "' and '" + mv_par11 + "' "
 
         if mv_par04 == 1    //Somente a RECEBER
 

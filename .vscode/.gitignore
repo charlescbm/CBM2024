@@ -1,0 +1,3 @@
+# Ignorar todas as extensões de arquivo, exceto .prw
+.
+!*.prw

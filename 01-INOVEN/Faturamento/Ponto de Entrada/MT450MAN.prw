@@ -12,34 +12,83 @@
 */
 //DESENVOLVIDO POR INOVEN
 
-
 User Function MT450MAN()
 ***********************
 
 Local lRet 		:= .F.
 Local pNumRA	:= space(len(SE1->E1_NUM))
 Local cNumRA	:= space(len(SE1->E1_NUM))
+Local _x
+// Marcelo [GDVIEW] - 16/12/2023
+Local cRotina := Upper(Alltrim(Funname()))
+Local cBkpFun := Funname()
+Local cBkpRot := GetRotInteg()
 
 Private aParam	:= {}
 
+// Marcelo [GDVIEW] - 16/12/2023
+If !("FINA040" $ cRotina)
+	SetRotInteg("FINA040") 
+	SetFunName("FINA040")
+Endif
+
 if Type("cGoTitR") == 'U'
-	_SetNamedPrvt( "cGoTitR" , "" , "MATA450" )
+	//_SetNamedPrvt( "cGoTitR" , "" , "MATA450" )
+	PUBLIC cGoTitR := "" // Marcelo [GDVIEW] - 16/12/2023
 endif
-if Type("nGoTitR") == 'U'
-	_SetNamedPrvt( "nGoTitR" , 0 , "MATA450" )
+//if Type("nGoTitR") == 'U'
+//	_SetNamedPrvt( "nGoTitR" , 0 , "MATA450" )
+//endif
+if Type("aGoTitR") == 'U'
+	//_SetNamedPrvt( "aGoTitR" , {} , "MATA450" )
+	PUBLIC aGoTitR := {} // Marcelo [GDVIEW] - 16/12/2023
 endif
 if Type("cGoTitR") <> 'U'
 	cGoTitR := space(len(SE1->E1_PREFIXO)) + space(len(SE1->E1_NUM))
 endif
-if Type("nGoTitR") <> 'U'
-	nGoTitR := 0
+//if Type("nGoTitR") <> 'U'
+//	nGoTitR := 0
+//endif
+if Type("aGoTitR") <> 'U'
+	aGoTitR := {}
 endif
 
 SC5->(dbSetOrder(1))
 if SC5->(msSeek(xFilial("SC5") + SC9->C9_PEDIDO))
 	//Caso condicao de pagamento ANTECIPADO, solicitar numero do titulo de RA
-	if SC5->C5_CONDPAG == "003"	
 
+	//if SC5->C5_CONDPAG == "003"
+	if SC5->C5_CONDPAG $ GetNewPar("IN_CPADIAN", "003")
+
+		//busca valor total do pedido
+		nTotalPed := 0
+		SC6->(dbSetOrder(1))
+		SC6->(msSeek(FWxFilial('SC6') + SC5->C5_NUM, .T.))
+		While !SC6->(EoF()) .And. SC6->C6_FILIAL == FWxFilial('SC6') .and. SC6->C6_NUM == SC5->C5_NUM
+			nTotalPed += SC6->C6_VALOR
+			SC6->(DbSkip())
+		EndDo
+		nTotalPed += SC5->C5_FRETE + SC5->C5_SEGURO + SC5->C5_DESPESA
+
+		aRecnoSE1	:= {}
+		cNumPedido	:= SC5->C5_NUM
+		cCodCli		:= SC5->C5_CLIENTE
+		cCodLoja	:= SC5->C5_LOJACLI
+		cTes		:= ""
+		nItem		:= 0
+		nMoedPed	:= SC5->C5_MOEDA
+		aRecnoSE1 := FPEDADT("R", cNumPedido, nTotalPed, aRecnoSE1, cCodCli, cCodLoja, cTes, nItem, nMoedPed)	
+		//alert(len(aRecnoSE1))
+
+		for _x:= 1 to len(aRecnoSE1)
+			//alert(aRecnoSE1[_x][1])	//pedido
+			//alert(aRecnoSE1[_x][2])	//recno SE1
+			//alert(aRecnoSE1[_x][3])	//valor
+			aadd(aGoTitR, {aRecnoSE1[_x][1], aRecnoSE1[_x][2]})
+			lRet := .T.
+		next
+
+		/*
 		xMVPAR01 := MV_PAR01
 		IF PARAMBOX( {	{1,"Nr.Titulo RA", pNumRA,"@!",".T.","","",30,.T.};
 						}, "Titulo Pagto Antecipado", @aParam,,,,,,,,.F.,.T.)
@@ -75,6 +124,7 @@ if SC5->(msSeek(xFilial("SC5") + SC9->C9_PEDIDO))
 
 		Endif
 		MV_PAR01 := xMVPAR01
+		*/
 
 	else
 		lRet := .T.
@@ -84,5 +134,9 @@ endif
 if !lRet
 	MsgStop("Para liberar este pedido é preciso informar o numero do título referente ao pagamento antecipado (RA)." + chr(13) + chr(10) + "Liberação não autorizada!","INOVEN - Avisos")
 endif
+
+// Marcelo [GDVIEW] - 16/12/2023
+SetFunName(cBkpFun)
+SetRotInteg(cBkpRot)
 
 Return(lRet)

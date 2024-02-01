@@ -14,6 +14,7 @@
 #DEFINE  P_END    08
 #DEFINE  P_UF    09
 #DEFINE  P_CEP    10
+#DEFINE  P_ATIVO  11
 
 /*ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
 ±±ºPrograma  ³ ITECX020 º Autor ³ 	Meliora/Gustavo	 º Data ³  08/01/14     º±±
@@ -80,11 +81,13 @@ if lFiltra
    cCodA3 := QRYA3->A3_COD
 endif
 
-_cQry := " SELECT A1_COD COD, A1_LOJA LOJA, A1_NOME NOME, A1_PESSOA PESSOA,A1_CGC CGC, A1_NREDUZ XNFANTA, A1_MUN MUN,A1_EST UF,A1_CEP CEP ,A1_END ENDER"+ENTER
+_cQry := " SELECT A1_COD COD, A1_LOJA LOJA, A1_NOME NOME, A1_PESSOA PESSOA,A1_CGC CGC, A1_NREDUZ XNFANTA, A1_MUN MUN,A1_EST UF,A1_CEP CEP ,A1_END ENDER,A1_MSBLQL ATIVO"+ENTER
 _cQry += "   FROM "+ RetSqlName('SA1') +" SA1  "+ENTER
 _cQry += "     WHERE SA1.D_E_L_E_T_ <> '*' "+ENTER
 _cQry += "       AND A1_FILIAL = '"+ xFilial('SA1') +"' "+ENTER
-_cQry += "       AND A1_MSBLQL <> '1' "+ENTER
+if !IsInCallStack("U_IVENA020")
+   _cQry += "       AND A1_MSBLQL <> '1' "+ENTER
+endif
 /*//Renato Bandeira em 29/10/14 - tratamento para segundo vendedor
 If lVendUSU
 	//--.iNi Caso seja um representante, irá mostrar somente a carteira dele e o clientes inativos
@@ -109,12 +112,12 @@ DbSelectArea("_TRP")
 _TRP->(DbGotop()) 
 
 While !_TRP->(EOF())
-      Aadd(aListBox1,{.F., _TRP->NOME, _TRP->COD, _TRP->LOJA, TransForm(_TRP->CGC,iIF(_TRP->PESSOA=='F',"@R 999.999.999-99","@R 99.999.999/9999-99")), _TRP->XNFANTA, _TRP->MUN, _TRP->ENDER,_TRP->UF,TransForm(_TRP->CEP,"@R 99999-999" )})
+      Aadd(aListBox1,{.F., _TRP->NOME, _TRP->COD, _TRP->LOJA, TransForm(_TRP->CGC,iIF(_TRP->PESSOA=='F',"@R 999.999.999-99","@R 99.999.999/9999-99")), _TRP->XNFANTA, _TRP->MUN, _TRP->ENDER,_TRP->UF,TransForm(_TRP->CEP,"@R 99999-999" ),_TRP->ATIVO})
       _TRP->(DbSkip())
 EndDo
 
 IF LEN(aListBox1) <= 0
-   Aadd(aListBox1,{.F.,'','','','','','','',''}) 	
+   Aadd(aListBox1,{.F.,'','','','','','','','',''}) 	
 ENDIF
 
 aListBK := aClone( aListBox1 ) 
@@ -123,8 +126,8 @@ DEFINE MSDIALOG _oDlg TITLE "Cadastro de Cliente [Ativo]" FROM C(198),C(181) TO 
                               
 //oListBox1 := TCBrowse():New( 02 , 02, 449, 140,,;  //p11
 oListBox1 := TCBrowse():New( 32 , 02, 449, 110,,;   //p12
-                              {'','Razão Social','Código','Loja','Cnpj','Nome Fantasia','Municipio','Endereco','UF',"CEP"},;
-                              {40,130,40,30,40,100,40,130,30,50},;
+                              {'','Razão Social','Código','Loja','Cnpj','Nome Fantasia','Municipio','Endereco','UF',"CEP",'Ativo'},;
+                              {40,130,40,30,40,100,40,130,30,50,30},;
                               _oDlg,,,,,{||},,,,,,,.F.,,.T.,,.F.,,, )
 xSetBrws()                         	
 
@@ -165,7 +168,8 @@ oListBox1:bLine := {||{	If( aListBox1[oListBox1:nAt,P_CLICK] ,oOK,oNO)	,;
 							aListBox1[oListBox1:nAt,P_MUN]				,;
 							aListBox1[oListBox1:nAt,P_END]				,;
 							aListBox1[oListBox1:nAt,P_UF]				,;
-							aListBox1[oListBox1:nAt,P_CEP]			    }}  
+							aListBox1[oListBox1:nAt,P_CEP]			,;  
+							aListBox1[oListBox1:nAt,P_ATIVO]			    }}  
 
 // Evento de duplo click na celula
 oListBox1:bLDblClick   := {|| xLimpBox(aListBox1),;
@@ -383,6 +387,11 @@ IF LEN(aListBox1) > 0
          	   //cod_cli := SA1->A1_COD
          	   //coja_cli := SA1->A1_LOJA
          	   cod_cnpj := SA1->A1_CGC
+               if IsInCallStack("U_IVENA020") .and. SA1->A1_MSBLQL == '1'
+                  MSGALERT("ATENÇÃO!!! ESTE CLIENTE ESTÁ INATIVO! NÃO SERÁ POSSÍVEL GRAVAR ORÇAMENTO E PEDIDO.")
+                  _lBotaoGrvOrc  := .F.
+                  _lPedBotaoGrv  := .F.
+               endif
             ENDIF
 		ENDIF
 	//Next _nB

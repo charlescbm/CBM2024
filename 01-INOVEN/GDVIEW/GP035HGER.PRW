@@ -8,7 +8,7 @@
 */
 User Function GP035HGER()
 
-Return {"A1_MUN","A1_EST","A1_CGC","A1_RISCO","A1_LC","A1_VENCLC","A1_CLASSE","A1_PRIOR","A1_PRICOM","A1_ULTCOM","A1_CONTATO","A1_DDD","A1_TEL","A1_EMAIL,A1_VACUM"}
+Return {"A1_XCOLIG","A1_MUN","A1_EST","A1_CGC","A1_RISCO","A1_LC","A1_VENCLC","A1_CLASSE","A1_PRIOR","A1_PRICOM","A1_ULTCOM","A1_CONTATO","A1_DDD","A1_TEL","A1_EMAIL,A1_VACUM"}
 
     //aHdrGer//////////////////////////////////////////////////////////
    // GDVFW():addHdr(@aHdrGer,{"MSTATUS","A1_FILIAL","A1_COD","A1_LOJA","A1_NOME"})

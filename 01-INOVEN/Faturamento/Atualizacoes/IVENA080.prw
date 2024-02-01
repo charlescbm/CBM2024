@@ -36,7 +36,7 @@ Rotina para realização da simulação de frete de acordo com rotina utilizada no G
 //DESENVOLVIDO POR INOVEN
 
 //User Function IVENA080(_oObjCT,_oObjTFrt,_lMostra)
-User Function IVENA080(_oObjCT,_oObjTFrt,_lMostra,_nPrvFrt,_cTrpPes)
+User Function IVENA080(_oObjCT,_oObjTFrt,_lMostra,_nPrvFrt,_cTrpPes,_cRedes)
 
 	Local aArea 		:= GetArea()
 	Local oModelSim  	:= FWLoadModel("GFEX010")
@@ -90,6 +90,7 @@ User Function IVENA080(_oObjCT,_oObjTFrt,_lMostra,_nPrvFrt,_cTrpPes)
 	Local _aColsIt		:= {}
 	
 	Default _cTrpPes	:= ""
+	Default _cRedes		:= ""
 
 	Private cCodTrans	:= ""
 
@@ -115,21 +116,35 @@ User Function IVENA080(_oObjCT,_oObjTFrt,_lMostra,_nPrvFrt,_cTrpPes)
 	endif
 
 
+	//
+	SA1->(dbSetOrder(1))
+	SA1->(dbSeek(xFilial("SA1")+cod_cli+coja_cli))	   
+	
+	//Verifica primeiro se existe a chave "NS" cadastrada, se n? busca a chave "N". Mesmo tratamento utilizado no OMSM011.
+	cTpDoc	:= AllTrim(Posicione("SX5",1,xFilial("SX5")+"MQNS","X5_DESCRI"))
+	If Empty(cTpDoc)
+		cTpDoc := Alltrim(Posicione("SX5",1,xFilial("SX5")+"MQN","X5_DESCRI"))
+	EndIf
+	cCdEmis := OMSM011COD(,,,.T.,xFilial("SF2"))
+	cCdRem 	:= cCdEmis
+
+	cCdDest := IIF(MTA410ChkEmit(SA1->A1_CGC),SA1->A1_CGC, OMSM011COD(cod_cli,coja_cli,1,,) )
+	//
 	
 	//If !Empty(cod_cli) .And. !Empty(coja_cli) .And. !Empty(oOrcamento:aCols[oOrcamento:oBrowse:nAt,_nPosProd]) //.And. !Empty(oOrcamento:aCols[oOrcamento:oBrowse:nAt,GdFieldPos("UB_QUANT", __aHeaderEx)]) .And. !Empty(oOrcamento:aCols[oOrcamento:oBrowse:nAt,GdFieldPos("UB_VLRITEM", __aHeaderEx)])	
 	If !Empty(cod_cli) .And. !Empty(coja_cli) .And. !Empty(xProd) //.And. !Empty(oOrcamento:aCols[oOrcamento:oBrowse:nAt,GdFieldPos("UB_QUANT", __aHeaderEx)]) .And. !Empty(oOrcamento:aCols[oOrcamento:oBrowse:nAt,GdFieldPos("UB_VLRITEM", __aHeaderEx)])	
 	
 		ProcRegua(nRegua)      
 	
-		SA1->(dbSeek(xFilial("SA1")+cod_cli+coja_cli))	   
+		//SA1->(dbSeek(xFilial("SA1")+cod_cli+coja_cli))	   
 	
 		cCdClFr	:= "0001"	//define como carga fracionada
-		cTpDoc := "" 
+		/*cTpDoc := "" 
 		//Verifica primeiro se existe a chave "NS" cadastrada, se n? busca a chave "N". Mesmo tratamento utilizado no OMSM011.
 		cTpDoc	:= AllTrim(Posicione("SX5",1,xFilial("SX5")+"MQNS","X5_DESCRI"))
 		If Empty(cTpDoc)
 			cTpDoc := Alltrim(Posicione("SX5",1,xFilial("SX5")+"MQN","X5_DESCRI"))
-		EndIf
+		EndIf*/
 			
 		oModelSim:SetOperation(3) //Seta como inclusão
 		oModelSim:Activate() 			
@@ -137,12 +152,12 @@ User Function IVENA080(_oObjCT,_oObjTFrt,_lMostra,_nPrvFrt,_cTrpPes)
 		oModelNeg:LoadValue('CONSNEG' ,"2" ) // -- 1=Considera Tab.Frete em Negociacao; 2=Considera apenas Tab.Frete Aprovadas
 		IncProc()
 		//Agrupadores - Não obrigatorio
-		oModelAgr:LoadValue('GWN_CDCLFR',cCdClFr)  //classificação de frete                                 
-		oModelAgr:LoadValue('GWN_CDTPOP',cTpOp)    //tipo da operação
+		oModelAgr:LoadValue('GWN_CDCLFR',AllTrim(cCdClFr))  //classificação de frete                                 
+		oModelAgr:LoadValue('GWN_CDTPOP',AllTrim(cTpOp))    //tipo da operação
 		oModelAgr:LoadValue('GWN_CDTPVC',AllTrim(cTpVc))  	//Tipo de veiculo
 		oModelAgr:LoadValue('GWN_DOC'   ,"ROMANEIO"     )           
 		//Documento de Carga
-		oModelDC:LoadValue('GW1_EMISDC', SM0->M0_CGC) 	//codigo do emitente - chave
+		/*oModelDC:LoadValue('GW1_EMISDC', SM0->M0_CGC) 	//codigo do emitente - chave
 		oModelDC:LoadValue('GW1_NRDC'  , ""  ) 	//numero da nota - chave
 		oModelDC:LoadValue('GW1_CDTPDC', cTpDoc) 		// tipo do documento - chave
 		oModelDC:LoadValue('GW1_CDREM' , IIF(_fL1ChkE(SM0->M0_CGC),SM0->M0_CGC, _fL1RetE(xFilial("SC5")) ) )  	//remetente
@@ -150,13 +165,31 @@ User Function IVENA080(_oObjCT,_oObjTFrt,_lMostra,_nPrvFrt,_cTrpPes)
 		oModelDC:LoadValue('GW1_TPFRET', "1")
 		oModelDC:LoadValue('GW1_ICMSDC', "2")
 		oModelDC:LoadValue('GW1_USO'   , "1")
-		oModelDC:LoadValue('GW1_QTUNI' , 1)   
+		oModelDC:LoadValue('GW1_QTUNI' , 1)*/
+
+		
+		oModelDC:LoadValue('GW1_EMISDC', cCdEmis) 	//codigo do emitente - chave
+		oModelDC:LoadValue('GW1_NRDC'  , ""  ) 	//numero da nota - chave
+		oModelDC:LoadValue('GW1_CDTPDC', cTpDoc) 		// tipo do documento - chave
+		oModelDC:LoadValue('GW1_CDREM' , cCdRem)  	//remetente
+		oModelDC:LoadValue('GW1_CDDEST', cCdDest)   //destinatario
+
+		oModelDC:LoadValue('GW1_TPFRET', "1")
+		oModelDC:LoadValue('GW1_ICMSDC', "2")
+		oModelDC:LoadValue('GW1_USO'   , "1")
+		oModelDC:LoadValue('GW1_QTUNI' , 1) 
+
 		//Trechos
-		oModelTr:LoadValue('GWU_EMISDC' ,SM0->M0_CGC)												//codigo do emitente - chave
-		oModelTr:LoadValue('GWU_NRDC'   ,""  ) 												//numero da nota - chave
-		oModelTr:LoadValue('GWU_CDTPDC' ,cTpDoc)													// tipo do documento - chave
-		oModelTr:LoadValue('GWU_SEQ'    ,"01"   )    												//sequencia - chave
-		oModelTr:LoadValue('GWU_NRCIDD' ,AllTrim(TMS120CdUf(SA1->A1_EST, "1") + SA1->A1_COD_MUN))   // codigo da cidade para o calculo
+		/*if empty(_cTrpPes)
+			oModelTr:LoadValue('GWU_EMISDC' ,SM0->M0_CGC)												//codigo do emitente - chave
+			oModelTr:LoadValue('GWU_NRDC'   ,""  ) 												//numero da nota - chave
+			oModelTr:LoadValue('GWU_CDTPDC' ,cTpDoc)													// tipo do documento - chave
+			oModelTr:LoadValue('GWU_SEQ'    ,"01"   )    												//sequencia - chave
+			oModelTr:LoadValue('GWU_NRCIDD' ,AllTrim(TMS120CdUf(SA1->A1_EST, "1") + SA1->A1_COD_MUN))   // codigo da cidade para o calculo
+		else*/
+			I080SetTrechos(oModelTr,cTpDoc,cCdEmis,cCdRem,cCdDest,Iif(Empty(SA1->A1_ESTE),SA1->A1_EST,SA1->A1_ESTE),Iif(Empty(SA1->A1_CODMUNE),SA1->A1_COD_MUN,SA1->A1_CODMUNE), _cTrpPes, _cRedes)
+		//endif
+
 
 		//nLenAcols := Len(oOrcamento:aCols)
 		nLenAcols := Len(_aColsIt)
@@ -172,7 +205,8 @@ User Function IVENA080(_oObjCT,_oObjTFrt,_lMostra,_nPrvFrt,_cTrpPes)
 				//SB1->(dbSeek(xFilial("SB1")+oOrcamento:aCols[nX,_nPosProd]))
 				SB1->(dbSeek(xFilial("SB1")+_aColsIt[nX,_nPosProd]))
 				//--VERIFICAR QUESTÃO DOS PRODUTOS
-				oModelIt:LoadValue('GW8_EMISDC',SM0->M0_CGC)	//codigo do emitente - chave
+				//oModelIt:LoadValue('GW8_EMISDC',SM0->M0_CGC)	//codigo do emitente - chave
+				oModelIt:LoadValue('GW8_EMISDC',cCdEmis)	//codigo do emitente - chave
 				oModelIt:LoadValue('GW8_NRDC'  ,""  ) 	//numero da nota - chave
 				oModelIt:LoadValue('GW8_CDTPDC',cTpDoc) 		// tipo do documento - chave
 				oModelIt:LoadValue('GW8_ITEM'  , "ITEM"+ PADL((nItem),3,"0")  )        		//codigo do item    -
@@ -340,7 +374,8 @@ User Function IVENA080(_oObjCT,_oObjTFrt,_lMostra,_nPrvFrt,_cTrpPes)
 							endif
 						next
 						if empty(lAchou)
-							_cTrpPes := ""
+						//	_cTrpPes := ""
+							cCodTrans := _cTrpPes
 						endif
 					endif
 					if empty(_cTrpPes)
@@ -478,6 +513,7 @@ Static Function _fLDM1RS(aListBox,_oObjCT,_nPrvFrt)
 	Local _nLVlrFrt		:= 0
 	Local nItemMrk		:= 0
 	Local nOpca			:= 0
+	Local aParam		:= {}
 	
 	Default aListBox:= {}
 	
@@ -531,18 +567,51 @@ Static Function _fLDM1RS(aListBox,_oObjCT,_nPrvFrt)
 		ACTIVATE MSDIALOG oDlg CENTERED
 
 		If nOpca == 1
-			cod_trp 	:= cCodTrans 
-			come_transp	:= _cNomTrans
-			_nDnyVlFrt	:= _nLVlrFrt
-			_nPrvFrt	:= _nLVlrFrt
+
+			if empty(cCodTrans)
+				If !IsInCallStack("U_IVENA020")
+					xMVPAR01 := MV_PAR01
+					xMVPAR02 := MV_PAR02
+				endif
+				//While .T.
+					if PARAMBOX( { 	{1,"Transportadora",CriaVar("A4_COD",.F.),"@!","","SA4","",70,.T.},	;
+									{1,"Valor do Frete",0,"@E 999,999.99","","","",70,.F.}	;
+									},"DADOS DO FRETE",@aParam,,,,,,,,.F.,.T.)
+
+									cCodTrans 	:= MV_PAR01
+									cod_trp  	:= MV_PAR01
+									_nDnyVlFrt  := MV_PAR02
+									_nPrvFrt	:= MV_PAR02
+									//exit
+					else
+						_nDnyVlFrt  := 0
+						_nPrvFrt	:= 0
+					endif
+				//End
+				If !IsInCallStack("U_IVENA020")
+					MV_PAR01	:= xMVPAR01
+					MV_PAR02	:= xMVPAR02
+				endif
+			else
+				cod_trp 	:= cCodTrans 
+				come_transp	:= _cNomTrans
+				_nDnyVlFrt	:= _nLVlrFrt
+				_nPrvFrt	:= _nLVlrFrt
+			endif
 			
 			Public _nNewVlFrt := _nDnyVlFrt
 //			Public _cNewDetal := _cDetalhe
 			
-			_oObjCT:cCaption := cCodTrans
-			_oObjCT:Refresh()
+			if valtype(_oObjCT) <> "U"
+				_oObjCT:cCaption := cCodTrans
+				_oObjCT:Refresh()
+			endif
 			
-			oDlgFimCot:Refresh()
+			If IsInCallStack("U_IVENA020")
+				if valtype(oDlgFimCot) <> "U"
+					oDlgFimCot:Refresh()
+				endif
+			endif
 		End If
 
 Return(cCodTrans)	
@@ -566,12 +635,15 @@ Static Function _fL1MrkS(aListBox,nItemMrk,cCodTrans,_cNomTrans,_nLVlrFrt)
 	Default cCodTrans	:= "" 
 	
 	If nItemMrk == 0  //Nenhum Item Marcado em Memória
-		If aListBox[nItem,SMEXISTMP]
+		//If aListBox[nItem,SMEXISTMP]
+		If aListBox[nItem,SMEXISTMP] .and. alltrim(aListBox[nItem,SMCODTRAN]) <> "404"
 			cCodTrans 				:= aListBox[nItem,SMCODTRAN]
 			_cNomTrans				:= aListBox[nItem,SMNOMETRAN]
 			_nLVlrFrt				:= aListBox[nItem,SMVALOR]
 			aListBox[nItem,SMMARCA] := '1'	
 			nItemMrk 				:= nItem                         		
+		elseif aListBox[nItem,SMEXISTMP] .and. alltrim(aListBox[nItem,SMCODTRAN]) == "404"
+			MsgAlert("Transportadora definida como Redespacho não pode ser selecionada!")
 		Else
 			MsgAlert("Transportadora não cadastrada no Microsiga Protheus!")
 		EndIf
@@ -582,13 +654,16 @@ Static Function _fL1MrkS(aListBox,nItemMrk,cCodTrans,_cNomTrans,_nLVlrFrt)
 		cCodTrans 				:=  ""
 		
 	Else //Marca o Item selecionado e desmarca o Item já marcado anteriormente.
-		If aListBox[nItem,SMEXISTMP]
+		//If aListBox[nItem,SMEXISTMP]
+		If aListBox[nItem,SMEXISTMP] .and. alltrim(aListBox[nItem,SMCODTRAN]) <> "404"
 			aListBox[nItem,SMMARCA] 	:= '1'			
 			aListBox[nItemMrk,SMMARCA] 	:= '2'				
 			nItemMrk 					:= nItem                         		
 			cCodTrans 					:= aListBox[nItem,SMCODTRAN]		
 			_cNomTrans					:= aListBox[nItem,SMNOMETRAN]
 			_nLVlrFrt					:= aListBox[nItem,SMVALOR]
+		elseif aListBox[nItem,SMEXISTMP] .and. alltrim(aListBox[nItem,SMCODTRAN]) == "404"
+			MsgAlert("Transportadora definida como Redespacho não pode ser selecionada!")
 		Else
 			MsgAlert("Transportadora não cadastrada no Microsiga Protheus!")
 		EndIf	
@@ -597,3 +672,81 @@ Static Function _fL1MrkS(aListBox,nItemMrk,cCodTrans,_cNomTrans,_nLVlrFrt)
 	oListBox:Refresh()
 						
 Return(Nil)	
+
+Static Function I080SetTrechos(oModelTr,cTpDoc,cCdEmis,cCdRem,cCdDest,cEst,cCodMun,xTrans, xRedes)
+Local nI		:= 1
+Local aTrechos	:= {}
+//Local cValor	:= ""
+Local lMRedes	:= ExistBlock("M461LSF2")
+Local cCidO		:= Posicione("GU3",1,xFilial("GU3")+cCdRem,"GU3_NRCID")
+Local cCepO		:= Posicione("GU3",1,xFilial("GU3")+cCdRem,"GU3_CEP")
+Local nPosPg	:= aScan(oModelTr:aHeader,{|x| AllTrim(x[2]) == "GWU_PAGAR"})
+Local cTpFrete	:= ""
+
+//aAdd(aTrechos, { M->C5_TRANSP , AllTrim(M->C5_TPFRETE), "", "" })
+aAdd(aTrechos, { xTrans , "C", "", "" })
+
+For nI := 1 To 5
+	If !lMRedes .And. nI > 1 
+		Exit
+	EndIf
+	/*If SC5->(ColumnPos('C5_REDESP' +Iif(nI == 1,"",Str(nI,1)))) > 0
+		aAdd(aTrechos, { M->&('C5_REDESP' +Iif(nI == 1,"",Str(nI,1))) , AllTrim(M->C5_TPFRETE) , "" , "" } )
+		If lMRedes
+			If SC5->(ColumnPos('C5_TFRDP' +Str(nI,1))) > 0 .And. !Empty(cValor := M->&('C5_TFRDP' +Str(nI,1)))
+				aTail(aTrechos)[2] := cValor
+			EndIf
+			If SC5->(ColumnPos('C5_ESTRDP' +Str(nI,1))) > 0 .And. !Empty(cValor := M->&('C5_ESTRDP' +Str(nI,1)))
+				aTail(aTrechos)[3] := cValor
+			EndIf
+			If SC5->(ColumnPos('C5_CMURDP' +Str(nI,1))) > 0 .And. !Empty(cValor := M->&('C5_CMURDP' +Str(nI,1)))
+				aTail(aTrechos)[4] := cValor
+			EndIf
+		EndIf
+	EndIf*/
+	aAdd(aTrechos, { xRedes , "C" , "" , "" } )
+Next nI
+
+aAdd(aTrechos, {Nil,Nil} )
+
+For nI := 1 To Len(aTrechos)
+	If nI != 1
+		oModelTr:AddLine()
+		oModelTr:GoLine( nI )
+	EndIf
+	
+	oModelTr:LoadValue('GWU_SEQ'   , MsStrZero(nI,2) )	// sequencia - chave
+	oModelTr:LoadValue('GWU_CDTPDC', cTpDoc )			// tipo do documento - chave
+	oModelTr:LoadValue('GWU_EMISDC', cCdEmis)			// codigo do emitente - chave
+	oModelTr:LoadValue('GWU_NRDC'  , ""  ) 		// numero da nota - chave
+	oModelTr:LoadValue('GWU_NRCIDO', cCidO )			// cidade origem
+	oModelTr:LoadValue('GWU_CEPO'  , cCepO )			// cep origem
+
+	If nPosPg > 0
+		//cTpFrete := Iif(Empty(aTrechos[nI][2]),M->C5_TPFRETE,aTrechos[nI][2])
+		cTpFrete := aTrechos[nI][2]
+		oModelTr:LoadValue('GWU_PAGAR',IIf(cTpFrete == "C" .Or. cTpFrete == "R","1","2"))
+	EndIf
+	
+	If !Empty(aTrechos[nI + 1][1])
+		SA4->( dbSetOrder(1) )
+		SA4->( dbSeek(xFilial("SA4")+aTrechos[nI + 1][1] ) )
+		//If lMRedes .And. !Empty(aTrechos[nI + 1][3]) .And. !Empty(aTrechos[nI + 1][4])
+		//	oModelTr:LoadValue('GWU_NRCIDD', rTrim(TMS120CDUF(aTrechos[nI + 1][3], "1") + aTrechos[nI + 1][4] ))
+		//Else
+			oModelTr:LoadValue('GWU_NRCIDD', rTrim(TMS120CDUF(SA4->A4_EST, "1") + SA4->A4_COD_MUN ))
+		//EndIf
+		oModelTr:LoadValue('GWU_CEPD', SA4->A4_CEP)
+	Else
+		oModelTr:LoadValue('GWU_NRCIDD', rTrim(TMS120CdUf(cEst, "1") + cCodMun ))
+		oModelTr:LoadValue('GWU_CEPD', POSICIONE("GU3",1,xFilial("GU3")+cCdDest,"GU3_CEP"))
+
+		nI := Len(aTrechos)
+	EndIf
+
+	//-- Origem do pr?imo trecho ?o destino do atual
+	cCepO := oModelTr:GetValue('GWU_CEPD')
+	cCidO := oModelTr:GetValue('GWU_NRCIDD')
+Next nI
+
+Return

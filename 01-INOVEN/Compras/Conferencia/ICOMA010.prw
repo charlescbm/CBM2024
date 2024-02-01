@@ -28,11 +28,17 @@
 
 @description Conferencia Recebimento
 
+@author Victor Andrade
+@since 09/04/2018
+@version 1.0
+
+@type function
 /*/
 /*********************************************************************************************/
 //DESENVOLVIDO POR INOVEN
 
 User Function ICOMA010()
+//Local aArea		:= GetArea() 
 
 Local cFiltro	:= ""
 Local pFiltro    	:= { "Nao Conferidas","Conferidas", "Conferidas Parcial", "Todas" }

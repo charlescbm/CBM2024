@@ -118,7 +118,7 @@ If SC5->C5_TIPO == 'N'
 	
 	If SC5->C5_CONDPAG $ GetMv('FS_CONDBON',.F.,'')
 		If ! ( __cUserID $ GetMV('LI_410LIB',.F.,'000000') .Or. __cUserID == '000000' )
-			MsgInfo('Bonificaç²es somente podem ser liberadas pelo Gerente!!')
+			MsgInfo('Bonificacoes somente podem ser liberadas pelo Gerente!!')
 			Return()
 		EndIf
 	EndIf
@@ -140,7 +140,7 @@ If SC5->C5_TIPO == 'N'
 	
 	//-- Verifica se pedido j?foi programado.
 	If fValProg(SC5->C5_NUM,SC5->C5_FILIAL) .AND. !EMPTY(SC5->C5_LIBEROK)
-		ALERT("Pedido já liberado! Não será possivel solicitar nova liberação.")
+		ALERT("Pedido ja liberado! Não sera possivel solicitar nova liberacao.")
 		RestArea(aArea)
 		Return .T.
 	EndIf
@@ -215,7 +215,7 @@ If SC5->C5_TIPO == 'N'
 	EndDo
 	
 	If !lPode                                         
-		ALERT("AGUARDE A LIBERAæ•²O DA ANALISE DE CRè’ITO!!!")
+		ALERT("AGUARDE A LIBERACAO DA ANALISE DE CREDITO!!!")
 		u_DnyGrvSt(SC5->C5_NUM, "000036") //Informa que pedido est?em analise de cré–ito.
 		IF EMPTY(SC5->C5_LIBEROK) .AND.	_TEMSC9 == .T.
 			RecLock("SC5",.F.)

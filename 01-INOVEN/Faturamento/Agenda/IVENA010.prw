@@ -1803,10 +1803,10 @@ Static Function VldFin(lNewAg)
 		If MsgYesNo("Deseja criar nova agenda?")
 			lCont := .T.
 		else
-			aDadosUsu := U_FSLogin("<b>Ser?necessário solicitar</n>aprovação do gerente para prosseguir.</b>", .F.)
+			aDadosUsu := U_FSLogin("<b>Sera necessário solicitar aprovação do gerente para prosseguir.</b>", .F.)
 			If(aDadosUsu != Nil)//Achou o usuário
 				If (aDadosUsu[1] == .F. .or. !(aDadosUsu[3]$ cGrpAprv))  //Se o usuário for valido ainda dever?estar dentro do grupo de aprovadores
-					Alert("O usuário ?inválido ou não pertence ao grupo de gerentes!!!")
+					Alert("O usuario invalido ou nao pertence ao grupo de gerentes!!!")
 				Else
 					lNewAg := .F.
 					lCont := .T.

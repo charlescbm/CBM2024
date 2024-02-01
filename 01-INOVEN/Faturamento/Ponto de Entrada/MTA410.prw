@@ -88,9 +88,10 @@ Private nTotalPL := 0
 
 	//Simulação de frete e gravacao do valor previsto
 	If !IsInCallStack("U_IVENA020") .and. !empty(M->C5_TPFRETE) .and. M->C5_TPFRETE=="C" .and. M->C5_TIPO == 'N'	//Apenas frete CIF
-	
+		
 		_nPrvFrt := 0
-		xRet := U_IVENA080(,,.F.,@_nPrvFrt)
+		//xRet := U_IVENA080(,,.F.,@_nPrvFrt, M->C5_TRANSP, iif(!empty(M->C5_REDESP), M->C5_REDESP, ""))
+		xRet := U_IVENA080(,,iif(!empty(M->C5_TRANSP),.F.,.T.),@_nPrvFrt, M->C5_TRANSP, iif(!empty(M->C5_REDESP), M->C5_REDESP, ""))
 		if !empty(xRet)
 			M->C5_TRANSP := xRet
 			M->C5_ZPRVFRE := _nPrvFrt

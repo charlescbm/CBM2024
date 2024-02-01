@@ -103,7 +103,8 @@ dbSelectArea("ZZA")
 ZZA->( dbSetOrder(1))
 ZZA->( dbGoTop())
 ZZA->( dbGoTo((cAlias)->RECNOZZA) )
-If ZZA->ZZA_BAIXA	== "2"
+//If ZZA->ZZA_BAIXA	== "2"
+If ZZA->ZZA_BAIXA	$ "2/3"
 	MsgAlert("Etiqueta já lida.")
 	lRet := .F.
 Else

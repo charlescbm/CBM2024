@@ -233,7 +233,7 @@ ENDIF
 //previsao de frete
 if (empty(COD_TRP) .and. empty(nPrvFrt)) .or. (!empty(COD_TRP) .and. empty(nPrvFrt))
 	_nPrvFrt := 0
-	xRet := U_IVENA080(,,.F.,@_nPrvFrt,COD_TRP)
+	xRet := U_IVENA080(NIL,NIL,iif(!empty(COD_TRP),.F.,.T.),@_nPrvFrt,COD_TRP,cod_Redesp)
 	if !empty(xRet)
 		COD_TRP := xRet
 		nPrvFrt := _nPrvFrt
@@ -700,7 +700,7 @@ IF LRET
 				AADD(ACAB,{"C5_PARC4" ,nParc4,     NIL})
 				AADD(ACAB,{"C5_XDIAS4",nDias4,     NIL})
 				
-				AADD(ACAB,{"C5_REDESP",cod_Redesp, NIL})
+				//AADD(ACAB,{"C5_REDESP",cod_Redesp, NIL})
 				AADD(ACAB,{"C5_TIPOFAT",'2', NIL})
 				//--Entrega retira - Desconto condição de pagamento
 

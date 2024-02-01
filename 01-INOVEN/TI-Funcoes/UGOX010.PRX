@@ -1,0 +1,57 @@
+#include "rwmake.ch"
+/*
++-------------------------------------------------------------------------------+
+!                             FICHA TECNICA DO PROGRAMA    	                 	!
++-------------------------------------------------------------------------------+
+!Programa          	! UGOX010													!
++-------------------+-----------------------------------------------------------+
+!Descricao			! Gatilho nos clientes, campos: A1_CGC, A1_EMAIL, A1_TEL	!
++-------------------+-----------------------------------------------------------+
+!Autor         		! GoOne Consultoria											!
++-------------------+-----------------------------------------------------------+
+!Data de Criacao  	! 30/11/2023							                	!
++-------------------+-----------------------------------------------------------+
+*/
+//DESENVOLVIDO POR INOVEN
+
+User Function UGOX010()
+
+Local cRet := &(ReadVar())
+Local cCond := '%'
+
+if ReadVar() == 'M->A1_CGC'
+	cCond += "A1_CGC = '" + cRet + "' "
+elseif ReadVar() == 'M->A1_EMAIL'
+	cCond += "A1_EMAIL = '" + cRet + "' "
+elseif ReadVar() == 'M->A1_TEL'
+	cCond += "A1_TEL = '" + cRet + "' "
+endif
+cCond += '%'
+
+If Select("QRYSA1") <> 0
+	QRYSA1->(dbCloseArea())
+EndIf
+
+BeginSQL Alias "QRYSA1"
+SELECT A1_COD, A1_LOJA, A1_NOME, A1_CGC
+FROM 
+	%Table:SA1% A1
+WHERE
+	A1.%NotDel%
+	AND %exp:cCond%
+	AND 1=1
+EndSql
+
+cMsg := 'Já existe cliente com a informação deste campo cadastrado! Código(s): ' + CHR(13) + CHR(10)
+lTem := .F.
+While QRYSA1->(!eof())
+
+	cMsg += QRYSA1->A1_COD + '/' + QRYSA1->A1_LOJA + ' - ' + alltrim(QRYSA1->A1_NOME) + ' (' + QRYSA1->A1_CGC + ')' + CHR(13) + CHR(10)
+	lTem := .T.
+	QRYSA1->(dbSkip())
+End
+if lTem
+	Aviso("AVISO CADASTRAL",cMsg,{"OK"})
+endif
+
+Return( cRet )

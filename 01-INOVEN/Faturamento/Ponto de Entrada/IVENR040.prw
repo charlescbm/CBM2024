@@ -102,7 +102,7 @@ If !Empty(SC5->C5_BLQ)
 EndIf
 
 If fValCred(SC5->C5_NUM,SC5->C5_FILIAL)  .and. !EMPTY(SC5->C5_LIBEROK)
-	ALERT("AGUARDE A LIBERAÇÃO DA ANALISE DE CRÉDITO!!!")
+	ALERT("AGUARDE A LIBERACAO DA ANALISE DE CREDITO!!!")
 	RestArea(aArea)
 	Return .T.
 EndIf
@@ -186,7 +186,7 @@ If SC5->C5_TIPO == 'N'
 	EndDo
 	
 	If !lPode
-		ALERT(OemToAnsi("AGUARDE A LIBERAÇÃO DA ANALISE DE CRÉDITO!!!"))
+		ALERT(OemToAnsi("AGUARDE A LIBERACAO DA ANALISE DE CREDITO!!!"))
 		u_DnyGrvSt(SC5->C5_NUM, "000036") //Informa que pedido está em analise de crédito.
 		IF EMPTY(SC5->C5_LIBEROK) .AND.	_TEMSC9 == .T.
 			RecLock("SC5",.F.)

@@ -25,7 +25,7 @@ Local cGrpAprv := GetMv("FS_GRPGPED",,"000000")
 Local nOpc  := PARAMIXB [1] 
 
 If nOpc == 4 .and. !Empty(SC5->C5_XPEDPGT)
-	MsgAlert(OemToAnsi('Em caso de alteração, ser?necessario reenviar o Link de Pgto!!'))
+	MsgAlert(OemToAnsi('Em caso de alteração, sera necessario reenviar o Link de Pgto!!'))
 EndIf
 
 If Type("l410Auto") <> "U" 
@@ -34,10 +34,10 @@ If Type("l410Auto") <> "U"
 			//If fValProg(SC5->C5_NUM,SC5->C5_FILIAL) .AND. !EMPTY(SC5->C5_LIBEROK)
 				//--Avalia se pedido est?na fila de transferencia de saldo
 				lRet := .F.
-			  	aDadosUsu := U_FSLogin("<b>Ser?necessário solicitar</n>aprovação do gerente para acesso a esta rotina.</b>", .F.)
+			  	aDadosUsu := U_FSLogin("<b>Sera necessário solicitar aprovação do gerente para acesso a esta rotina.</b>", .F.)
 				If(aDadosUsu != Nil)//Achou o usuário
 					If (aDadosUsu[1] == .F. .or. !(aDadosUsu[3]$ cGrpAprv))  //Se o usuário for valido ainda dever?estar dentro do grupo de aprovadores
-						Alert("O usuário ?inválido ou não pertence ao grupo de gerentes!!!")
+						Alert("O usuário inválido ou não pertence ao grupo de gerentes!!!")
 					Else
 						lRet := .T.
 					EndIf	

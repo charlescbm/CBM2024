@@ -9,13 +9,6 @@
 {Protheus.doc} SF2460I
 Ponto de entrada utilizado para tratar informaçoes apos faturamento                                            
        
-@author		P2P
-@since     	16/09/16
-@version  	P.11              
-@param 		Nenhum
-@return    	Nenhum
-@obs        Nenhum
-
 Alterações Realizadas desde a Estruturação Inicial
 ------------+-----------------+---------------------------------------------------------
 Data       	|Desenvolvedor    |Motivo                                                    
@@ -46,6 +39,7 @@ User Function SF2460I()
 	//Destinado a compensacao automatica dos titulos
 	Local aRecSE1 := {}
 	Local aRecRA  := {}
+	Local cCpPed  := ""	//pedido, quando compensacao
     
 	// Chamada Ponto de Entrada Projetos Corporativos
 	//If ExistBlock("XSF2460I")
@@ -90,6 +84,7 @@ User Function SF2460I()
 	if !(SF2->F2_TIPO$"DB")
 		cNumRA := ""
 		cPedRA := ""
+		cCpPed := ""
 		SA1->(dbSetOrder(1))
 		SA1->(msSeek(xFilial('SA1') + SF2->F2_CLIENTE + SF2->F2_LOJA))
 		SE1->(DbSetorder(01))
@@ -100,19 +95,26 @@ User Function SF2460I()
 			SE1->E1_XCGCCLI:= SA1->A1_CGC
 			SE1->(MsUnLock())
 
-			SC5->(dbSetOrder(1))
+			/*SC5->(dbSetOrder(1))
 			if SC5->(msSeek(xFilial("SC5") + SE1->E1_PEDIDO))
 				if SC5->C5_CONDPAG == "003"
 					cNumRA := SC5->C5_ZFINANT
 					cPedRA := SC5->C5_NUM
 					AAdd(aRecSE1, SE1->(RECNO()))
 				endif
-			endif				
+			endif*/				
+			SC5->(dbSetOrder(1))
+			if SC5->(msSeek(xFilial("SC5") + SE1->E1_PEDIDO))
+				if SC5->C5_CONDPAG $ GetNewPar("IN_CPADIAN", "003")
+					cCpPed := SC5->C5_NUM
+					AAdd(aRecSE1, SE1->(RECNO()))
+				endif
+			endif
 			
 			SE1->(DbSkip())
 		EndDo
 
-		if !empty(cNumRA)
+		/*if !empty(cNumRA)
 			SE1->(dbSetOrder(1))
 			SE1->(msSeek(xFilial("SE1") + cNumRA, .T.))
 			While SE1->(!Eof()) .And. SE1->E1_FILIAL == xFilial("SE1") .and. cNumRA == SE1->E1_PREFIXO + SE1->E1_NUM .And. SE1->E1_CLIENTE = SF2->F2_CLIENTE .And. SE1->E1_LOJA == SF2->F2_LOJA				
@@ -126,7 +128,28 @@ User Function SF2460I()
 			//MsAguarde({|lEnd| MaIntBxCR(3, aRecSe1,, aRecRA,, {.T.,.F.,.F.,.F.,.F.,.T.},,,,,,,,,,, MV_PAR08 == 1) },"Aguarde...","Realizando o processo de compensação...",.T.)
 			MsAguarde({|lEnd| MaIntBxCR(3, aRecSe1,, aRecRA,, {.F.,.F.,.F.,.F.,.F.,.T.},,,,,,,,,,, MV_PAR08 == 1) },"Aguarde...","Realizando o processo de compensação...",.T.)
 
-		endif
+		endif*/
+		if !empty(cCpPed)
+			IF SELECT("QRYE1") <> 0
+				QRYE1->(DBCLOSEAREA())
+			ENDIF                                                                     
+			
+			BeginSQL Alias "QRYE1"	                    
+				SELECT E1_NUM, E1_PREFIXO, E1_TIPO, E1_CLIENTE, E1_LOJA, R_E_C_N_O_ E1RECNO
+				FROM %Table:SE1% E1
+				WHERE
+					E1.%NotDel%
+					AND E1_PEDIDO = %Exp:cCpPed%
+					AND E1_CLIENTE = %Exp:SF2->F2_CLIENTE% AND E1_LOJA = %Exp:SF2->F2_LOJA%
+					AND E1_SALDO  > 0
+			EndSql
+			While QRYE1->(!eof())
+				AAdd(aRecRA, QRYE1->E1RECNO)
+				QRYE1->(dbSkip())
+			End
+			MsAguarde({|lEnd| MaIntBxCR(3, aRecSe1,, aRecRA,, {.F.,.F.,.F.,.F.,.F.,.T.},,,,,,,,,,, MV_PAR08 == 1) },"Aguarde...","Realizando o processo de compensação...",.T.)
+		endif					
+
 	Endif
 
 	//Beneficio do ICMS
