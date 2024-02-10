@@ -22,6 +22,8 @@
 User Function MT100TOK()
 
 Local nX 
+Local lRetu := .T.
+Local lValNfe := SuperGetMv("GD_HVALNFE",.F.,.F.) //Valida NF-e Documento Entrada
 
 	if substr(cTipo,1,1) == "C"	//Nota Complementar
 		//D1_FILIAL+D1_DOC+D1_SERIE+D1_FORNECE+D1_LOJA+D1_COD+D1_ITEM
@@ -41,7 +43,7 @@ Local nX
 			if msSeek(xFilial('SD1') + aCols[nX][nPosNfO] + aCols[nX][nPosSrO] + aCols[nX][nPosFor] + aCols[nX][nPosLoj] + aCols[nX][nPosPrd] + aCols[nX][nPosItO])
 				if aCols[_x][nPosLoc] <> SD1->D1_LOCAL
 					Help(,, "PROBLEMA-"+ALLTRIM(ProcName())+"-MT100TOK", , "Local diferente da nota de origem. Inclusão não será realizada. Item " + aCols[_x][nPosIte], 1, 0 )
-					Return .F.
+					Return (lRetu := .F.)
 				endif
 			endif
 		
@@ -49,4 +51,8 @@ Local nX
 
 	endif
 
-Return( .T. )
+	If (lRetu).and.(lValNfe).and.ExistBlock("G050VNfeXml") //Funcao para Validar NF-e x XML
+		MsgRun('GDVIEW XML > Validando Documento... ','',{ || lRetu := u_G050VNfeXml() })
+	Endif
+
+Return (lRetu)

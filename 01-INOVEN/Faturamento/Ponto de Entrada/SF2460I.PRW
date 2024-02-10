@@ -9,6 +9,13 @@
 {Protheus.doc} SF2460I
 Ponto de entrada utilizado para tratar informaçoes apos faturamento                                            
        
+@author		P2P
+@since     	16/09/16
+@version  	P.11              
+@param 		Nenhum
+@return    	Nenhum
+@obs        Nenhum
+
 Alterações Realizadas desde a Estruturação Inicial
 ------------+-----------------+---------------------------------------------------------
 Data       	|Desenvolvedor    |Motivo                                                    
@@ -102,7 +109,7 @@ User Function SF2460I()
 					cPedRA := SC5->C5_NUM
 					AAdd(aRecSE1, SE1->(RECNO()))
 				endif
-			endif*/				
+			endif*/	
 			SC5->(dbSetOrder(1))
 			if SC5->(msSeek(xFilial("SC5") + SE1->E1_PEDIDO))
 				if SC5->C5_CONDPAG $ GetNewPar("IN_CPADIAN", "003")
@@ -141,7 +148,7 @@ User Function SF2460I()
 					E1.%NotDel%
 					AND E1_PEDIDO = %Exp:cCpPed%
 					AND E1_CLIENTE = %Exp:SF2->F2_CLIENTE% AND E1_LOJA = %Exp:SF2->F2_LOJA%
-					AND E1_SALDO  > 0
+					AND E1_SALDO  > 0 AND E1_TIPO <> 'NF '
 			EndSql
 			While QRYE1->(!eof())
 				AAdd(aRecRA, QRYE1->E1RECNO)

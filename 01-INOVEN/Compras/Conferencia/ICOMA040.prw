@@ -82,7 +82,7 @@ EndIf
 //--------------------------------------+
 TgCom01NfNac(@lNacional)
 
-Begin Transaction
+//Begin Transaction
 
 	TAL01Tela(cAlias,nReg,nOpc)
 
@@ -93,7 +93,7 @@ Begin Transaction
 	SetKey( VK_F5, { || } )
 	SetKey( VK_F6, { || } )
 	
-End Transaction
+//End Transaction
 
 Return
 
@@ -231,6 +231,9 @@ oGrid:aColumns[8]:cTitle := "Ação"
 //oGrid:SetBlkColor( { || Iif( aItensNF[ oGrid:At() ][9] .And. aItensNF[ oGrid:At() ][10], CLR_BLACK, Nil ) } )
 //oGrid:SetBlkBackColor( { || Iif( aItensNF[ oGrid:At() ][9], CLR_HGRAY, Nil ) } )
 //oGrid:SetBlkColor( { || Iif( aItensNF[ oGrid:At() ][9], CLR_BLACK, Nil ) } )
+
+//oGrid:AddLegend( "aItensNF[oGrid:At(),8] == .T.", "GREEN",  "Registro do Tipo 1" )
+//oGrid:AddLegend( "aItensNF[oGrid:At(),8] == .F.", "RED",    "Registro do Tipo 2" )
 
 ACTIVATE FWBrowse oGrid
 
@@ -532,8 +535,8 @@ Return Iif(aItensNF[oGrid:At(),8],"BR_VERDE","BR_VERMELHO")
 Static Function BrwLegend()
 Local oLegend := FWLegend():New()
 
-oLegend:Add("","BR_VERDE" , "VERDE" ) 
-oLegend:Add("","BR_VERMELHO", "VERMELHO" ) 
+oLegend:Add("","BR_VERDE" , "Etq. Gerada" ) 
+oLegend:Add("","BR_VERMELHO", "Etq. Não Gerada" ) 
 oLegend:Activate()
 oLegend:View()
 oLegend:DeActivate()
