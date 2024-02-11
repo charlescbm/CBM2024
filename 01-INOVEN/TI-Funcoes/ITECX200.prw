@@ -54,7 +54,7 @@ else
 ENDIF
 
 //If File("\workflow\quadro_fat.htm") .and. dow(dDataBase) <> 7 .and. dow(dDataBase) <> 1
-If File("\workflow\quadro_fat_filial.htm") .and. dow(dDataBase) <> 7 .and. dow(dDataBase) <> 1 .and. lParam
+If File("\workflow\quadro_fat_filial.htm") .and. dow(dDataPro) <> 7 .and. dow(dDataPro) <> 1 .and. lParam
 
 	oProcess := TWFProcess():New("000001", OemToAnsi("Valores de Faturamento"))
 	//oProcess:NewTask("000001", "\workflow\quadro_fat.htm")
