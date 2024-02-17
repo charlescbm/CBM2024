@@ -35,7 +35,7 @@
 @type function
 /*/
 /*********************************************************************************************/
-//DESENVOLVIDO POR INOVEN
+//DESENVOLVIDO POR INOVEN - 11/02/2024
 
 User Function ICOMA040(cAlias,nReg,nOpc)
 
@@ -184,7 +184,7 @@ TAL01Filter()
 
 
 //aAdd(aButtons, {"NOTE", { || TAL01Mark( oGrid:At() ) }, "(F4) Efetuar Conferência", "(F4) Efetuar Conferência" } )
-//aAdd(aButtons, {"NOTE", { || TAL01Etq(cNFiscal,cSerie,cCodForn,cLojForn) }, "(F5) Impressão Etiquetas", "(F5) Impressão Etiquetas" } )
+aAdd(aButtons, {"NOTE", { || TAL40Etq() }, "Impressão", "Impressão" } )
 
 //SetKey( VK_F4, { || TAL01Mark( oGrid:At() ) } )
 //SetKey( VK_F5, { || TAL01Etq() } )
@@ -540,5 +540,109 @@ oLegend:Add("","BR_VERMELHO", "Etq. Não Gerada" )
 oLegend:Activate()
 oLegend:View()
 oLegend:DeActivate()
+
+Return
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} 
+
+Monta a tela de perguntas ...
+@author  Victor Andrade
+@since   09/04/2018
+@version 1
+/*/
+//-------------------------------------------------------------------
+Static Function TAL40Input( cDescr, nQuant, nPosTela )
+
+Local oDlg		:= Nil	
+Local oBtnOk	:= Nil
+Local oBtnCanc	:= Nil
+Local oGet		:= Nil
+Local oSay		:= Nil
+
+Local cGet		:= Space(45)
+
+Local nGet		:= 0
+Local nOpcA		:= 0
+
+Local lRet		:= .T.
+
+Default nQuant	:= 0
+Default nPosTela:= 0
+	
+	//-------------------------------------------------------------------
+	// Monta dialog para inserção do valor
+	//-------------------------------------------------------------------
+	DEFINE MSDIALOG oDlg TITLE "TOTVS" FROM 000, 000  TO 100, 300 PIXEL
+	nGet := nQuant
+    @ 006, 005 SAY oSay PROMPT cDescr SIZE 142, 007 OF oDlg PIXEL
+    If nPosTela == 7
+    	@ 018, 005 MSGET oGet VAR cGet SIZE 142, 010 PICTURE PesqPict( "ZZA", "ZZA_PALLET" ) OF oDlg PIXEL
+    Else
+    	@ 018, 005 MSGET oGet VAR nGet SIZE 142, 010 PICTURE PesqPict( "ZZA", "ZZA_PERDA" ) OF oDlg PIXEL
+    EndIf	
+
+	DEFINE SBUTTON oBtnOk FROM 034, 090 TYPE 01 OF oDlg ENABLE ACTION ( nOpcA := 1,oDlg:End() )
+	DEFINE SBUTTON oBtnCanc FROM 034, 120 TYPE 02 OF oDlg ENABLE ACTION ( IIF( nPosTela == 7,( lRet:= .F., oDlg:End()),oDlg:End()) )
+	//DEFINE SBUTTON oBtnCanc FROM 034, 120 TYPE 02 OF oDlg ENABLE ACTION ( ( lRet:= .F., oDlg:End()) )
+    
+  	ACTIVATE MSDIALOG oDlg CENTERED
+  	
+  	If nOpcA == 1 .And. nPosTela == 7
+  		//---------------------------+
+  		// Leitura de Etiqueta sobra | 
+  		//---------------------------+
+  		lRet := DelEtqSobra(cGet)
+  	ElseIf nOpcA == 1 .And. nPosTela == 8
+  		//----------------------------------+
+  		// Gerar etiqueta????               |
+  		//----------------------------------+
+  		//lRet := GerEtqFalt(nGet)
+  		lRet := .T.
+  	ElseIf nOpcA == 0
+  		nGet := 0
+  		lRet := .F.	
+  	EndIf
+  	
+Return( IIF( nPosTela == 7,lRet,nGet) )
+
+//-------------------------------------------------------------------
+/*/{Protheus.doc} TAL40Etq
+Efetua a chamada da rotina de impressão de etiquetas
+@author  Crele Cristina
+@since   09/02/2024
+@version 1
+/*/
+//-------------------------------------------------------------------
+Static Function TAL40Etq()
+
+Local nQtdPrint 	:= 0
+Local cImpressora	:= Space( TamSX3("CB5_CODIGO")[1] )
+Local nAt			:= oGrid:nAt
+
+Default nQtdFlt		:= 0
+
+//---------------------------------+
+// Chamar a impressão de etiquetas |
+//---------------------------------+
+If aItensNF[nAt,8]
+
+	nQtdPrint := TAL40Input( "Informe a baixo a quantidade de etiquetas que deseja Imprimir",IIF(nQtdFlt == 0,aItensNF[nAt][4],nQtdFlt), ,.T., cImpressora )
+
+	If nQtdPrint <= 0
+		MsgAlert( "Quantidade informada deve ser maior que zero.", "Atenção" ) 
+	ElseIf nQtdPrint > aItensNF[ nAt, 4 ]
+		MsgAlert( "Quantidade informada é maior que a quantidade da nota fiscal.", "Atenção" ) 
+	Else
+		//----------------------------------------+
+		// Chama rotina de impressão de etiquetas |
+		//----------------------------------------+
+		FWMsgRun(, {|| U_ICOMR010( aItensNF[nAt], SF1->F1_DOC, SF1->F1_SERIE, SF1->F1_FORNECE, SF1->F1_LOJA, nQtdPrint ) }, "Processando", "Imprimindo Etiquetas..." )
+		
+	EndIf
+
+Else
+	MsgAlert( "Etiqueta ainda não gerada!", "Atenção" )
+EndIf
 
 Return

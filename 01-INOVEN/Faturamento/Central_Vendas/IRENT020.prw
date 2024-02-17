@@ -7,7 +7,7 @@
 @version 1.0
 /*/
 //---------------------------------------------------------------------------------------------------------------------------------
-//DESENVOLVIDO POR INOVEN
+//DESENVOLVIDO POR INOVEN - 11/02/2024
 
 
 User Function IRENT020(cNumOrc,nMargema)
@@ -937,7 +937,6 @@ Static Function CalcMargens()
 	Local nDespImpPL  	:= 0
 	Local nImpPE		:= 0 
 	Local nDescp        := 0
-	//Local ny
 	Private ny
 	Private nAliqIcm  	:= 0
 	Private nAliqIcmPL	:= 0

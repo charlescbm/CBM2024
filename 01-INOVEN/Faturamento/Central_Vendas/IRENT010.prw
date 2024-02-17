@@ -7,7 +7,7 @@
 @version 1.0
 /*/
 //---------------------------------------------------------------------------------------------------------------------------------
-//DESENVOLVIDO POR INOVEN
+//DESENVOLVIDO POR INOVEN - 11/02/2024
 
 
 User Function IRENT010(cNumOrc,nMargem)

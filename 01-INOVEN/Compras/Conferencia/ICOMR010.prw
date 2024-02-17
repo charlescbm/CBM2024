@@ -49,6 +49,7 @@ If Pergunte( cPerg, .T. )
     If CB5SetImp( MV_PAR01 )
     	
     	Private nGridEtq := 0
+		Private nQtdIX   := 0
 
 		//---------------------+
     	// Posiciona Etiquetas |
@@ -92,6 +93,7 @@ If Pergunte( cPerg, .T. )
 						cEtq += '^LL224' + CRLF
 						cEtq += '^LS15' + CRLF
 					endif
+					nQtdIX++
 					nGridEtq++
 					cDsQrCode := PadL(Alltrim(cNFiscal),9,"0")	   		//Número da NF de Entrada
 					cDsQrCode += Alltrim(cItemNf)						//Item NF
@@ -145,9 +147,19 @@ If Pergunte( cPerg, .T. )
 					EndIf
 					
 					nCaixas++
-									
+
 					ZZA->( dbSkip() )
+
+					if nQtdIX == nQtdImp
+						exit
+					endif
+									
 				EndDo
+
+				if nQtdIX == nQtdImp
+					exit
+				endif
+
 				
 				//--------------------------------------+
 				// Encerra comunicação com a impressora |
