@@ -624,14 +624,11 @@ SB5->( dbSetOrder(1) )
 //------------------+
 // Calula a Cubagem | 
 //------------------+
+/*
 dbSelectArea("SD2")
 SD2->( dbSetOrder(3) )
 SD2->( dbSeek(xFilial("SD2") + cDoc + cSerie + cCodLoja + cLoja) )
 While SD2->( !Eof() .And. xFilial("SD2") + cDoc + cSerie + cCodLoja + cLoja == SD2->( D2_FILIAL + D2_DOC + D2_SERIE + D2_CLIENTE + D2_LOJA) )
-	/*
-    SB5->( dbSeek(xFilial("SB5") + SD2->D2_COD) )
-	nCalcCub:= Round(SD2->D2_QUANT * SB5->B5_ALTURA * SB5->B5_LARG * SB5->B5_COMPR,4)   	
-    */
     SB1->(dbSetOrder(1))
     SB1->(msSeek(xFilial('SB1') + SD2->D2_COD))
 	nCalcCub:= Round(SD2->D2_QUANT * SB1->B1_XALTURA * SB1->B1_XLARG * SB1->B1_XCOMPR,4)   	
@@ -640,6 +637,8 @@ While SD2->( !Eof() .And. xFilial("SD2") + cDoc + cSerie + cCodLoja + cLoja == S
 
 	SD2->( dbSkip() )
 EndDo
+*/
+nTotM3Nf := SF2->F2_ZCUBA
 
 RestArea(aArea)
 Return .T.
