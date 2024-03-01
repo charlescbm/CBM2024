@@ -328,7 +328,23 @@ Static Function FImpRel(oReport,cAlias,nTotal, nHErp)
 			While SD2->( !Eof() .And. xFilial("SD2") + SF2->F2_DOC + SF2->F2_SERIE + SF2->F2_CLIENTE + SF2->F2_LOJA == SD2->( D2_FILIAL + D2_DOC + D2_SERIE + D2_CLIENTE + D2_LOJA) )
 				SB1->(dbSetOrder(1))
 				SB1->(msSeek(xFilial('SB1') + SD2->D2_COD))
-				nCuba += Round(SD2->D2_QUANT * SB1->B1_XALTURA * SB1->B1_XLARG * SB1->B1_XCOMPR,4)   	
+				//nCuba += Round(SD2->D2_QUANT * SB1->B1_XALTURA * SB1->B1_XLARG * SB1->B1_XCOMPR,4)   	
+				nCuba += Round(SD2->D2_QUANT * SB1->B1_XVOL,4)   	
+
+				//--Grava dados do calculo da cubagem
+				cSQL := " UPDATE "+RetSqlName("SD2")+" "
+				cSql += " SET D2_XALTURA = "+alltrim(str(SB1->B1_XALTURA))
+				cSql += ", D2_XLARG = "+alltrim(str(SB1->B1_XLARG))
+				cSql += ", D2_XCOMPR = "+alltrim(str(SB1->B1_XCOMPR))
+				cSql += ", D2_XVOL = "+alltrim(str(SB1->B1_XVOL))
+				cSQL += " WHERE D2_FILIAL = '"+xFilial("SD2")+"'"
+				cSQL += " AND D2_DOC = '"+SF2->F2_DOC+"'"
+				cSQL += " AND D2_SERIE = '"+SF2->F2_SERIE+"'"
+				cSQL += " AND D2_CLIENTE = '"+SF2->F2_CLIENTE+"'"
+				cSQL += " AND D2_LOJA = '"+SF2->F2_LOJA+"'"
+				cSQL += " AND D2_ITEM = '"+SD2->D2_ITEM+"'"
+				TCSqlExec(cSql)
+
 				SD2->( dbSkip() )
 			EndDo
 			//recLock('SF2',.F.)

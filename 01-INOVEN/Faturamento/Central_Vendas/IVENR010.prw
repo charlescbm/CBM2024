@@ -9,11 +9,11 @@
 #DEFINE  _NRODAPE 2400
 
 /*ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-±±ºPrograma  ³ IVENR010 º Autor ³ 	Meliora/Gustavo	 º Data ³  04/11/2013   º±±
+±±ºPrograma  IVENR010 º Autor  	Meliora/Gustavo	 º Data   04/11/2013   º±±
 ±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºDescricao ³ Relatório Grafico - Orçamento...                             ¹±±
+±±ºDescricao  Relatório Grafico - Orçamento...                             ¹±±
 ±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
-±±ºUso       ³                                                              º±±
+±±ºUso                                                                     º±±
 ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
 //DESENVOLVIDO POR INOVEN
 
@@ -610,7 +610,8 @@ While SUB->(!EOF()) .And. SUB->UB_FILIAL==xFilial('SUB') .And. SUB->UB_NUM==SUA-
 
 	nPLiqui += ( SUB->UB_QUANT * SB1->B1_PESO )
 	nPBruto += ( SUB->UB_QUANT * SB1->B1_PESBRU )
-	nVol3   += Round(SUB->UB_QUANT * SB1->B1_XALTURA * SB1->B1_XLARG * SB1->B1_XCOMPR,4)   	
+	//nVol3   += Round(SUB->UB_QUANT * SB1->B1_XALTURA * SB1->B1_XLARG * SB1->B1_XCOMPR,4)   	
+	nVol3   += Round(SUB->UB_QUANT * SB1->B1_XVOL,4)   	
 	nVolCx  += SUB->UB_QUANT
 
 	SUB->(DbSkip())

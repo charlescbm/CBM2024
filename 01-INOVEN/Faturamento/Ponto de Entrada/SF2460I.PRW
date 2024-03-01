@@ -203,15 +203,21 @@ User Function SF2460I()
 	SD2->(msSeek(FWxFilial('SD2') + SF2->F2_DOC + SF2->F2_SERIE + SF2->F2_CLIENTE + SF2->F2_LOJA, .T. ))
 	While !SD2->(EoF()) .And. SD2->D2_FILIAL == FWxFilial('SD2') .and. SD2->D2_DOC + SD2->D2_SERIE + SD2->D2_CLIENTE + SD2->D2_LOJA == SF2->F2_DOC + SF2->F2_SERIE + SF2->F2_CLIENTE + SF2->F2_LOJA
 	
+		SB1->(dbSetOrder(1))
+		SB1->(msSeek(xFilial('SB1') + SD2->D2_COD))
+
 		SD2->(recLock('SD2', .F.))
 		SD2->D2_ZVCOMIS := SD2->D2_TOTAL * (SD2->D2_COMIS1 / 100)
 		SD2->D2_ZVCOMSS := SD2->D2_TOTAL * (SD2->D2_COMIS2 / 100)
+		SD2->D2_XALTURA	:= SB1->B1_XALTURA
+		SD2->D2_XLARG	:= SB1->B1_XLARG
+		SD2->D2_XCOMPR	:= SB1->B1_XCOMPR
+		SD2->D2_XVOL	:= SB1->B1_XVOL
 		SD2->(msUnlock())
 
 		//Calcula Cubagem
-		SB1->(dbSetOrder(1))
-		SB1->(msSeek(xFilial('SB1') + SD2->D2_COD))
-		nCuba += Round(SD2->D2_QUANT * SB1->B1_XALTURA * SB1->B1_XLARG * SB1->B1_XCOMPR,4)   	
+		//nCuba += Round(SD2->D2_QUANT * SB1->B1_XALTURA * SB1->B1_XLARG * SB1->B1_XCOMPR,4)   	
+		nCuba += Round(SD2->D2_QUANT * SB1->B1_XVOL,4)   	
 
 		SD2->(DbSkip())
 	EndDo

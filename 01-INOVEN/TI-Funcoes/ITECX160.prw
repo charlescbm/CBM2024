@@ -14,10 +14,10 @@ Ordens de Producao
 
 User Function ITECX160()
 
-If alltrim(cFilAnt) <> '0103'
+/*If alltrim(cFilAnt) <> '0103'
 	MsgAlert( "Opção não disponível para esta filial!", "Atenção" )
 	Return
-endif
+endif*/
 
 
 
@@ -54,9 +54,9 @@ Local aArea		:= GetArea()
 Local cAlias	:= GetNextAlias()
 Local cPallet	:= ""	
 Local cDescPrd	:= ""
-Local cTotEtq	:= ""	
+//Local cTotEtq	:= ""	
 Local cLoteEtq	:= ""
-//Local cCodProd	:= ""
+Local cCodProd	:= ""
 
 Local dData		:= ""
 Local dDtValid	:= ""
@@ -77,6 +77,8 @@ If !IEXPR160Qry(cAlias, cSeqIDe, cSeqIAte)
 	Return .T.
 EndIf
 
+Private nGridEtq := 0
+
 //-------------------+
 // Valida impressora |
 //-------------------+
@@ -94,73 +96,145 @@ If CB5SetImp( cImpressora )
    	nCaixas		:= 0
 	While (cAlias)->( !Eof() )
 
-		SB1->(dbSetOrder(1))
-		SB1->(msSeek(xFilial('SB1') + (cAlias)->ZZA_CODPRO))
-
-		//------------------------+
-		// Monta codigo de Barras |
-		//------------------------+
-		cCodBar 	:= Alltrim((cAlias)->ZZA_CODBAR) 				//Código de barras
-		cCodBar 	+= Alltrim((cAlias)->ZZA_CODPRO)				//Código do produto
-		cCodBar 	+= PadL(Alltrim((cAlias)->ZZA_NUMNF),9,"0")	   	//Número da NF de Entrada
-		cCodBar 	+= Alltrim((cAlias)->ZZA_ITEMNF)				//Item NF
-		cCodBar 	+= Alltrim((cAlias)->ZZA_NUMCX)					//Numero da Caixa
-		cLoteEtq 	:= Alltrim((cAlias)->ZZA_NUMLOT) 				//Lote de Compras
+		cCodProd 	:= Alltrim((cAlias)->ZZA_CODPRO)
 		cPallet		:= (cAlias)->ZZA_PALLET
-		cDescPrd	:= (cAlias)->B1_DESC
-		dData		:= SC2->C2_EMISSAO	//sTod((cAlias)->DTALT)
-		dDtValid	:= MonthSum(SC2->C2_DATPRI,SB1->B1_XDTVALI)
+		
+		While (cALias)->( !Eof() .And. cCodProd + cPallet == Alltrim((cAlias)->ZZA_CODPRO) + (cAlias)->ZZA_PALLET)
 
-		cNFiscal	:= PadL(Alltrim((cAlias)->ZZA_NUMNF),9,"0")
-		cItemNf		:= Alltrim((cAlias)->ZZA_ITEMNF)
-		cCodProd	:= Alltrim((cAlias)->ZZA_CODPRO)
+			SB1->(dbSetOrder(1))
+			SB1->(msSeek(xFilial('SB1') + (cAlias)->ZZA_CODPRO))
+
+			//------------------------+
+			// Monta codigo de Barras |
+			//------------------------+
+			cCodBar 	:= Alltrim((cAlias)->ZZA_CODBAR) 				//Código de barras
+			cCodBar 	+= Alltrim((cAlias)->ZZA_CODPRO)				//Código do produto
+			cCodBar 	+= PadL(Alltrim((cAlias)->ZZA_NUMNF),9,"0")	   	//Número da NF de Entrada
+			cCodBar 	+= Alltrim((cAlias)->ZZA_ITEMNF)				//Item NF
+			cCodBar 	+= Alltrim((cAlias)->ZZA_NUMCX)					//Numero da Caixa
+			cLoteEtq 	:= Alltrim((cAlias)->ZZA_NUMLOT) 				//Lote de Compras
+			cPallet		:= (cAlias)->ZZA_PALLET
+			cDescPrd	:= (cAlias)->B1_DESC
+			dData		:= SC2->C2_EMISSAO	//sTod((cAlias)->DTALT)
+			dDtValid	:= MonthSum(SC2->C2_DATPRI,SB1->B1_XDTVALI)
+
+			cNFiscal	:= PadL(Alltrim((cAlias)->ZZA_NUMNF),9,"0")
+			cItemNf		:= Alltrim((cAlias)->ZZA_ITEMNF)
+			cCodProd	:= Alltrim((cAlias)->ZZA_CODPRO)
+
+			if empty(nGridEtq)
+				cEtq := 'CT~~CD,~CC^~CT~' + CRLF
+				cEtq += '^XA~TA000~JSN^LT-20^MNW^MTT^PON^PMN^LH0,0^JMA^PR4,4~SD15^JUS^LRN^CI27^PA0,1,1,0^XZ' + CRLF
+				cEtq += '^XA' + CRLF
+				cEtq += '^MMT' + CRLF
+				cEtq += '^PW863' + CRLF
+				cEtq += '^LL224' + CRLF
+				cEtq += '^LS15' + CRLF
+			endif
+			nGridEtq++
+			cDsQrCode := PadL(Alltrim((cAlias)->ZZA_NUMNF),9,"0")  		//Número da NF de Entrada
+			cDsQrCode += Alltrim((cAlias)->ZZA_ITEMNF)					//Item NF
+			cDsQrCode += Alltrim((cAlias)->ZZA_NUMCX)					//Numero da Caixa
+			cEtq += U_ICOMR040(1,(cAlias)->ZZA_CODPRO,(cAlias)->B1_DESC,(cAlias)->ZZA_NUMLOT,"","",dData,dDtValid,cCodBar,cDsQrCode,nGridEtq)
+			if nGridEtq==3
+				nGridEtq := 0
+				cEtq += '^PQ1,0,1,Y' + CRLF
+				cEtq += '^XZ'
+				//faz a impressao
+
+				//salvar arquivo texto
+				//MemoWrite("\temp\etiqueta_qrcode_"+DTOS(dDataBase)+Replace(Time(),':','')+".txt",cEtq)
+
+				//-------------------------------------+
+				// Inicializa a montagem da impressora |
+				//-------------------------------------+
+				MscbBegin(1,6)
+				MSCBWrite(cEtq)
+				//---------------------------------+
+				// Finaliza a Imagem da Impressora |
+				//---------------------------------+
+				MscbEnd()
+
+				cEtq := ""
+			endif
+
+			/*
+			//-------------------------------------+
+			// Inicializa a montagem da impressora |
+			//-------------------------------------+
+			MscbBegin(1,6) 
+			
+			//cEtq := U_ICOMR040(1,(cAlias)->ZZA_CODPRO,(cAlias)->B1_DESC,(cAlias)->ZZA_NUMLOT,"","",dData,dDtValid,cCodBar)
+			cEtq := ITCXGETQ((cAlias)->ZZA_CODPRO,(cAlias)->B1_DESC,(cAlias)->ZZA_NUMLOT,dData,dDtValid,cCodBar)
+					
+			cTotEtq += cEtq + CRLF
+			
+			MSCBWrite(cEtq)
+							
+			//---------------------------------+
+			// Finaliza a Imagem da Impressora |
+			//---------------------------------+
+			MscbEnd()
+			*/
+		
+			//-------------------+
+			// Posicona registro | 
+			//-------------------+
+			ZZA->( dbGoTo((cAlias)->RECNOZZA) )
+			If ZZA->( FieldPos("ZZA_QTDIMP") ) > 0
+				RecLock("ZZA",.F.)
+					ZZA->ZZA_QTDIMP := ZZA->ZZA_QTDIMP + 1
+					ZZA->ZZA_USER	:= LogUserName()
+				ZZA->( MsUnLock() )	 
+			EndIf
+
+			nCaixas++		
+				
+			(cAlias)->( dbSkip() )
+
+		EndDo
+		
+		//--------------------------------------+
+		// Encerra comunicação com a impressora |
+		//--------------------------------------+
+		//MSCBClosePrinter()
+		
+		//-------------------------+
+		// Imprime etiqueta Pallet |
+		//-------------------------+
+		If !Empty(cPallet)
+			//ITECX160EPl(cImpressora,cPallet,cNFiscal,cItemNf,cCodProd,cDescPrd,dData,dDtValid,nCaixas)
+			ITECX160EPl(cPallet,cNFiscal,cItemNf,cCodProd,cDescPrd,dData,dDtValid,nCaixas,@nGridEtq,@cEtq)
+		EndIf
+	
+	Enddo
+
+	if nGridEtq<3
+		nGridEtq := 0
+		cEtq += '^PQ1,0,1,Y' + CRLF
+		cEtq += '^XZ'
+		//faz a impressao
+
+		//salvar arquivo texto
+		//MemoWrite("\temp\etiqueta_qrcode_"+DTOS(dDataBase)+Replace(Time(),':','')+".txt",cEtq)
 
 		//-------------------------------------+
 		// Inicializa a montagem da impressora |
 		//-------------------------------------+
-		MscbBegin(1,6) 
-		
-		//cEtq := U_ICOMR040(1,(cAlias)->ZZA_CODPRO,(cAlias)->B1_DESC,(cAlias)->ZZA_NUMLOT,"","",dData,dDtValid,cCodBar)
-		cEtq := ITCXGETQ((cAlias)->ZZA_CODPRO,(cAlias)->B1_DESC,(cAlias)->ZZA_NUMLOT,dData,dDtValid,cCodBar)
-				
-		cTotEtq += cEtq + CRLF
-		
+		MscbBegin(1,6)
 		MSCBWrite(cEtq)
-						
 		//---------------------------------+
 		// Finaliza a Imagem da Impressora |
 		//---------------------------------+
 		MscbEnd()
-		
-		//-------------------+
-		// Posicona registro | 
-		//-------------------+
-		ZZA->( dbGoTo((cAlias)->RECNOZZA) )
-		If ZZA->( FieldPos("ZZA_QTDIMP") ) > 0
-			RecLock("ZZA",.F.)
-				ZZA->ZZA_QTDIMP := ZZA->ZZA_QTDIMP + 1
-				ZZA->ZZA_USER	:= LogUserName()
-			ZZA->( MsUnLock() )	 
-		EndIf
+	
+	endif
 
-		nCaixas++		
-			
-		(cAlias)->( dbSkip() )
-
-	EndDo
-		
 	//--------------------------------------+
 	// Encerra comunicação com a impressora |
 	//--------------------------------------+
 	MSCBClosePrinter()
-	
-	//-------------------------+
-	// Imprime etiqueta Pallet |
-	//-------------------------+
-	If !Empty(cPallet)
-		ITECX160EPl(cImpressora,cPallet,cNFiscal,cItemNf,cCodProd,cDescPrd,dData,dDtValid,nCaixas)
-	EndIf
-		
+
 	//--------------------+
 	// Encerra temporario | 
 	//--------------------+
@@ -296,12 +370,13 @@ Return cEtiqueta
 
 /*/
 /************************************************************************************/
-Static Function ITECX160EPl(cImpressora,cCodPallet,cNFiscal,cItemNf,cCodProd,cDescPrd,dData,dDtValid,nCaixas)
+//Static Function ITECX160EPl(cImpressora,cCodPallet,cNFiscal,cItemNf,cCodProd,cDescPrd,dData,dDtValid,nCaixas,nGridEtq,cEtq)
+Static Function ITECX160EPl(cCodPallet,cNFiscal,cItemNf,cCodProd,cDescPrd,dData,dDtValid,nCaixas,nGridEtq,cEtq)
 
 //-------------------+
 // Valida impressora |
 //-------------------+
-If CB5SetImp( cImpressora )
+//If CB5SetImp( cImpressora )
 
 	//------------------------+
 	// Monta codigo de Barras |
@@ -314,11 +389,47 @@ If CB5SetImp( cImpressora )
 	cCodBar += PadL(Alltrim(cNFiscal),10,"0")		// Número da NF de Entrada   
 	
 	//cEtq := U_ICOMR040(2,cCodProd,cDescPrd,"",cCodPallet,StrZero(nCaixas,4),dData,dDtValid,cCodBar)
-	cEtq := ITCPGETQ(cCodProd,cDescPrd,cCodPallet,StrZero(nCaixas,4),dData,dDtValid,cCodBar)
-			
+	//cEtq := ITCPGETQ(cCodProd,cDescPrd,cCodPallet,StrZero(nCaixas,4),dData,dDtValid,cCodBar)
+	
+	if empty(nGridEtq)
+		cEtq := 'CT~~CD,~CC^~CT~' + CRLF
+		cEtq += '^XA~TA000~JSN^LT-20^MNW^MTT^PON^PMN^LH0,0^JMA^PR4,4~SD15^JUS^LRN^CI27^PA0,1,1,0^XZ' + CRLF
+		cEtq += '^XA' + CRLF
+		cEtq += '^MMT' + CRLF
+		cEtq += '^PW863' + CRLF
+		cEtq += '^LL224' + CRLF
+		cEtq += '^LS15' + CRLF
+	endif
+	nGridEtq++
+	cDsQrCode := 'PALLET: ' + cCodPallet
+	cEtq += U_ICOMR040(2,cCodProd,cDescPrd,"",cCodPallet,StrZero(nCaixas,4),dData,dDtValid,cCodBar,cDsQrCode,nGridEtq)
+	if nGridEtq==3
+		nGridEtq := 0
+		cEtq += '^PQ1,0,1,Y' + CRLF
+		cEtq += '^XZ'
+		//faz a impressao
+
+		//salvar arquivo texto
+		//MemoWrite("\temp\etiqueta_qrcode_"+DTOS(dDataBase)+Replace(Time(),':','')+".txt",cEtq)
+
+		//-------------------------------------+
+		// Inicializa a montagem da impressora |
+		//-------------------------------------+
+		MscbBegin(1,6)
+		MSCBWrite(cEtq)
+		//---------------------------------+
+		// Finaliza a Imagem da Impressora |
+		//---------------------------------+
+		MscbEnd()
+
+		cEtq := ""
+
+	endif
+
 	//cTotEtq := cEtq + CRLF
 	//cTotEtq += cEtq 
 	
+	/*
 	//-------------------------------------+
 	// Inicializa a montagem da impressora |
 	//-------------------------------------+
@@ -332,9 +443,12 @@ If CB5SetImp( cImpressora )
 	MscbEnd()
 			
 	MSCBClosePrinter()
+	*/
 
+/*
 Else
 	MsgAlert( "Erro ao comunicar-se com a impressora" )
-EndIf	
+EndIf
+*/	
 
 Return .T.

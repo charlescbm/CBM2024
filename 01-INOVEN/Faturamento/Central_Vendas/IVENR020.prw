@@ -593,7 +593,8 @@ While !EOF() .And. SC6->C6_FILIAL == xFilial('SC6') .And. SC6->C6_NUM == _cPV   
 
 	nPLiqui += ( SC6->C6_QTDVEN * SB1->B1_PESO )
 	nPBruto += ( SC6->C6_QTDVEN * SB1->B1_PESBRU )
-	nVol3   += Round(SC6->C6_QTDVEN * SB1->B1_XALTURA * SB1->B1_XLARG * SB1->B1_XCOMPR,4)   	
+	//nVol3   += Round(SC6->C6_QTDVEN * SB1->B1_XALTURA * SB1->B1_XLARG * SB1->B1_XCOMPR,4)   	
+	nVol3   += Round(SC6->C6_QTDVEN * SB1->B1_XVOL,4)   	
 	nVolCx  += SC6->C6_QTDVEN
 
 	select SC6

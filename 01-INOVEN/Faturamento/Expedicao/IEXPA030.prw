@@ -8,11 +8,6 @@
 /*/{Protheus.doc} IEXPA030
 
 @description Realiza a conferncia da nota para Expedição
-
-@author Bernard M. Margarido
-@since 20/04/2018
-@version 1.0
-
 @type function
 /*/
 /*******************************************************************************************/
@@ -234,7 +229,7 @@ Return
 Static Function IEXPA030Grv(cRomaneio,cNota,cSerie)
 Local aArea	:= GetArea()
 
-//Local nPItem		:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "ITECONF"})
+Local nPItem		:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "ITECONF"})
 Local nPProd		:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "PRDCONF"})
 //Local nPDesc		:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "DESCONF"})
 //Local nPQtd			:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "QTDCONF"})
@@ -242,7 +237,7 @@ Local nPCaixa		:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "NCXCONF"})
 Local nPPallet		:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "PALCONF"})
 Local nPLote		:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "LOTCONF"})
 Local nPStatus		:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "D2STAT"})	
-
+Local nPNFEtq		:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "NFECONF"})
 
 Local _lMotorista	:= .F.
 Local nEtq
@@ -267,7 +262,32 @@ For nEtq := 1 To Len(oGetItConf:aCols)
 	// Baixa etiqueta caixa |
 	//----------------------+	
 	Else
-		IEXPA040xCx(oGetItConf:aCols[nEtq][nPProd],oGetItConf:aCols[nEtq][nPCaixa],oGetItConf:aCols[nEtq][nPLote],oGetItConf:aCols[nEtq][nPPallet],cNota,cSerie,oGetItConf:aCols[nEtq][nPStatus])
+		if oGetItConf:aCols[nEtq][nPCaixa] == '99999' .and. oGetItConf:aCols[nEtq][nPNFEtq] == '999999999'
+			//CRIAR ZZA
+			ZZA->(RecLock( "ZZA", .T. ))
+				ZZA->ZZA_FILIAL	:= xFilial( "ZZA" )
+				ZZA->ZZA_CODPRO	:= oGetItConf:aCols[nEtq][nPProd]
+				ZZA->ZZA_CODBAR := '9999999999999'
+				ZZA->ZZA_QUANT  := 1
+				ZZA->ZZA_VLRUNI := 0
+				ZZA->ZZA_NUMNF  := '999999999'
+				ZZA->ZZA_SERIE  := '9'
+				ZZA->ZZA_FORNEC := '9'
+				ZZA->ZZA_LOJA   := '9'
+				ZZA->ZZA_NUMCX  := '99999'
+				ZZA->ZZA_NUMLOT := oGetItConf:aCols[nEtq][nPLote]
+				ZZA->ZZA_ITEMNF := '9999'
+				ZZA->ZZA_LOCENT := '9'
+				ZZA->ZZA_PALLET	:= ''
+				ZZA->ZZA_BAIXA	:= "3"	
+				ZZA->ZZA_CONFER	:= .T.
+				ZZA->ZZA_NFSAID:= cNota
+				ZZA->ZZA_SERSAI:= cSerie
+				ZZA->ZZA_DTCONF:= dDataBase
+			ZZA->( MsUnlock() )
+		else
+			IEXPA040xCx(oGetItConf:aCols[nEtq][nPProd],oGetItConf:aCols[nEtq][nPCaixa],oGetItConf:aCols[nEtq][nPLote],oGetItConf:aCols[nEtq][nPPallet],cNota,cSerie,oGetItConf:aCols[nEtq][nPStatus])
+		endif
 	EndIf
 	
 Next nEtq 
@@ -879,15 +899,6 @@ Return .T.
 Static Function TFat03ItConf(cCodPro,cDescPrd,cNumCx,cCodPallet,cNumLote,nQtdConf,cItemNF,cNFEtq)
 Local aArea		:= GetArea()
 
-Local nPItem	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "ITECONF"})
-Local nPProd	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "PRDCONF"})
-Local nPDesc	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "DESCONF"})
-Local nPQtd		:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "QTDCONF"})
-Local nPCaixa	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "NCXCONF"})
-Local nPPallet	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "PALCONF"})
-Local nPLote	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "LOTCONF"})
-Local nPItemNf	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "ITNCONF"})
-Local nPNFEtq	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "NFECONF"})
 
 //---------------+
 // Primeiro Item |
@@ -1739,6 +1750,52 @@ For nCols := 1 To Len(oGetNf:aCols)
 				endif
 				(cAlias)->(dbSkip())
 			End
+			//Complementa quando nao acha nenhuma etiqueta na ZZA para fazer amarracao - 20/02/2024
+			if nCt < nFltante
+				While nCt < nFltante
+					nTotIt	:= oGetNF:aCols[nCols][nPQtdConf] + 1
+					oGetNF:aCols[nCols][nPQtdConf]		:= nTotIt
+					oGetNF:aCols[nCols][nPStatus]		:= "2"
+					lColor								:= .T.
+
+					//Alimenta browse de itens conferidos
+					//---------------+
+					// Primeiro Item |
+					//---------------+
+					If Len(oGetItConf:aCols) <= 1 .And. Empty(oGetItConf:aCols[1][iPProd])
+
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPItem]				:= "0001"
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPProd]				:= oGetNf:aCols[nCols][nPCodPrd]
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPDesc]				:= Posicione("SB1",1,xFilial("SB1") + oGetNf:aCols[nCols][nPCodPrd],"B1_DESC")
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPQtd]				:= 1
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPCaixa]			:= '99999'
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPPallet]			:= ''	//(cAlias)->ZZA_PALLET
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPLote]				:= oGetNf:aCols[nCols][nPCodLot]
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPItemNf]			:= '9999'
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPNFEtq]			:= '999999999'
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPStatus]			:= "3"
+						
+					Else
+						aAdd(oGetItConf:aCols,Array(Len(oGetItConf:aHeader)+1)) 
+						
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPItem]				:= StrZero(Len(oGetItConf:aCols),4)
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPProd]				:= oGetNf:aCols[nCols][nPCodPrd]
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPDesc]				:= Posicione("SB1",1,xFilial("SB1") + oGetNf:aCols[nCols][nPCodPrd],"B1_DESC")
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPQtd]				:= 1
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPCaixa]			:= '99999'
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPPallet]			:= ''	//(cAlias)->ZZA_PALLET
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPLote]				:= oGetNf:aCols[nCols][nPCodLot]
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPItemNf]			:= '9999'
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPNFEtq]			:= '999999999'
+						oGetItConf:aCols[Len(oGetItConf:aCols)][iPStatus]			:= "3"
+						
+						oGetItConf:aCols[Len(oGetItConf:aCols)][Len(oGetItConf:aHeader)+1]	:= .F.
+					EndIf
+					nCt++
+					loop
+				End
+			endif
+
 			(cAlias)->(DBCLOSEAREA())
 
 		endif

@@ -612,7 +612,8 @@ dbSelectArea("SF2")
 SF2->( dbSetOrder(1) ) 
 SF2->( dbSeek(xFilial("SF2") + cDoc + cSerie + cCodLoja + cLoja) )
 nTotCxNf 	:= SF2->F2_VOLUME1
-nTotPesoNf	:= SF2->F2_PLIQUI
+//nTotPesoNf	:= SF2->F2_PLIQUI
+nTotPesoNf	:= SF2->F2_PBRUTO
 nFreteNf	:= SF2->F2_FRETE
 
 //----------------------------------+

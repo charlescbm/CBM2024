@@ -18,9 +18,9 @@ Local nQtdPallet:= 0
 Local nPallet	:= 0
 Local cNPallet	:= ""
 
-If alltrim(cFilAnt) <> '0103'
-	Return
-endif
+//If alltrim(cFilAnt) <> '0103'
+//	Return
+//endif
 
 //If MsgYesNo("Confirma a geração de etiqueta para esta OP?")
 
@@ -81,7 +81,7 @@ endif
 			ZZA->ZZA_NUMLOT := SC2->C2_XLOTE
 			ZZA->ZZA_ITEMNF := "00" + SC2->C2_ITEM
 			ZZA->ZZA_LOCENT := SC2->C2_LOCAL
-			ZZA->ZZA_PALLET	:= cNPallet	
+			ZZA->ZZA_PALLET	:= iif(nQtdPallet <> 0,cNPallet,"")		//cNPallet	
 			ZZA->ZZA_BAIXA	:= "1"
 			ZZA->ZZA_CONFER	:= .F.
 		ZZA->( MsUnlock() )
