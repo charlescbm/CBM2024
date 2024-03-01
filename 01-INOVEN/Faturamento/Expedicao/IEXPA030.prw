@@ -8,6 +8,11 @@
 /*/{Protheus.doc} IEXPA030
 
 @description Realiza a conferncia da nota para Expedição
+
+@author Bernard M. Margarido
+@since 20/04/2018
+@version 1.0
+
 @type function
 /*/
 /*******************************************************************************************/
@@ -898,7 +903,15 @@ Return .T.
 /*******************************************************************************************/
 Static Function TFat03ItConf(cCodPro,cDescPrd,cNumCx,cCodPallet,cNumLote,nQtdConf,cItemNF,cNFEtq)
 Local aArea		:= GetArea()
-
+Local nPItem	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "ITECONF"})
+Local nPProd	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "PRDCONF"})
+Local nPDesc	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "DESCONF"})
+Local nPQtd		:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "QTDCONF"})
+Local nPCaixa	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "NCXCONF"})
+Local nPPallet	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "PALCONF"})
+Local nPLote	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "LOTCONF"})
+Local nPItemNf	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "ITNCONF"})
+Local nPNFEtq	:= aScan(oGetItConf:aHeader,{|x| Alltrim(x[2]) == "NFECONF"})
 
 //---------------+
 // Primeiro Item |
