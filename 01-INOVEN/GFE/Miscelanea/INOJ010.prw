@@ -97,16 +97,20 @@ User Function IJ010Proc(xEmp,xFil)
 	RPCSetEnv(xEmp,xFil,"","","GFE","IJ010Proc",{"GXH","GW1","GW3","GWN"})
 	FWLogMsg("INFO",nil,"IJ010Proc",nil,nil,nil,"IJ010Proc - "+xEmp+xFil+" - Abrindo Arquivos - "+dtoc(MsDate())+" "+Time(),nil,nil,nil)
 	//Configuro diretorio de importacao
-	cDirImp := "\EDIGFE\CTE\" ; cDirBkp := ""
+	cDirImp := "\EDI\CTE\" ; cDirBkp := ""
+	/*
 	If !Empty(cDirImp)
 		cDirBkp := GetMV("MV_XMLDIR")
 		PutMV("MV_XMLDIR",cDirImp)
 	Endif
+	*/
 	FWLogMsg("INFO",nil,"IJ010Proc",nil,nil,nil,"IJ010Proc - "+xEmp+xFil+" - Importacao dos arquivos "+cDirImp+" - "+dtoc(MsDate())+" "+Time(),nil,nil,nil)
 	GFEA118IMP() //Chamado da rotina de importação do GFE
+	/*
 	If !Empty(cDirBkp)
 		PutMV("MV_XMLDIR",cDirBkp)
 	Endif
+	*/
 	RpcClearEnv()
 Return
 

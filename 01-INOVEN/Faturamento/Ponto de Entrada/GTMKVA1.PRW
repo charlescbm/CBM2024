@@ -40,7 +40,7 @@ If SUS->(msSeek(xFilial("SUS")+cCliTmk+cLoja))
     	IF SA1->(msSeek(XFILIAL('SA1')+SUS->US_CGC))
 
 			WHILE !SA1->(EOF()) .AND. ALLTRIM(SA1->A1_CGC)==ALLTRIM(SUS->US_CGC)
-				IF ALLTRIM(SA1->A1_INSCR)==ALLTRIM(SUS->US_INSCR)
+				//IF ALLTRIM(SA1->A1_INSCR)==ALLTRIM(SUS->US_INSCR)
 					cCGC := ""
 					IF LEN(ALLTRIM(SA1->A1_CGC))==14
 						cCGC := "CNPJ "+TRANSFORM(SA1->A1_CGC,"@R 99.999.999/9999-99")
@@ -49,7 +49,7 @@ If SUS->(msSeek(xFilial("SUS")+cCliTmk+cLoja))
 					ENDIF
 					APMSGALERT("Não é possível converter este prospect em cliente pois já existe um cliente cadastrado com o "+cCGC+" ("+SA1->A1_COD+"/"+SA1->A1_LOJA+").","CPF/CNPJ EXISTENTE-"+ALLTRIM(PROCNAME())+"-TMKVA1")
 					Return .F.
-		   		ENDIF
+		   		//ENDIF
 		   		SA1->(dbSkip())
 		   ENDDO
     	ENDIF
