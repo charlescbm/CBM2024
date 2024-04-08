@@ -1,0 +1,1559 @@
+#line 1 "N:\PROTHEUS11\INCLUDE\BATR280.CH"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		Static STR0001 := "Listagem para Inventario"
+		Static STR0002 := "Este programa emite um relatorio que facilita a digitacao"
+		Static STR0003 := "das quantidades inventariadas."
+
+		Static STR0005 := " Por Codigo       "
+		Static STR0006 := " Por Tipo         "
+		Static STR0007 := " Por Descricao    "
+		Static STR0008 := " Por Grupo        "
+		Static STR0009 := "Zebrado"
+		Static STR0010 := "Administracao"
+		Static STR0011 := "PRODUTO(S)"
+		Static STR0012 := "CODIGO          TP GRUPO DESCRICAO                      UM AMZ DESCRICAO       ENDERECO        LOTE       SUB    NUMERO           ______1a. CONTAGEM______       ______2a. CONTAGEM______       ______3a. CONTAGEM______"
+		Static STR0013 := "                                                               ARMAZEM                                    LOTE   SERIE            QUANTIDADE      ETIQUETA       QUANTIDADE      ETIQUETA       QUANTIDADE      ETIQUETA"
+		Static STR0014 := "CANCELADO PELO OPERADOR"
+		Static STR0015 := "CODIGO          TP GRUP DESCRICAO                      UM AMZ ENDERECO         __1a. CONTAGEM__  __2a. CONTAGEM__  __3a. CONTAGEM__ "
+		Static STR0016 := "                                                                               QUANTIDADE ETIQU. QUANTIDADE ETIQU. QUANTIDADE ETIQU."
+		Static STR0017 := " Por Endereco     "
+
+
+
+
+
+
+		Static STR0024 := "Produtos"
+		Static STR0025 := "Saldos por Endereço"
+		Static STR0026 := "CODIGO          TP GRUP DESCRICAO                      UM AMZ                  __1a. CONTAGEM__  __2a. CONTAGEM__  __3a. CONTAGEM__ "
+
+
+
+
+
+	STATIC uInit := __InitFun()
+
+	Static Function __InitFun()
+	uInit := Nil
+	If Type("cPaisLoc") == "C"
+
+		If cPaisLoc == "PTG"
+			STR0001 := "Listagem Para Inventário"
+			STR0002 := "Este programa emite um relatório que facilita a digitação"
+			STR0003 := "Das quantidades inventariadas."
+			STR0005 := " por código       "
+			STR0006 := " por tipo         "
+			STR0007 := " por descrição    "
+			STR0008 := " por grupo        "
+			STR0009 := "Código de barras"
+			STR0010 := "Administração"
+			STR0011 := "Artigo(s)"
+			STR0012 := "Código          Tp Grupo Descrição                      Um Amz Descrição       Endereço        Lote       Sub    Número           ______1a. Contagem______       ______2a. Contagem______       ______3a. Contagem______"
+			STR0013 := "                                                               Armazém                                    Lote   Série            Quantidade      Etiqueta       Quantidade      Etiqueta       Quantidade      Etiqueta"
+			STR0014 := "Cancelado Pelo Operador"
+			STR0015 := "Código          tp grup descrição                      um amz endereço         __1a. contagem__  __2a. contagem__  __3a. contagem__ "
+			STR0016 := "                                                                               Quantidade Etiqu. Quantidade Etiqu. Quantidade Etiqu."
+			STR0017 := " por endereço     "
+			STR0024 := "Artigos"
+			STR0025 := "Saldos Por Morada"
+			STR0026 := "Código          tp grup descrição                      um amz                  __1a. Contagem__  __2a. Contagem__  __3a. Contagem__ "
+		EndIf
+		EndIf
+	Return Nil
+#line 2 "n:\protheus11\my projects\estoque\relatorios\batr280.prw"
+#line 1 "N:\PROTHEUS11\INCLUDE\PROTHEUS.CH"
+#line 1 "N:\PROTHEUS11\INCLUDE\Dialog.ch"
+#line 28 "PROTHEUS.CH"
+#line 1 "N:\PROTHEUS11\INCLUDE\Font.ch"
+#line 29 "PROTHEUS.CH"
+#line 1 "N:\PROTHEUS11\INCLUDE\PTMenu.ch"
+#line 31 "PROTHEUS.CH"
+#line 1 "N:\PROTHEUS11\INCLUDE\Print.ch"
+#line 33 "PROTHEUS.CH"
+#line 1 "N:\PROTHEUS11\INCLUDE\Colors.ch"
+#line 35 "PROTHEUS.CH"
+#line 1 "N:\PROTHEUS11\INCLUDE\Folder.ch"
+#line 37 "PROTHEUS.CH"
+#line 1 "N:\PROTHEUS11\INCLUDE\msobject.ch"
+#line 38 "PROTHEUS.CH"
+#line 1 "N:\PROTHEUS11\INCLUDE\VKey.ch"
+#line 42 "PROTHEUS.CH"
+#line 1 "N:\PROTHEUS11\INCLUDE\WinApi.ch"
+#line 44 "PROTHEUS.CH"
+#line 1 "N:\PROTHEUS11\INCLUDE\FWCommand.ch"
+#line 47 "PROTHEUS.CH"
+#line 1 "N:\PROTHEUS11\INCLUDE\FWCSS.CH"
+#line 50 "PROTHEUS.CH"
+#line 16 "n:\protheus11\my projects\estoque\relatorios\batr280.prw"
+Function U_BATR280()
+
+Local oReport
+Private cAliasSB1 := "SB1"
+Private cAliasSB2 := "SB2"
+Private lVersao   := (VAL(GetVersao( .F. )) == 11 .And.  GetRpoRelease() >= "R6" .Or.   VAL(GetVersao( .F. ))  > 11)
+
+If FindFunction("TRepInUse") .And.  TRepInUse()
+
+
+
+	oReport := ReportDef()
+	oReport:PrintDialog()
+Else
+	U_BATR280R3()
+EndIf
+
+Return
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function ReportDef()
+
+Local aOrdem	:= {}
+Local cPerg		:= "MTR280"
+Local oReport
+Local oCell
+Local oSection1
+Local oSection2
+
+If !__lPyme
+	aOrdem := {STR0005,STR0006,STR0007,STR0008,STR0017}
+Else
+	aOrdem := {STR0005,STR0006,STR0007,STR0008}
+EndIf
+
+
+
+
+
+
+
+
+
+
+
+
+oReport := TReport():New("MATR280",STR0001,cPerg, {|oReport| ReportPrint(oReport)},STR0002+" "+STR0003+" "+"Ele e' emitido de acordo com os parametros informados.")
+oReport:SetLandScape()
+
+
+
+
+AjustaSX1(cPerg)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pergunte(cPerg, .F. )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+oSection1 := TRSection():New(oReport,STR0024,{"SB1","SB2"},aOrdem,,)
+
+TRCell():New(oSection1,"B1_COD","SB1",,,,,)
+TRCell():New(oSection1,"B1_TIPO","SB1")
+TRCell():New(oSection1,"B1_GRUPO","SB1")
+TRCell():New(oSection1,"B1_DESC","SB1")
+TRCell():New(oSection1,"B1_UM","SB1")
+TRCell():New(oSection1,"B2_LOCAL","SB2")
+TRCell():New(oSection1,"B2_LOCALIZ","SB2")
+
+If !__lPyme
+	oCell := TRCell():New(oSection1,"LOCALIZ","")
+	oCell:GetFieldInfo("BF_LOCALIZ")
+EndIf
+
+	oCell := TRCell():New(oSection1,"LOTECTL","")
+	oCell:GetFieldInfo("BF_LOTECTL")
+	oCell := TRCell():New(oSection1,"NUMLOTE","")
+	oCell:GetFieldInfo("BF_NUMLOTE")
+
+If !__lPyme
+	oCell := TRCell():New(oSection1,"NUMSERI","")
+	oCell:GetFieldInfo("BF_NUMSERI")
+	oCell:SetSize(14)
+EndIf
+
+TRCell():New(oSection1,"QTD1",""," _______1a."+Chr(13)+Chr(10)+"Quantidade",,11,,{|| "[         ]" })
+TRCell():New(oSection1,"ETQ1","","Contagem"+Chr(13)+Chr(10)+"Etiqueta",, 8,,{|| "[      ]" })
+TRCell():New(oSection1,"QTD2",""," _______2a."+Chr(13)+Chr(10)+"Quantidade",,11,,{|| "[         ]" })
+TRCell():New(oSection1,"ETQ2","","Contagem"+Chr(13)+Chr(10)+"Etiqueta",, 8,,{|| "[      ]" })
+TRCell():New(oSection1,"QTD3",""," _______3a."+Chr(13)+Chr(10)+"Quantidade",,11,,{|| "[         ]" })
+TRCell():New(oSection1,"ETQ3","","Contagem"+Chr(13)+Chr(10)+"Etiqueta",, 8,,{|| "[      ]" })
+
+
+If !__lPyme
+
+	oSection2 := TRSection():New(oReport,STR0025,{"SBE","SB1","SB2"})
+
+	oCell:=TRCell():New(oSection2,"B1COD","SB1",,,,,{|| (cAliasSB1)->B1_COD})
+	oCell:GetFieldInfo("B1_COD")
+	oCell:=TRCell():New(oSection2,"B1TIPO","SB1",,,,,{|| (cAliasSB1)->B1_TIPO})
+	oCell:GetFieldInfo("B1_TIPO")
+	oCell:=TRCell():New(oSection2,"B1GRUPO","SB1",,,,,{|| (cAliasSB1)->B1_GRUPO})
+	oCell:GetFieldInfo("B1_GRUPO")
+	oCell:=TRCell():New(oSection2,"B1DESC","SB1",,,,,{|| (cAliasSB1)->B1_DESC})
+	oCell:GetFieldInfo("B1_DESC")
+	oCell:=TRCell():New(oSection2,"B1UM","SB1",,,,,{|| (cAliasSB1)->B1_UM})
+	oCell:GetFieldInfo("B1_UM")
+	oCell:=TRCell():New(oSection2,"B2LOCAL","SB2",,,,,{|| (cAliasSB2)->B2_LOCAL})
+	oCell:GetFieldInfo("B2_LOCAL")
+	oCell:=TRCell():New(oSection2,"B2LOCALIZ","SB2",,,,,{|| (cAliasSB2)->B2_LOCALIZ})
+	oCell:GetFieldInfo("B2_LOCALIZ")
+
+	oCell := TRCell():New(oSection2,"LOCALIZ2","")
+	oCell:GetFieldInfo("BF_LOCALIZ")
+	oCell := TRCell():New(oSection2,"LOTECTL2","")
+	oCell:GetFieldInfo("BF_LOTECTL")
+	oCell := TRCell():New(oSection2,"NUMLOTE2","")
+	oCell:GetFieldInfo("BF_NUMLOTE")
+	oCell := TRCell():New(oSection2,"NUMSERI2","")
+	oCell:GetFieldInfo("BF_NUMSERI")
+	oCell:SetSize(14)
+	TRCell():New(oSection2,"QTD1_2",""," _______1a."+Chr(13)+Chr(10)+"Quantidade",,11,,{|| "[         ]" })
+	TRCell():New(oSection2,"ETQ1_2","","Contagem"+Chr(13)+Chr(10)+"Etiqueta",, 8,,{|| "[      ]" })
+	TRCell():New(oSection2,"QTD2_2",""," _______2a."+Chr(13)+Chr(10)+"Quantidade",,11,,{|| "[         ]" })
+	TRCell():New(oSection2,"ETQ2_2","","Contagem"+Chr(13)+Chr(10)+"Etiqueta",, 8,,{|| "[      ]" })
+	TRCell():New(oSection2,"QTD3_2",""," _______3a."+Chr(13)+Chr(10)+"Quantidade",,11,,{|| "[         ]" })
+	TRCell():New(oSection2,"ETQ3_2","","Contagem"+Chr(13)+Chr(10)+"Etiqueta",, 8,,{|| "[      ]" })
+
+EndIf
+
+Return(oReport)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function ReportPrint(oReport)
+
+Local cAliasQRY := ""
+Local cAliasSBF := "SBF"
+Local cCondicao1:= ""
+Local cLoteAnt	:= ""
+Local cOrdem    := ""
+Local cProduto  := ""
+Local cWhile	:= ""
+Local lQuery	:= .F. 
+Local lImpLote	:= If(mv_par13==1, .T. , .F. )
+Local nOrdem    := oReport:Section(1):GetOrder()
+Local lFirst	:= .T. 
+Local lRastro	:= .F. 
+Local lRastroS	:= .F. 
+Local lCLocal	:= .F. 
+Local oSection1	:= oReport:Section(1)
+Local oSection2	:= oReport:Section(2)
+
+
+
+  	Local cOrderBy  := ""
+	Local cWhere    :=  ""
+
+
+If nOrdem == 1
+	cOrdem := STR0005
+ElseIf nOrdem == 2
+	cOrdem := STR0006
+ElseIf nOrdem == 3
+	cOrdem := STR0007
+ElseIf nOrdem == 4
+	cOrdem := STR0008
+ElseIf nOrdem == 5
+	cOrdem := STR0017
+EndIf
+
+
+
+
+If nOrdem == 5
+	oSection2:SetHeaderPage()
+	dbSelectArea("SBE")
+	dbSetOrder(1)
+Else
+	oSection1:SetHeaderPage()
+EndIf
+oReport:SetTitle(oReport:Title()+" ("+AllTrim(cOrdem)+")" )
+
+dbSelectArea("SB2")
+dbSetOrder(1)
+
+dbSelectArea("SB8")
+dbSetOrder(3)
+
+dbSelectArea("SBF")
+dbSetOrder(2)
+
+dbSelectArea("SB1")
+dbSetOrder(nOrdem)
+
+
+
+
+
+
+
+
+	MakeSqlExpr(oReport:uParam)
+
+
+
+	lQuery := .T. 
+	cAliasQRY := GetNextAlias()
+	cAliasSB1 := cAliasQRY
+	cAliasSB2 := cAliasQRY
+
+	cWhere := "%"
+	If mv_par14 == 2
+		cWhere += " AND B2_QATU <> 0 "
+	EndIf
+	cWhere += "%"
+
+	If !__lPyme .And.  nOrdem == 5
+
+		cAliasSBF := cAliasQRY
+
+		oSection2:BeginQuery()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+__execSql(cAliasQRY," SELECT BE_FILIAL,BE_LOCAL,BE_LOCALIZ,BF_FILIAL, BF_PRODUTO,BF_LOCAL,BF_LOCALIZ,BF_LOTECTL,BF_NUMLOTE,BF_NUMSERI, B1_FILIAL,B1_COD,B1_TIPO,B1_GRUPO,B1_DESC,B1_UM,B1_PERINV, B2_FILIAL,B2_COD,B2_LOCAL,B2_LOCALIZ,B2_DINVENT,B2_DINVFIM,B2_DTINV FROM  "+RetSqlName('SB1')+" SB1,  "+RetSqlName('SB2')+" SB2,  "+RetSqlName('SBE')+" SBE JOIN  "+RetSqlName('SBF')+" SBF ON SBF.BF_FILIAL =  '" +xFilial('SBF')+"'  AND SBF.BF_LOCAL = SBE.BE_LOCAL AND SBF.BF_LOCALIZ = SBE.BE_LOCALIZ AND SBF.BF_PRODUTO >=  "+___SQLGetValue(MV_PAR03)+" AND SBF.BF_PRODUTO <=  "+___SQLGetValue(MV_PAR04)+" AND SBF.D_E_L_E_T_= ' ' WHERE SBE.BE_FILIAL =  '" +xFilial('SBE')+"'  AND SBE.BE_LOCAL >=  "+___SQLGetValue(MV_PAR01)+" AND SBE.BE_LOCAL <=  "+___SQLGetValue(MV_PAR02)+" AND SB1.B1_FILIAL =  '" +xFilial('SB1')+"'  AND SB1.B1_COD = SBF.BF_PRODUTO AND SB1.B1_TIPO >=  "+___SQLGetValue(MV_PAR05)+" AND SB1.B1_TIPO <=  "+___SQLGetValue(MV_PAR06)+" AND SB1.B1_GRUPO >=  "+___SQLGetValue(MV_PAR07)+" AND SB1.B1_GRUPO <=  "+___SQLGetValue(MV_PAR08)+" AND SB1.B1_DESC >=  "+___SQLGetValue(MV_PAR09)+" AND SB1.B1_DESC <=  "+___SQLGetValue(MV_PAR10)+" AND SB2.B2_FILIAL =  '" +xFilial('SB2')+"'  AND SB2.B2_COD = SBF.BF_PRODUTO AND SB2.B2_LOCAL = SBF.BF_LOCAL AND SB1.D_E_L_E_T_= ' ' AND SB2.D_E_L_E_T_= ' ' AND SBE.D_E_L_E_T_= ' '  "+___SQLGetValue(CWHERE)+" ORDER BY  "+ SqlOrder(SBE->(IndexKey())),{},.F.)
+		oSection2:EndQuery()
+
+	Else
+		oSection1:BeginQuery()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+__execSql(cAliasQRY," SELECT B1_FILIAL,B1_COD,B1_TIPO,B1_GRUPO,B1_DESC,B1_UM,B1_PERINV,B2_FILIAL,B2_COD,B2_LOCAL,B2_LOCALIZ,B2_DINVENT,B2_DINVFIM,B2_DTINV FROM  "+RetSqlName('SB1')+" SB1 JOIN  "+RetSqlName('SB2')+" SB2 ON B2_FILIAL =  '" +xFilial('SB2')+"'  AND B2_COD = B1_COD AND B2_LOCAL >=  "+___SQLGetValue(MV_PAR01)+" AND B2_LOCAL <=  "+___SQLGetValue(MV_PAR02)+" AND SB2.D_E_L_E_T_= ' ' WHERE B1_FILIAL =  '" +xFilial('SB1')+"'  AND B1_COD >=  "+___SQLGetValue(MV_PAR03)+" AND B1_COD <=  "+___SQLGetValue(MV_PAR04)+" AND B1_TIPO >=  "+___SQLGetValue(MV_PAR05)+" AND B1_TIPO <=  "+___SQLGetValue(MV_PAR06)+" AND B1_GRUPO >=  "+___SQLGetValue(MV_PAR07)+" AND B1_GRUPO <=  "+___SQLGetValue(MV_PAR08)+" AND B1_DESC >=  "+___SQLGetValue(MV_PAR09)+" AND B1_DESC <=  "+___SQLGetValue(MV_PAR10)+" AND SB1.D_E_L_E_T_= ' '  "+___SQLGetValue(CWHERE)+" ORDER BY  "+ SqlOrder(SB1->(IndexKey())),{},.F.)
+		oSection1:EndQuery()
+	EndIf
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+dbSelectArea(cAliasQRY)
+
+	If ! lImpLote
+		If nOrdem == 5
+		If !__lPyme
+			oSection2:Cell("LOCALIZ2"):Disable()
+		EndIf
+		oSection2:Cell("LOTECTL2"):Disable()
+		oSection2:Cell("NUMLOTE2"):Disable()
+		If !__lPyme
+			oSection2:Cell("NUMSERI2"):Disable()
+		EndIf
+	Else
+		If !__lPyme
+			oSection1:Cell("LOCALIZ"):Disable()
+    	EndIf
+		oSection1:Cell("LOTECTL"):Disable()
+		oSection1:Cell("NUMLOTE"):Disable()
+		If !__lPyme
+			oSection1:Cell("NUMSERI"):Disable()
+		EndIf
+	EndIf
+Else
+	If nOrdem == 5
+		If !__lPyme
+			oSection2:Cell("LOCALIZ2"):Enable()
+		EndIf
+		oSection2:Cell("LOTECTL2"):Enable()
+		oSection2:Cell("NUMLOTE2"):Enable()
+		If !__lPyme
+			oSection2:Cell("NUMSERI2"):Enable()
+		EndIf
+	Else
+		If !__lPyme
+			oSection1:Cell("LOCALIZ"):Enable()
+		EndIf
+		oSection1:Cell("LOTECTL"):Enable()
+		oSection1:Cell("NUMLOTE"):Enable()
+		If !__lPyme
+			oSection1:Cell("NUMSERI"):Enable()
+		EndIf
+	EndIf
+EndIf
+
+If !__lPyme .And.  nOrdem == 5
+
+
+
+	oReport:SetMeter(SBE->(LastRec()))
+	oSection2:Init()
+
+	If lQuery
+		cWhile := "!Eof()"
+	Else
+		dbSeek(xFilial("SBE") + AllTrim(mv_par01), .T. )
+		cWhile := cCondicao
+	EndIf
+	while !oReport:Cancel() .And. &(cWhile)
+		If oReport:Cancel()
+			Exit
+		EndIf
+		oReport:IncMeter()
+
+		If !lQuery
+			(cAliasSBF)->(dbSeek(xFilial("SBF")+(cAliasQRY)->BE_LOCAL+(cAliasQRY)->BE_LOCALIZ, .F. ))
+		EndIf
+
+
+		while !oReport:Cancel() .And. !(cAliasSBF)->(Eof()) .And. xFilial("SBF")+(cAliasQRY)->BE_LOCAL+(cAliasQRY)->BE_LOCALIZ==(cAliasSBF)->BF_FILIAL+(cAliasSBF)->BF_LOCAL+(cAliasSBF)->BF_LOCALIZ
+
+			If !lQuery
+				If (cAliasSBF)->BF_PRODUTO < mv_par03 .Or.  (cAliasSBF)->BF_PRODUTO > mv_par04
+					(cAliasSBF)->(dbSkip())
+					Loop
+				EndIf
+
+
+
+				If mv_par14 == 2 .And.  (cAliasSBF)->BF_QUANT == 0
+					(cAliasSBF)->(dbSkip())
+					Loop
+				EndIf
+				SB1->(dbSeek(xFilial("SB1")+(cAliasSBF)->BF_PRODUTO, .F. ))
+
+
+				If 	(SB1->B1_TIPO  < mv_par05) .Or.  (SB1->B1_TIPO  > mv_par06) .Or.  (SB1->B1_DESC  < mv_par09) .Or.  (SB1->B1_DESC  > mv_par10) .Or.  (SB1->B1_GRUPO < mv_par07) .Or.  (SB1->B1_GRUPO > mv_par08)
+					(cAliasSBF)->(dbSkip())
+					Loop
+				EndIf
+				SB2->(dbSeek(xFilial("SB2")+(cAliasSBF)->BF_PRODUTO+(cAliasSBF)->BF_LOCAL, .F. ))
+			EndIf
+
+			If lVersao .And.  mv_par15 == 2
+				If Empty((cAliasSB2)->B2_DINVFIM) .Or.  (cAliasSB2)->B2_DINVFIM < mv_par11 .Or.  (cAliasSB2)->B2_DTINV > mv_par12
+					(cAliasSBF)->(dbSkip())
+					Loop
+				EndIf
+			Else
+
+
+				If (!Empty((cAliasSB2)->B2_DINVENT) .And.  ((((cAliasSB2)->B2_DINVENT + (cAliasSB1)->B1_PERINV) < mv_par11) .Or.  (((cAliasSB2)->B2_DINVENT + (cAliasSB1)->B1_PERINV) > mv_par12)))
+					(cAliasSBF)->(dbSkip())
+					Loop
+				EndIf
+			EndIf
+
+			lRastro	  := Rastro((cAliasSB1)->B1_COD)
+			lRastroS  := Rastro((cAliasSB1)->B1_COD, "S")
+			lCLocal	  := Localiza((cAliasSB1)->B1_COD)
+			lFirst := .T. 
+
+			If lCLocal .And.  lImpLote
+			    If lFirst
+					oSection2:Cell("B1COD"):Show()
+					oSection2:Cell("B1TIPO"):Show()
+					oSection2:Cell("B1GRUPO"):Show()
+					oSection2:Cell("B1DESC"):Show()
+					oSection2:Cell("B1UM"):Show()
+					oSection2:Cell("B2LOCAL"):Show()
+					oSection2:Cell("B2LOCALIZ"):Show()
+					lFirst := .F. 
+			    Else
+					oSection2:Cell("B1COD"):Hide()
+					oSection2:Cell("B1TIPO"):Hide()
+					oSection2:Cell("B1GRUPO"):Hide()
+					oSection2:Cell("B1DESC"):Hide()
+					oSection2:Cell("B1UM"):Hide()
+					oSection2:Cell("B2LOCAL"):Hide()
+					oSection2:Cell("B2LOCALIZ"):Hide()
+			    EndIf
+				oSection2:Cell("LOCALIZ2"):SetValue((cAliasSBF)->BF_LOCALIZ)
+				oSection2:Cell("LOTECTL2"):SetValue((cAliasSBF)->BF_LOTECTL)
+				oSection2:Cell("NUMLOTE2"):SetValue((cAliasSBF)->BF_NUMLOTE)
+				oSection2:Cell("NUMSERI2"):SetValue((cAliasSBF)->BF_NUMSERI)
+			   	oSection2:PrintLine()
+
+			ElseIf lRastro .And.  lImpLote .And.  SB8->(dbSeek(xFilial("SB8") + (cAliasSB1)->B1_COD + (cAliasSBF)->BF_LOCAL, .F. ))
+				cCondicao1 := "SB8->B8_FILIAL + SB8->B8_PRODUTO + SB8->B8_LOCAL + SB8->B8_LOTECTL " + If(lRastroS,"+ SB8->B8_NUMLOTE","")
+
+				while !oReport:Cancel() .And. !SB8->(Eof()) .And. xFilial("SB8")+(cAliasSB1)->B1_COD+(cAliasSBF)->BF_LOCAL+SB8->B8_LOTECTL+If(lRastroS,SB8->B8_NUMLOTE,"")==&(cCondicao1)
+
+
+
+					If mv_par14 == 2 .And.  SB8->B8_SALDO == 0
+						SB8->(dbSkip())
+						Loop
+					EndIf
+				    If lFirst
+						oSection2:Cell("B1COD"):Show()
+						oSection2:Cell("B1TIPO"):Show()
+						oSection2:Cell("B1GRUPO"):Show()
+						oSection2:Cell("B1DESC"):Show()
+						oSection2:Cell("B1UM"):Show()
+						oSection2:Cell("B2LOCAL"):Show()
+						oSection2:Cell("B2LOCALIZ"):Show()
+						lFirst := .F. 
+				    Else
+						oSection2:Cell("B1COD"):Hide()
+						oSection2:Cell("B1TIPO"):Hide()
+						oSection2:Cell("B1GRUPO"):Hide()
+						oSection2:Cell("B1DESC"):Hide()
+						oSection2:Cell("B1UM"):Hide()
+						oSection2:Cell("B2LOCAL"):Hide()
+						oSection2:Cell("B2LOCALIZ"):Hide()
+				    EndIf
+					oSection2:Cell("LOCALIZ2"):SetValue("")
+					oSection2:Cell("LOTECTL2"):SetValue(SB8->B8_LOTECTL)
+					oSection2:Cell("NUMLOTE2"):SetValue(If(lRastroS,SB8->B8_NUMLOTE,""))
+					oSection2:Cell("NUMSERI2"):SetValue("")
+				   	oSection2:PrintLine()
+					SB8->(dbSkip())
+				EndDo
+			Else
+				oSection2:Cell("B1COD"):Show()
+				oSection2:Cell("B1TIPO"):Show()
+				oSection2:Cell("B1GRUPO"):Show()
+				oSection2:Cell("B1DESC"):Show()
+				oSection2:Cell("B1UM"):Show()
+				oSection2:Cell("B2LOCAL"):Show()
+				oSection2:Cell("B2LOCALIZ"):Show()
+				oSection2:Cell("LOCALIZ2"):SetValue("")
+				oSection2:Cell("LOTECTL2"):SetValue("")
+				oSection2:Cell("NUMLOTE2"):SetValue("")
+				oSection2:Cell("NUMSERI2"):SetValue("")
+			   	oSection2:PrintLine()
+			EndIf
+			(cAliasSBF)->(dbSkip())
+		EndDo
+
+		If !lQuery
+			(cAliasQRY)->(dbSkip())
+		EndIf
+
+	EndDo
+	oSection2:Finish()
+
+Else
+
+	oReport:SetMeter(SB1->(LastRec()))
+	If lQuery
+		cWhile := "!Eof()"
+	Else
+		If nOrdem == 4
+			dbSeek(xFilial("SB1") + mv_par07, .T. )
+			cWhile := "!Eof() .And. "+cAliasQRY+"->B1_GRUPO <= mv_par08 .And. "+cAliasQRY+'->B1_FILIAL == "'+xFilial("SB1")+'"'
+		ElseIf nOrdem == 3
+			dbSeek(xFilial("SB1") + mv_par09, .T. )
+			cWhile := "!Eof() .And. "+cAliasQRY+"->B1_DESC <= mv_par10 .And. "+cAliasQRY+'->B1_FILIAL == "'+xFilial("SB1")+'"'
+		ElseIf nOrdem == 2
+			dbSeek(xFilial("SB1") + mv_par05, .T. )
+			cWhile := "!Eof() .And. "+cAliasQRY+"->B1_TIPO <= mv_par06 .And. "+cAliasQRY+'->B1_FILIAL == "'+xFilial("SB1")+'"'
+		Else
+			dbSeek(xFilial("SB1") + mv_par03, .T. )
+			cWhile := "!Eof() .And. "+cAliasQRY+"->B1_COD <= mv_par04 .And. "+cAliasQRY+'->B1_FILIAL == "'+xFilial("SB1")+'"'
+		Endif
+	Endif
+	oSection1:Init()
+
+	while !oReport:Cancel() .And. &(cWhile)
+		If oReport:Cancel()
+			Exit
+		EndIf
+		oReport:IncMeter()
+
+		If !lQuery .And.  !(cAliasSB2)->(dbSeek(xFilial("SB2") + (cAliasQRY)->B1_COD, .F. ))
+			(cAliasQRY)->(dbSkip())
+			Loop
+		EndIf
+
+
+		while !oReport:Cancel() .And. !(cAliasSB2)->(Eof()) .And. (cAliasSB2)->B2_FILIAL+(cAliasSB2)->B2_COD==xFilial("SB2")+(cAliasQRY)->B1_COD
+
+			If lVersao .And.  mv_par15 == 2
+				If Empty((cAliasSB2)->B2_DINVFIM) .Or.  (cAliasSB2)->B2_DINVFIM < mv_par11 .Or.  (cAliasSB2)->B2_DTINV > mv_par12
+					(cAliasSB2)->(dbSkip())
+					Loop
+				EndIf
+			Else
+
+
+				If (!Empty((cAliasSB2)->B2_DINVENT) .And.  ((((cAliasSB2)->B2_DINVENT + (cAliasQRY)->B1_PERINV) < mv_par11) .Or.  (((cAliasSB2)->B2_DINVENT + (cAliasQRY)->B1_PERINV) > mv_par12)))
+					(cAliasSB2)->(dbSkip())
+					Loop
+				EndIf
+			EndIf
+
+			If !lQuery
+				If ((cAliasSB2)->B2_LOCAL < mv_par01) .Or.  ((cAliasSB2)->B2_LOCAL > mv_par02)
+					(cAliasSB2)->(dbSkip())
+					Loop
+				EndIf
+
+
+
+				If mv_par14 == 2 .And.  (cAliasSB2)->B2_QATU == 0
+					(cAliasSB2)->(dbSkip())
+					Loop
+				EndIf
+			EndIf
+
+			lRastro	  := Rastro((cAliasQRY)->B1_COD)
+			lRastroS  := Rastro((cAliasQRY)->B1_COD, "S")
+			lCLocal	  := Localiza((cAliasQRY)->B1_COD)
+			lFirst := .T. 
+
+
+			If lCLocal .And.  lImpLote .And.  SBF->(dbSeek(xFilial("SBF") + (cAliasQRY)->B1_COD + (cAliasSB2)->B2_LOCAL, .F. ))
+
+				while !oReport:Cancel() .And. !SBF->(Eof()) .And. xFilial("SBF")+(cAliasQRY)->B1_COD+(cAliasSB2)->B2_LOCAL==SBF->BF_FILIAL+SBF->BF_PRODUTO+SBF->BF_LOCAL
+
+				    If lFirst
+						oSection1:Cell("B1_COD"):Show()
+						oSection1:Cell("B1_TIPO"):Show()
+						oSection1:Cell("B1_GRUPO"):Show()
+						oSection1:Cell("B1_DESC"):Show()
+						oSection1:Cell("B1_UM"):Show()
+						oSection1:Cell("B2_LOCAL"):Show()
+					    If !__lPyme
+							oSection1:Cell("B2_LOCALIZ"):Show()
+						EndIf
+						lFirst := .F. 
+				    Else
+						oSection1:Cell("B1_COD"):Hide()
+						oSection1:Cell("B1_TIPO"):Hide()
+						oSection1:Cell("B1_GRUPO"):Hide()
+						oSection1:Cell("B1_DESC"):Hide()
+						oSection1:Cell("B1_UM"):Hide()
+						oSection1:Cell("B2_LOCAL"):Hide()
+					    If !__lPyme
+							oSection1:Cell("B2_LOCALIZ"):Hide()
+						EndIf
+				    EndIf
+				   	If !__lPyme
+					   	oSection1:Cell("LOCALIZ"):SetValue(SBF->BF_LOCALIZ)
+					EndIf
+					oSection1:Cell("LOTECTL"):SetValue(SBF->BF_LOTECTL)
+					oSection1:Cell("NUMLOTE"):SetValue(SBF->BF_NUMLOTE)
+					If !__lPyme
+						oSection1:Cell("NUMSERI"):SetValue(SBF->BF_NUMSERI)
+					EndIf
+				   	oSection1:PrintLine()
+					SBF->(dbSkip())
+				EndDo
+
+			ElseIf lRastro .And.  lImpLote .And.  SB8->(dbSeek(xFilial("SB8") + (cAliasQRY)->B1_COD + (cAliasSB2)->B2_LOCAL, .F. ))
+				cLoteAnt   := ""
+				cCondicao1 := "SB8->B8_FILIAL + SB8->B8_PRODUTO + SB8->B8_LOCAL + SB8->B8_LOTECTL " + If(lRastroS,"+ SB8->B8_NUMLOTE","")
+
+				while !oReport:Cancel() .And. !SB8->(Eof()) .And. xFilial("SB8")+(cAliasQRY)->B1_COD+(cAliasSB2)->B2_LOCAL+SB8->B8_LOTECTL+If(lRastroS,SB8->B8_NUMLOTE,"")==&(cCondicao1)
+
+
+
+					If mv_par14 == 2 .And.  SB8->B8_SALDO == 0
+						SB8->(dbSkip())
+						Loop
+					EndIf
+                    If !(cLoteAnt==SB8->B8_LOTECTL) .Or.  lRastroS
+					    If lFirst
+							oSection1:Cell("B1_COD"):Show()
+							oSection1:Cell("B1_TIPO"):Show()
+							oSection1:Cell("B1_GRUPO"):Show()
+							oSection1:Cell("B1_DESC"):Show()
+							oSection1:Cell("B1_UM"):Show()
+							oSection1:Cell("B2_LOCAL"):Show()
+							If !__lPyme
+								oSection1:Cell("B2_LOCALIZ"):Show()
+							EndIf
+							lFirst := .F. 
+					    Else
+							oSection1:Cell("B1_COD"):Hide()
+							oSection1:Cell("B1_TIPO"):Hide()
+							oSection1:Cell("B1_GRUPO"):Hide()
+							oSection1:Cell("B1_DESC"):Hide()
+							oSection1:Cell("B1_UM"):Hide()
+							oSection1:Cell("B2_LOCAL"):Hide()
+						    If !__lPyme
+								oSection1:Cell("B2_LOCALIZ"):Hide()
+							EndIf
+					    EndIf
+						If !__lPyme
+							oSection1:Cell("LOCALIZ"):SetValue("")
+						EndIf
+						oSection1:Cell("LOTECTL"):SetValue(SB8->B8_LOTECTL)
+						oSection1:Cell("NUMLOTE"):SetValue(If(lRastroS,SB8->B8_NUMLOTE,""))
+						If !__lPyme
+							oSection1:Cell("NUMSERI"):SetValue("")
+						EndIf
+						cLoteAnt := SB8->B8_LOTECTL
+
+					   	oSection1:PrintLine()
+					Endif
+					SB8->(dbSkip())
+				EndDo
+			Else
+				oSection1:Cell("B1_COD"):Show()
+				oSection1:Cell("B1_TIPO"):Show()
+				oSection1:Cell("B1_GRUPO"):Show()
+				oSection1:Cell("B1_DESC"):Show()
+				oSection1:Cell("B1_UM"):Show()
+				oSection1:Cell("B2_LOCAL"):Show()
+
+				If !__lPyme
+					oSection1:Cell("B2_LOCALIZ"):Show()
+					oSection1:Cell("LOCALIZ"):SetValue("")
+				EndIf
+				oSection1:Cell("LOTECTL"):SetValue("")
+				oSection1:Cell("NUMLOTE"):SetValue("")
+				If !__lPyme
+					oSection1:Cell("NUMSERI"):SetValue("")
+				EndIf
+
+			   	oSection1:PrintLine()
+			EndIf
+
+			(cAliasSB2)->(dbSkip())
+		EndDo
+
+		If !lQuery
+			(cAliasQRY)->(dbSkip())
+		EndIf
+
+	EndDo
+	oSection1:Finish()
+EndIf
+
+
+
+
+If !lQuery
+	dbSelectArea(cAliasQRY)
+	dbSetOrder(1)
+	dbClearFilter()
+EndIf
+SB1->(dbSetOrder(1))
+SB2->(dbSetOrder(1))
+SB8->(dbSetOrder(1))
+SBF->(dbSetOrder(1))
+
+Return NIL
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function AjustaSX1(cPerg)
+
+
+
+
+PutSX1(cPerg,"14","Lista Prod. Com Saldo Zerado ?","Lista Prod. Con Saldo Nulo ?  ","Cons. Prod. With Stock Zero ? ","mv_che","N",1,0,0,"C","","","","","mv_par14","Sim","Si","Yes","","Nao","No","No","","","","","","","","","",{"Considera o produto com saldo zerado na","filtragem do cadastro de saldos (SB2)."},{"Consider the product with zeroed balance","in filtering the balances file (SB2)."},{"Considera el producto con saldo cero en","el filtro del archivo de saldos (SB2)."})
+Return Nil
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Function U_Batr280R3()
+
+
+
+
+Local Tamanho
+Local Titulo   := STR0001
+Local cDesc1   := STR0002
+Local cDesc2   := STR0003
+Local cDesc3   := "Ele e' emitido de acordo com os parametros informados."
+Local cString  := "SB1"
+Local aOrd     := {}
+Local wnRel    := "MATR280"
+
+
+
+
+Private aReturn  := {OemToAnsi(STR0009), 1,OemToAnsi(STR0010), 2, 2, 1, "",1 }
+Private nLastKey := 0
+Private cPerg    := "MTR280"
+
+
+
+
+If !__lPyme
+	aOrd := {OemToAnsi(STR0005),OemToAnsi(STR0006),OemToAnsi(STR0007),OemToAnsi(STR0008),OemToAnsi(STR0017)}
+Else
+	aOrd := {OemToAnsi(STR0005),OemToAnsi(STR0006),OemToAnsi(STR0007),OemToAnsi(STR0008)}
+EndIf
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AjustaSX1(cPerg)
+Pergunte(cPerg, .F. )
+
+Tamanho := If(mv_par13 == 1,"G","M")
+
+
+
+
+wnRel:=SetPrint(cString,wnRel,cPerg,@Titulo,cDesc1,cDesc2,cDesc3, .F. ,aOrd,,Tamanho)
+
+If nLastKey == 27
+	dbClearFilter()
+	Return Nil
+Endif
+
+SetDefault(aReturn,cString)
+
+If nLastKey == 27
+	dbClearFilter()
+	Return Nil
+Endif
+
+
+Tamanho := If(mv_par13 == 1,"G","M")
+
+RptStatus({|lEnd| C280Imp(aOrd,@lEnd,wnRel,cString,Titulo,Tamanho)},Titulo)
+
+Return Nil
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function C280Imp(aOrd,lEnd,wnRel,cString,Titulo,Tamanho)
+
+Local cRodaTxt   := STR0011
+Local nCntImpr   := 0
+Local ntipo      := 0
+Local lRastro    := .F. 
+Local lRastroS   := .F. 
+Local lCLocal    := .F. 
+Local cDet       := "[            ]  [          ]   [            ]  [          ]   [            ]  [          ]"
+Local cLoteAnt   := ""
+
+
+
+Private Li      := 80
+Private m_pag   := 1
+
+
+
+
+Private cCondicao  := ""
+Private cCondicao1 := ""
+Private lContinua  := .T. 
+Private lUsaLote   := If(GetMV("MV_RASTRO")=="S", .T. , .F. )
+Private lImpLote   := If(mv_par13==1, .T. , .F. )
+
+
+If !lImpLote
+	cDet := "[         ][     ][         ][     ][         ][     ]"
+EndIf
+
+
+
+
+nTipo := If(aReturn[4]==1,15,18)
+
+
+
+
+If Type("NewHead") # "U"
+	NewHead += " (" + AllTrim(aOrd[aReturn[8]]) + ")"
+Else
+	Titulo += " (" + AllTrim(aOrd[aReturn[8]]) + ")"
+EndIf
+
+
+
+
+If lImpLote
+	Cabec1 := STR0012
+	Cabec2 := STR0013
+
+
+
+Else
+	Cabec1 := If(!__lPyme,STR0015,STR0026)
+	Cabec2 := STR0016
+EndIf
+
+
+
+
+
+
+
+dbSelectArea("SB2")
+dbSetOrder(1)
+
+dbSelectArea("SB8")
+dbSetOrder(3)
+
+dbSelectArea("SBF")
+dbSetOrder(2)
+
+dbSelectArea("SB1")
+dbSetOrder(aReturn[8])
+
+If !__lPyme .And.  aReturn[8] == 5
+	A280ImpEnd(aOrd,lEnd,wnRel,cString,Titulo,Tamanho)
+Else
+	If aReturn[8] == 4
+		dbSeek(xFilial(Alias()) + mv_par07, .T. )
+		cCondicao := "lContinua .And. !Eof() .And. B1_GRUPO <= mv_par08"
+	ElseIf aReturn[8] == 3
+		dbSeek(xFilial(Alias()) + mv_par09, .T. )
+		cCondicao := "lContinua .And. !Eof() .And. B1_DESC <= mv_par10"
+	ElseIf aReturn[8] == 2
+		dbSeek(xFilial(Alias()) + mv_par05, .T. )
+		cCondicao := "lContinua .And. !Eof() .And. B1_TIPO <= mv_par06"
+	Else
+		dbSeek(xFilial(Alias()) + mv_par03, .T. )
+		cCondicao := "lContinua .And. !Eof() .And. B1_COD <= mv_par04"
+	Endif
+
+	SetRegua(LastRec())
+	while&(cCondicao) .And. B1_FILIAL==xFilial(Alias())
+
+		If lEnd
+			PrintOut(_PROW()+1,001,STR0014,,)
+			Exit
+		EndIf
+
+		IncRegua()
+
+
+
+
+
+		If !SB2->(dbSeek(xFilial("SB2") + SB1->B1_COD, .F. )) .Or.  (SB1->B1_COD   < mv_par03) .Or.  (SB1->B1_COD   > mv_par04) .Or.  (SB1->B1_TIPO  < mv_par05) .Or.  (SB1->B1_TIPO  > mv_par06) .Or.  (SB1->B1_DESC  < mv_par09) .Or.  (SB1->B1_DESC  > mv_par10) .Or.  (SB1->B1_GRUPO < mv_par07) .Or.  (SB1->B1_GRUPO > mv_par08)
+			SB1->(dbSkip())
+			Loop
+		EndIf
+
+		lRastro  := Rastro(SB1->B1_COD)
+		lRastroS := Rastro(SB1->B1_COD, "S")
+		lCLocal  := Localiza(SB1->B1_COD)
+
+
+		while !SB2->(Eof()) .And. SB2->B2_FILIAL+SB2->B2_COD==xFilial("SB2")+SB1->B1_COD
+
+			If lEnd
+				PrintOut(_PROW()+1,001,STR0014,,)
+				lContinua := .F. 
+				Exit
+			EndIf
+
+			If lVersao .And.  mv_par15 == 2
+				If Empty((cAliasSB2)->B2_DINVFIM) .Or.  (cAliasSB2)->B2_DINVFIM < mv_par11 .Or.  (cAliasSB2)->B2_DTINV > mv_par12
+					SB2->(dbSkip())
+					Loop
+				EndIf
+			Else
+
+
+				If (!Empty(SB2->B2_DINVENT) .And.  (((SB2->B2_DINVENT + SB1->B1_PERINV) < mv_par11) .Or.  ((SB2->B2_DINVENT + SB1->B1_PERINV) > mv_par12)))
+					SB2->(dbSkip())
+					Loop
+				EndIf
+			EndIf
+
+
+
+
+			If (SB2->B2_LOCAL < mv_par01) .Or.  (SB2->B2_LOCAL > mv_par02)
+				SB2->(dbSkip())
+				Loop
+			EndIf
+
+
+
+
+			If mv_par14 == 2 .And.  SB2->B2_QATU == 0
+				SB2->(dbSkip())
+				Loop
+			EndIf
+
+			If Li > 55
+				Cabec(Titulo,Cabec1,Cabec2,wnRel,Tamanho,nTipo)
+			EndIf
+
+
+
+
+			nCntImpr++
+
+			f280ImpDet()
+
+
+			If lCLocal .And.  lImpLote .And.  SBF->(dbSeek(xFilial("SBF") + SB1->B1_COD + SB2->B2_LOCAL, .F. ))
+
+				while !SBF->(Eof()) .And. xFilial("SBF")+SB1->B1_COD+SB2->B2_LOCAL==SBF->BF_FILIAL+SBF->BF_PRODUTO+SBF->BF_LOCAL
+					If Li > 55
+						Cabec(Titulo,Cabec1,Cabec2,wnRel,Tamanho,nTipo)
+						f280ImpDet()
+					EndIf
+					PrintOut(Li,079,Left(SBF->BF_LOCALIZ,15),,)
+					PrintOut(Li,095,Left(SBF->BF_LOTECTL,10),,)
+					PrintOut(Li,106,Left(SBF->BF_NUMLOTE,06),,)
+					PrintOut(Li,113,Left(SBF->BF_NUMSERI,14)+" ",,)
+					PrintOut(Li,128,cDet,,)
+					Li++
+					SBF->(dbSkip())
+				EndDo
+
+			ElseIf lRastro .And.  lImpLote .And.  SB8->(dbSeek(xFilial("SB8") + SB1->B1_COD + SB2->B2_LOCAL, .F. ))
+				cLoteAnt   := ""
+
+				cCondicao1 := "SB8->B8_FILIAL + SB8->B8_PRODUTO + SB8->B8_LOCAL + SB8->B8_LOTECTL " + If(lRastroS,"+ SB8->B8_NUMLOTE","")
+
+				while !SB8->(Eof()) .And. xFilial("SB8")+SB1->B1_COD+SB2->B2_LOCAL+SB8->B8_LOTECTL+If(lRastroS,SB8->B8_NUMLOTE,"")==&(cCondicao1)
+
+
+
+					If mv_par14 == 2 .And.  SB8->B8_SALDO == 0
+						SB8->(dbSkip())
+						Loop
+					EndIf
+					If Li > 55
+						Cabec(Titulo,Cabec1,Cabec2,wnRel,Tamanho,nTipo)
+						f280ImpDet()
+					EndIf
+                    If !(cLoteAnt==SB8->B8_LOTECTL) .Or.  lRastroS
+						PrintOut(Li,095,Left(SB8->B8_LOTECTL,10),,)
+						PrintOut(Li,106,If(lRastroS,Left(SB8->B8_NUMLOTE,06),"")+" ",,)
+						PrintOut(Li,128,cDet,,)
+						cLoteAnt := SB8->B8_LOTECTL
+						Li++
+					Endif
+					SB8->(dbSkip())
+				EndDo
+			Else
+				If lImpLote
+				    PrintOut(Li,128,cDet,,)
+				Else
+					PrintOut(Li,78,cDet,,)
+				EndIf
+				Li++
+			EndIf
+
+			SB2->(dbSkip())
+
+		EndDo
+
+		SB1->(dbSkip())
+
+	EndDo
+EndIf
+If Li # 80
+	Roda(nCntImpr,cRodaTxt,Tamanho)
+EndIf
+
+
+
+
+dbSelectArea(cString)
+dbSetOrder(1)
+dbClearFilter()
+
+SB1->(dbSetOrder(1))
+SB2->(dbSetOrder(1))
+SB8->(dbSetOrder(1))
+SBF->(dbSetOrder(1))
+
+If aReturn[5] == 1
+	Set( 24, "" )
+	dbCommitAll()
+	OurSpool(wnRel)
+Endif
+
+MS_FLUSH()
+
+Return Nil
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function f280ImpDet()
+
+If lImpLote
+	PrintOut(Li,000,Left(SB1->B1_COD,15),,)
+	PrintOut(Li,016,Left(SB1->B1_TIPO,02),,)
+	PrintOut(Li,019,Left(SB1->B1_GRUPO,04),,)
+	PrintOut(Li,025,Left(SB1->B1_DESC,30),,)
+	PrintOut(Li,056,Left(SB1->B1_UM,02),,)
+	PrintOut(Li,059,Left(SB2->B2_LOCAL,02),,)
+	PrintOut(Li,063,Left(SB2->B2_LOCALIZ,15),,)
+Else
+	PrintOut(Li,000,Left(SB1->B1_COD,15),,)
+	PrintOut(Li,016,Left(SB1->B1_TIPO,02),,)
+	PrintOut(Li,019,Left(SB1->B1_GRUPO,04),,)
+	PrintOut(Li,024,Left(SB1->B1_DESC,30),,)
+	PrintOut(Li,055,Left(SB1->B1_UM,02),,)
+
+
+
+
+		PrintOut(Li,058,Left(SB2->B2_LOCAL,02),,)
+		PrintOut(Li,062,Left(SB2->B2_LOCALIZ,15),,)
+
+EndIf
+
+Return Nil
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function A280ImpEnd(aOrd,lEnd,wnRel,cString,Titulo,Tamanho)
+
+Local cRodaTxt   := STR0011
+Local nCntImpr   := 0
+Local ntipo      := 0
+Local lRastro    := .F. 
+Local lRastroS   := .F. 
+Local lCLocal    := .F. 
+Local cDet       := "[            ]  [          ]   [            ]  [          ]   [            ]  [          ]"
+
+SB1->(dbSetOrder(1))
+
+dbSelectArea("SBE")
+dbSetOrder(1)
+dbGotop()
+SetRegua(LastRec())
+
+While !Eof() .And.  BE_FILIAL == xFilial("SBE")
+
+	If lEnd
+		PrintOut(_PROW()+1,001,STR0014,,)
+		Exit
+	EndIf
+
+	IncRegua()
+
+	If (BE_LOCAL < mv_par01) .Or.  (BE_LOCAL > mv_par02)
+		dbSkip()
+		Loop
+	EndIf
+
+	SBF->(dbSetOrder(1))
+	SBF->(dbSeek(xFilial("SBF")+SBE->BE_LOCAL+SBE->BE_LOCALIZ, .F. ))
+	while !SBF->(Eof()) .And. xFilial("SBF")+SBE->BE_LOCAL+SBE->BE_LOCALIZ==SBF->BF_FILIAL+SBF->BF_LOCAL+SBF->BF_LOCALIZ
+
+		If lEnd
+			PrintOut(_PROW()+1,001,STR0014,,)
+			lContinua := .F. 
+			Exit
+		EndIf
+
+
+
+
+		If SBF->BF_PRODUTO < mv_par03 .Or.  SBF->BF_PRODUTO > mv_par04
+			SBF->(dbSkip())
+			Loop
+		EndIf
+
+
+
+
+		If mv_par14 == 2 .And.  SBF->BF_QUANT == 0
+			SBF->(dbSkip())
+			Loop
+		EndIf
+
+		SB1->(dbSeek(xFilial("SB1")+SBF->BF_PRODUTO, .F. ))
+
+
+
+		If 	(SB1->B1_TIPO  < mv_par05) .Or.  (SB1->B1_TIPO  > mv_par06) .Or.  (SB1->B1_DESC  < mv_par09) .Or.  (SB1->B1_DESC  > mv_par10) .Or.  (SB1->B1_GRUPO < mv_par07) .Or.  (SB1->B1_GRUPO > mv_par08)
+			SBF->(dbSkip())
+			Loop
+		EndIf
+
+		SB2->(dbSeek(xFilial("SB2")+SBF->BF_PRODUTO+SBF->BF_LOCAL, .F. ))
+
+		If lVersao .And.  mv_par15 == 2
+			If Empty((cAliasSB2)->B2_DINVFIM) .Or.  (cAliasSB2)->B2_DINVFIM < mv_par11 .Or.  (cAliasSB2)->B2_DTINV > mv_par12
+				SBF->(dbSkip())
+				Loop
+			EndIf
+		Else
+
+
+			If (!Empty(SB2->B2_DINVENT) .And.  (((SB2->B2_DINVENT + SB1->B1_PERINV) < mv_par11) .Or.  ((SB2->B2_DINVENT + SB1->B1_PERINV) > mv_par12)))
+				SBF->(dbSkip())
+				Loop
+			EndIf
+		EndIf
+
+		lRastro  := Rastro(SBF->BF_PRODUTO)
+		lRastroS := Rastro(SBF->BF_PRODUTO, "S")
+		lCLocal  := Localiza(SBF->BF_PRODUTO)
+
+		If Li > 55
+			Cabec(Titulo,Cabec1,Cabec2,wnRel,Tamanho,nTipo)
+		EndIf
+
+
+
+
+		nCntImpr++
+
+		f280ImpDet()
+
+		If lCLocal .And.  lImpLote
+			If Li > 55
+				Cabec(Titulo,Cabec1,Cabec2,wnRel,Tamanho,nTipo)
+				f280ImpDet()
+			EndIf
+			PrintOut(Li,079,Left(SBF->BF_LOCALIZ,15),,)
+			PrintOut(Li,095,Left(SBF->BF_LOTECTL,10),,)
+			PrintOut(Li,106,Left(SBF->BF_NUMLOTE,06),,)
+			PrintOut(Li,113,Left(SBF->BF_NUMSERI,14)+" ",,)
+			PrintOut(Li,128,cDet,,)
+			Li++
+
+		ElseIf lRastro .And.  lImpLote .And.  SB8->(dbSeek(xFilial("SB8") + SB1->B1_COD + SB2->B2_LOCAL, .F. ))
+			cCondicao1 := "SB8->B8_FILIAL + SB8->B8_PRODUTO + SB8->B8_LOCAL + SB8->B8_LOTECTL " + If(lRastroS,"+ SB8->B8_NUMLOTE","")
+
+			while !SB8->(Eof()) .And. xFilial("SB8")+SB1->B1_COD+SB2->B2_LOCAL+SB8->B8_LOTECTL+If(lRastroS,SB8->B8_NUMLOTE,"")==&(cCondicao1)
+
+
+
+				If mv_par14 == 2 .And.  SB8->B8_SALDO == 0
+					SB8->(dbSkip())
+					Loop
+				EndIf
+				If Li > 55
+					Cabec(Titulo,Cabec1,Cabec2,wnRel,Tamanho,nTipo)
+					f280ImpDet()
+				EndIf
+				PrintOut(Li,095,Left(SB8->B8_LOTECTL,10),,)
+				PrintOut(Li,106,If(lRastroS,Left(SB8->B8_NUMLOTE,06),"")+" ",,)
+				PrintOut(Li,128,cDet,,)
+				Li++
+				SB8->(dbSkip())
+			EndDo
+		Else
+			If lImpLote
+				PrintOut(Li,128,cDet,,)
+			Else
+				PrintOut(Li,79,cDet,,)
+			EndIf
+			Li++
+		EndIf
+
+		SBF->(dbSkip())
+
+	EndDo
+
+	SBE->(dbSkip())
+
+EndDo
+
+Return Nil

@@ -1,0 +1,48 @@
+#INCLUDE "Protheus.ch"
+#INCLUDE "TopConn.ch"
+#INCLUDE "TbiConn.ch"
+#INCLUDE "RWMAKE.CH"
+
+/*ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Rdmake    ³ BGPEG001  ³ Autor ³                       ³ Data ³ 04/07/13 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Retorna descrição da Justificativa de Desligamento          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Observacao³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Especifico Brascola                                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+User Function BGPEG001(cMat)
+
+Local cQuery:= ""  
+Local cJust := ""
+
+If Type("INCLUI")=="L" .And. (!INCLUI) .And. (SRA->RA_SITFOLH == "D")
+	
+	cQuery += "SELECT RX_TXT FROM SRG010 RG, SRX010 RX "
+	cQuery += "WHERE RG.D_E_L_E_T_ <> '*' "
+	cQuery += "AND RX.D_E_L_E_T_ <> '*' "
+	cQuery += "AND RX_COD = RG_TIPORES "
+	cQuery += "AND RG_FILIAL = '"+xFilial("SRG")+"' "
+	cQuery += "AND RG_RESCDIS NOT IN ('1','2') "
+	cQuery += "AND RG_MAT = '"+cMat+"'"
+	
+	dbUseArea(.T., "TOPCONN", TcGenQry(,,cQuery), "QUERY", .T., .F. ) 
+	
+	DbSelectArea("QUERY")
+	DbGoTop() 
+	
+	cJust+=  QUERY->RX_TXT
+	
+Endif
+
+DbCloseArea()
+Return(cJust)
+
+
+
+

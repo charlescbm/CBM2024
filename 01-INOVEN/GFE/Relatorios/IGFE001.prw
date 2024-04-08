@@ -328,8 +328,8 @@ Static Function FImpRel(oReport,cAlias,nTotal, nHErp)
 			While SD2->( !Eof() .And. xFilial("SD2") + SF2->F2_DOC + SF2->F2_SERIE + SF2->F2_CLIENTE + SF2->F2_LOJA == SD2->( D2_FILIAL + D2_DOC + D2_SERIE + D2_CLIENTE + D2_LOJA) )
 				SB1->(dbSetOrder(1))
 				SB1->(msSeek(xFilial('SB1') + SD2->D2_COD))
-				//nCuba += Round(SD2->D2_QUANT * SB1->B1_XALTURA * SB1->B1_XLARG * SB1->B1_XCOMPR,4)   	
-				nCuba += Round(SD2->D2_QUANT * SB1->B1_XVOL,4)   	
+				nCuba += Round(SD2->D2_QUANT * SB1->B1_XALTURA * SB1->B1_XLARG * SB1->B1_XCOMPR,5)   	
+				//nCuba += Round(SD2->D2_QUANT * SB1->B1_XVOL,4)   	
 
 				//--Grava dados do calculo da cubagem
 				cSQL := " UPDATE "+RetSqlName("SD2")+" "

@@ -1,0 +1,182 @@
+#include "Protheus.ch"
+#include "topconn.ch"
+#include "rwmake.ch"
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Rdmake    ³ MSD2520  ³ Autor ³ Artur da Costa        ³ Data ³11/10/2005 |±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³  Grava registro de Nota excluida em tabela Especifica PA2.  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Observacao³                                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Alteração ³ 08.11.05 - Almir Bandina - Gravar a quantidade pendente no  ³±±
+±±³          ³            cabeçalho do pedido para ajustar o flag na tela  ³±±
+±±³          ³            de browse.                                       ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+User Function SF2520E()
+
+Local aAreaAtu:= GetArea()
+Local aAreaPA2:= PA2->( GetArea() )
+Local aAreaSC5:= SC5->( GetArea() )
+Local cSeq	  := Replicate( "0", TAMSX3("PA2_SEQ") [1] )
+Local cObs	  := CriaVar( "PA2_OBS", .F., .F. )
+Local cDoc	  := SF2->F2_DOC
+Local cSerie  := SF2->F2_SERIE
+Local dDtCanc := SF2->F2_EMISSAO // Date()
+Local cHrNota := SF2->F2_HORA
+Local lTela	  := .T.
+Local cQry	  := ""
+
+Private _cCod:= CriaVar( 'ZZC_COD', .f., 'L' )
+Private _cGp := 'N'
+
+DbSelectArea("PA2")
+DbSetOrder(1)
+
+MsSeek( xFilial("PA2") + cDoc + cSerie )
+
+While !Eof() .And. ( PA2->PA2_FILIAL == xFilial("PA2") .And. PA2->PA2_DOC == cDoc .And. PA2->PA2_SERIE == cSerie )
+	
+	cSeq:= PA2->PA2_SEQ
+	
+	If PA2->PA2_DTCANC == dDtCanc .And. PA2->PA2_HORAEM == cHrNota
+		lTela:= .F.
+	EndIf
+	
+	DbSelectArea("PA2")
+	dbSkip()
+EndDo
+
+cSeq:= Soma1( cSeq, TAMSX3( "PA2_SEQ" ) [1] )
+
+If lTela
+	TelObs( @cObs, cDoc, cSerie )
+	
+	RecLock('PA2',.t.)
+		PA2->PA2_FILIAL := xFilial("PA2")
+		PA2->PA2_DOC    := SF2->F2_DOC
+		PA2->PA2_SERIE  := SF2->F2_SERIE
+		PA2->PA2_SEQ    := cSeq
+		PA2->PA2_CLIENT := SF2->F2_CLIENTE
+		PA2->PA2_LOJA   := SF2->F2_LOJA
+		PA2->PA2_COND   := SF2->F2_COND
+		PA2->PA2_DUPL   := SF2->F2_DUPL
+		PA2->PA2_EMISSA := SF2->F2_EMISSAO
+		PA2->PA2_HORAEM := SF2->F2_HORA
+		PA2->PA2_EST    := SF2->F2_EST
+		PA2->PA2_TIPCLI := SF2->F2_TIPOCLI
+		PA2->PA2_VLRBRU := SF2->F2_VALBRUT
+		PA2->PA2_DTENTR := SF2->F2_DTENTR
+		PA2->PA2_DTSAID := SF2->F2_DTSAIDA
+		PA2->PA2_DTDIGT := SF2->F2_DTDIGIT
+		PA2->PA2_DTCANC := dDtCanc
+		PA2->PA2_HORA   := Left(Time(),5)
+		PA2->PA2_USRCANC:= Alltrim(cUsername)
+		PA2->PA2_OBS    := cObs
+		PA2_TIPO   		:= _cCod
+		PA2_GP  		:= _cGp
+	MsUnLock()
+EndIf
+
+//		PA2->PA2_FLGIMP := SF2->F2_FLGIMP
+
+/// PARA ATIVAR A FUNCAO AC_QTDPEN() ABAIXO, APENAS COLOQUE UM ".T." NO LUGAR DO ".F."
+/// DESSA FORMA A ROTINA NAO IRA MAIS PASSAR PELO BLOCO SEGUINTE E UTILIZARA SOMENTE A FUNCAO "AC_QTDPEN"
+If .F.
+	// Ajusta o status do pedido quando cancela a nota quando for faturamento
+	U_AC_QTDPEN( SF2->F2_DOC, SF2->F2_SERIE, "" )
+Else
+	If SD2->D2_TIPO $ "NCIP"
+		cQry:= "SELECT SUM( CASE WHEN (SC6.C6_QTDVEN - SC6.C6_QTDENT) <= SC6.C6_QTDVEN THEN SC6.C6_QTDVEN - SC6.C6_QTDENT ELSE 0 END) AS QTDPEN "
+		cQry+= "FROM " + RetSqlName("SC6") + " SC6" + " "
+		cQry+= "WHERE SC6.C6_FILIAL = '" + SD2->D2_FILIAL + "' "
+		cQry+= "AND SC6.C6_NUM = '" + SD2->D2_PEDIDO + "' "
+		cQry+= "AND SC6.C6_BLQ = ' ' "
+		cQry+= "AND SC6.D_E_L_E_T_ <> '*' "
+
+		If Select("MSD2520A") > 0
+			DbSelectArea("MSD2520A")
+			DbCloseArea()
+		EndIf
+
+		TCQUERY cQry NEW ALIAS "MSD2520A"
+		
+		DbSelectArea("SC5")
+		DbSetOrder(1)
+		
+		If MsSeek( xFilial("SC5") + SD2->D2_PEDIDO ) .And. SC5->C5_QTDPEN <> 0
+			RecLock( "SC5", .F. )
+				SC5->C5_QTDPEN:= MSD2520A->QTDPEN
+			MsUnlock()
+		EndIf
+
+		DbSelectArea("MSD2520A")
+		DbCloseArea()
+	EndIf
+EndIf
+
+
+IF SF2->F2_FILIAL = '01'  .AND. SF2->F2_ICMSRET <> 0
+   EXCGUIA()
+ENDIF
+
+
+
+
+RestArea( aAreaSC5 )
+RestArea( aAreaPA2 )
+RestArea( aAreaAtu )
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Rdmake    ³ TelObs   ³ Autor ³ Artur da Costa        ³ Data ³11/10/2005 |±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Grava registro de Nota excluida em tabela Especifica PA2.   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Especifico Brascola                                         ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function TelObs( cObs, cDoc, cSerie )
+
+Local oDlg1:= {}
+
+DEFINE MSDIALOG oDlg1 TITLE 'Motivo da Exclusao' From 000, 000 To 100,440 OF oMainWnd PIXEL
+	@ 010,010 SAY 'Informe o código do motivo da exclusão: ' + cDoc + '/' + cSerie OF oDlg1 PIXEL COLOR CLR_HBLUE
+	@ 025,010 SAY 'Informe se a guia de recolhimento de impostos foi paga (S/N): ' OF oDlg1 PIXEL COLOR CLR_HBLUE		
+	@ 010,170 MSGET _cCod             SIZE 040, 010	F3 "ZZC" Of oDlg1 PIXEL WHEN .t. VALID( !Empty( _cCod )) //.And. U_VALIDAZZC( _cCod ) )
+	@ 025,170 MSGET _cGp  PICTURE '!' SIZE 040, 010          Of oDlg1 PIXEL WHEN .t. VALID( !Empty( _cGp  ) .And. _cGp $ 'S/N' )
+	DEFINE SBUTTON FROM 040, 185 TYPE 1 ACTION ( oDlg1:End() ) ENABLE OF oDlg1 PIXEL
+ACTIVATE MSDIALOG oDlg1 CENTERED VALID( !Empty( _cCod ) )
+
+Return
+
+
+/*******************************************
+          Exclui Guia gerada
+/*******************************************/
+static  function  EXCGUIA()
+
+ _cQuery := "DELETE FROM " + RetSqlName("SF6")  "
+ _cQuery += " WHERE F6_FILIAL = '" + SF2->F2_FILIAL + "' "
+ _cQuery += " AND F6_DOC   = '" + SF2->F2_DOC + "' "
+ _cQuery += " AND F6_SERIE = '" + SF2->F2_SERIE + "' "
+ _cQuery += " AND D_E_L_E_T_ <> '*' "
+		    
+ 
+
+  TCSQLEXEC( _cQuery )
+
+  RETURN
+
+          

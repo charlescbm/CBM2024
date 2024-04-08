@@ -1,0 +1,267 @@
+/*
++----------------------------------------------------------------------------+
+!                         FICHA TECNICA DO PROGRAMA                          !
++----------------------------------------------------------------------------+
+!   DADOS DO PROGRAMA                                                        !
++------------------+---------------------------------------------------------+
+!Tipo              ! Atualização                                             !
++------------------+---------------------------------------------------------+
+!Modulo            ! FAT - Faturamento                                       !
++------------------+---------------------------------------------------------+
+!Nome              ! BFATR011                                                !
++------------------+---------------------------------------------------------+
+!Descricao         ! Relatório de Bonificação                                !
++------------------+---------------------------------------------------------+
+!Autor             ! FERNANDO SIMOES DA MAIA                                 !
++------------------+---------------------------------------------------------+
+!Data de Criacao   ! 18/01/2013                                              !
++------------------+---------------------------------------------------------+
+*/
+
+#include "rwmake.ch"
+#include "totvs.ch"
+#include "protheus.ch"
+#include "topconn.ch"     
+
+User Function BFATR011()
+
+Local cPerg   := PADR("BFATR011",10)
+Local oReport := BFATR11A(cPerg)
+
+
+BFATR11B(cPerg)
+
+If Pergunte(cPerg,.T.)
+	oReport:PrintDialog()
+EndIf
+
+Return
+
+Static Function BFATR11A(cPerg)
+
+Local oReport
+Local oSection1
+
+oReport:= TReport():New("BFATR011","Bonificação",cPerg,{|oReport| BFATR11C(oReport)},"Impressão do Relatório Bonificação")
+oReport:SetTotalInLine(.F.)
+oReport:nFontBody := 6
+     
+oSection1 := TRSection():New(oReport,"Bonificação",{"SC5", "SC6", "SB1", "SA3","ZZQ","ZZR"})  //Tabelas usadas na query
+
+/*  
+TRCell():New(oSection1,cName,cAlias,cTitle,cPicture,nSize,lPixel,bBlock,cAlign,lLineBreak,cHeaderAlign,lCellBreak,nColSpace,lAutoSize,nClrBack,nClrFore,lBold)
+cName		    Nome da célula
+cAlias		    Tabela utilizada pela célula
+cTitle	    	Título da célula
+cPicture    	Máscara da célula
+nSize	    	Tamanho da célula
+lPixel	    	Aponta se o tamanho foi informado em pixel
+bBlock	    	Bloco de código com o retorno do campo
+cAlign	    	Alinhamento da célula. "LEFT", "RIGHT" e "CENTER"
+lLineBreak	    Quebra linha se o conteúdo estourar o tamanho do campo
+cHeaderAlign	Alinhamento do cabeçalho da célula. "LEFT", "RIGHT" e "CENTER"
+lCellBreak   	Compatibilidade - Não utilizado
+nColSpace    	Espaçamento entre as células
+lAutoSize   	Ajusta o tamanho da célula com base no tamanho da página e as Informações impressas
+nClrBack    	Cor de fundo da célula
+nClrFore    	Cor da fonte da célula
+lBold	    	Imprime a fonte em negrito 
+ */
+
+//TRCell():New(oSection1,cName         ,cAlias, cTitle        ,cPicture,nSize ,lPixel,bBlock,cAlign  ,lLineBreak,cHeaderAlign,lCellBreak,nColSpace,lAutoSize,nClrBack,nClrFore,lBold)
+  TRCell():New(oSection1,"EMISSAO"     ,"SC5" , "Emissão"     ,        ,  10  ,.F.   ,      ,"LEFT"  ,  .F.     , "LEFT"     ,          ,   1     ,    .F.  ,        ,        ,     )
+  TRCell():New(oSection1,"BONIFICADO"  ,"SC6" , "Bonific."    ,        ,  9   ,.F.   ,      ,"LEFT"  ,  .F.     , "LEFT"     ,          ,   1     ,    .F.  ,        ,        ,     )
+  TRCell():New(oSection1,"DESC_PROD"   ,"SB1" , "DescBoni"    ,        ,  30  ,.F.   ,      ,"LEFT"  ,  .F.     , "LEFT"     ,          ,   1     ,    .F.  ,        ,        ,     )  
+  TRCell():New(oSection1,"QTD_BONI"    ,"SC6" , "QtdBo"       ,        ,  3   ,.F.   ,      ,"CENTER",  .F.     , "CENTER"   ,          ,   1     ,    .F.  ,        ,        ,     ) 
+  TRCell():New(oSection1,"Valor_Boni"  ,"SC6" , "VlrBonif"    ,        ,  9   ,.F.   ,      ,"RIGHT" ,  .F.     , "RIGHT"    ,          ,   1     ,    .F.  ,        ,        ,     )
+  TRCell():New(oSection1,"COMPRADO"    ,"SC6" , "Comprado"    ,        ,  9   ,.F.   ,      ,"LEFT"  ,  .F.     , "LEFT"     ,          ,   1     ,    .F.  ,        ,        ,     )
+  TRCell():New(oSection1,"DESC_PRODC"  ,"SB1" , "DescComp"    ,        ,  30  ,.F.   ,      ,"LEFT"  ,  .F.     , "LEFT"     ,          ,   1     ,    .F.  ,        ,        ,     )
+  TRCell():New(oSection1,"QTD_COMP"    ,"SC6" , "QtdComp"     ,        ,  3   ,.F.   ,      ,"CENTER",  .F.     , "CENTER"   ,          ,   1     ,    .F.  ,        ,        ,     )
+  TRCell():New(oSection1,"Valor_compra","SC6" , "VlrCompr"    ,        ,  9   ,.F.   ,      ,"RIGHT" ,  .F.     , "RIGHT"    ,          ,   1     ,    .F.  ,        ,        ,     )
+  TRCell():New(oSection1,"REGRA_BONI"  ,"SC6" , "Regra"       ,        ,  7   ,.F.   ,      ,"LEFT"  ,  .F.     , "LEFT"     ,          ,   1     ,    .F.  ,        ,        ,     )
+  TRCell():New(oSection1,"DESC_BONI"   ,"ZZQ" , "DescBoni"    ,        ,  30  ,.F.   ,      ,"LEFT"  ,  .F.     , "LEFT"     ,          ,   1     ,    .F.  ,        ,        ,     )
+  TRCell():New(oSection1,"NUM_PED"     ,"SC6" , "Pedido"      ,        ,  7   ,.F.   ,      ,"RIGHT" ,  .F.     , "RIGHT"    ,          ,   1     ,    .F.  ,        ,        ,     )
+  TRCell():New(oSection1,"COD_CLI"     ,"SC6" , "Cliente"     ,        ,  9   ,.F.   ,      ,"LEFT"  ,  .F.     , "LEFT"     ,          ,   1     ,    .F.  ,        ,        ,     )
+  TRCell():New(oSection1,"NOME_CLI"    ,"SA1" , "Nome"        ,        ,  20  ,.F.   ,      ,"LEFT"  ,  .F.     , "LEFT"     ,          ,   1     ,    .F.  ,        ,        ,     )
+  TRCell():New(oSection1,"REGIAO"      ,"SA1" , "Região"      ,        ,  7   ,.F.   ,      ,"LEFT"  ,  .F.     , "LEFT"     ,          ,   1     ,    .F.  ,        ,        ,     )
+  TRCell():New(oSection1,"GRUPO"       ,"SA1" , "Grupo"       ,        ,  7   ,.F.   ,      ,"LEFT"  ,  .F.     , "LEFT"     ,          ,   1     ,    .F.  ,        ,        ,     )
+  TRCell():New(oSection1,"ES"          ,"SA1" , "UF"          ,        ,  3   ,.F.   ,      ,"RIGHT" ,  .F.     , "RIGHT"    ,          ,   1     ,    .F.  ,        ,        ,     )
+  TRCell():New(oSection1,"COD_VEND"    ,"SC5" , "Vendedor"    ,        ,  7   ,.F.   ,      ,"LEFT"  ,  .F.     , "LEFT"     ,          ,   1     ,    .F.  ,        ,        ,     )
+  TRCell():New(oSection1,"VENDEDOR"    ,"SA3" , "NomeVend"    ,        ,  20  ,.F.   ,      ,"LEFT"  ,  .F.     , "LEFT"     ,          ,   1     ,    .F.  ,        ,        ,     )
+
+/*                   
+oSection1:Cell("EMISSAO"):SetSize(9)
+oSection1:Cell("BONIFICADO"):SetSize(9)
+oSection1:Cell("DESC_PROD"):SetSize(30)
+oSection1:Cell("QTD_BONI"):SetSize(3)
+oSection1:Cell("Valor_Boni"):SetSize(10)
+oSection1:Cell("COMPRADO"):SetSize(9)
+oSection1:Cell("DESC_PROD"):SetSize(30) 
+oSection1:Cell("QTD_COMP"):SetSize(4)
+oSection1:Cell("Valor_Compra"):SetSize(20)
+oSection1:Cell("REGRA_BONI"):SetSize(9)
+oSection1:Cell("DESC_BONI"):SetSize(20)
+oSection1:Cell("NUM_PED"):SetSize(20)
+oSection1:Cell("COD_CLI"):SetSize(9)
+oSection1:Cell("NOME_CLI"):SetSize(30)
+oSection1:Cell("REGIAO"):SetSize(7)
+oSection1:Cell("GRUPO"):SetSize(7)
+oSection1:Cell("ES"):SetSize(3)
+oSection1:Cell("COD_VEND"):SetSize(7)
+oSection1:Cell("VENDEDOR"):SetSize(30)
+                 
+          
+oSection1:Cell("EMISSAO"):SetHeaderAlign("LEFT")
+oSection1:Cell("BONIFICADO"):SetHeaderAlign("LEFT")
+oSection1:Cell("DESC_PROD"):SetHeaderAlign("LEFT")
+oSection1:Cell("QTD_BONI"):SetHeaderAlign("RIGHT")
+oSection1:Cell("Valor_Boni"):SetHeaderAlign("RIGHT")
+oSection1:Cell("COMPRADO"):SetHeaderAlign("LEFT")
+oSection1:Cell("DESC_PROD"):SetHeaderAlign("LEFT")
+oSection1:Cell("QTD_COMP"):SetHeaderAlign("RIGHT")
+oSection1:Cell("Valor_Compra"):SetHeaderAlign("RIGHT")
+oSection1:Cell("REGRA_BONI"):SetHeaderAlign("LEFT")
+oSection1:Cell("DESC_BONI"):SetHeaderAlign("LEFT")
+oSection1:Cell("NUM_PED"):SetHeaderAlign("RIGHT")
+oSection1:Cell("COD_CLI"):SetHeaderAlign("LEFT")
+oSection1:Cell("NOME_CLI"):SetHeaderAlign("LEFT")
+oSection1:Cell("REGIAO"):SetHeaderAlign("LEFT")
+oSection1:Cell("GRUPO"):SetHeaderAlign("LEFT")
+oSection1:Cell("ES"):SetHeaderAlign("CENTER")
+oSection1:Cell("COD_VEND"):SetHeaderAlign("LEFT")
+oSection1:Cell("VENDEDOR"):SetHeaderAlign("LEFT")   */
+
+
+//oSection1:Cell("C6_PRODUTO"):SetRowDiff(5)                                  
+
+/*
+SetBorder(uBorder,nWeight,nColor,lHeader)   - Define as bordas da célula.
+uBorder	Tipo Caracter: "TOP"     ,"BOTTOM"  ,"LEFT"    ,"RIGHT"  ,"ALL"
+        Tipo Numérico: 1-Superior,2-Inferior,3-Esquerda,4-Direita,5-Todas
+nWeight	Largura da borda
+nColor	Cor da borda
+lHeader	Aponta se é borda de cabeçalho
+*/     
+
+                       //SetBorder(uBorder,nWeight,nColor,lHeader) 
+oSection1:Cell("EMISSAO")     :SetBorder("BOTTOM",1,CLR_BLACK,.T.)
+oSection1:Cell("BONIFICADO")  :SetBorder("BOTTOM",1,CLR_BLACK,.T.)
+oSection1:Cell("DESC_PROD")   :SetBorder("BOTTOM",1,CLR_BLACK,.T.)  
+oSection1:Cell("QTD_BONI")    :SetBorder("BOTTOM",1,CLR_BLACK,.T.)
+oSection1:Cell("Valor_Boni")  :SetBorder("BOTTOM",1,CLR_BLACK,.T.)
+oSection1:Cell("COMPRADO")    :SetBorder("BOTTOM",1,CLR_BLACK,.T.)
+oSection1:Cell("DESC_PRODC")  :SetBorder("BOTTOM",1,CLR_BLACK,.T.)
+oSection1:Cell("QTD_COMP")    :SetBorder("BOTTOM",1,CLR_BLACK,.T.)  
+oSection1:Cell("Valor_Compra"):SetBorder("BOTTOM",1,CLR_BLACK,.T.)
+oSection1:Cell("REGRA_BONI")  :SetBorder("BOTTOM",1,CLR_BLACK,.T.)
+oSection1:Cell("DESC_BONI")   :SetBorder("BOTTOM",1,CLR_BLACK,.T.)
+oSection1:Cell("NUM_PED")     :SetBorder("BOTTOM",1,CLR_BLACK,.T.)
+oSection1:Cell("COD_CLI")     :SetBorder("BOTTOM",1,CLR_BLACK,.T.)  
+oSection1:Cell("NOME_CLI")    :SetBorder("BOTTOM",1,CLR_BLACK,.T.)
+oSection1:Cell("REGIAO")      :SetBorder("BOTTOM",1,CLR_BLACK,.T.)
+oSection1:Cell("GRUPO")       :SetBorder("BOTTOM",1,CLR_BLACK,.T.)
+oSection1:Cell("ES")          :SetBorder("BOTTOM",1,CLR_BLACK,.T.)
+oSection1:Cell("COD_VEND")    :SetBorder("BOTTOM",1,CLR_BLACK,.T.)  
+oSection1:Cell("VENDEDOR")    :SetBorder("BOTTOM",1,CLR_BLACK,.T.)  
+
+
+                       //SetBorder(uBorder,nWeight,nColor,lHeader) 
+oSection1:Cell("EMISSAO")     :SetBorder("BOTTOM",1,CLR_BLACK,.F.)
+oSection1:Cell("BONIFICADO")  :SetBorder("BOTTOM",1,CLR_BLACK,.F.)
+oSection1:Cell("DESC_PROD")   :SetBorder("BOTTOM",1,CLR_BLACK,.F.)  
+oSection1:Cell("QTD_BONI")    :SetBorder("BOTTOM",1,CLR_BLACK,.F.)
+oSection1:Cell("Valor_Boni")  :SetBorder("BOTTOM",1,CLR_BLACK,.F.)
+oSection1:Cell("COMPRADO")    :SetBorder("BOTTOM",1,CLR_BLACK,.F.)
+oSection1:Cell("DESC_PRODC")  :SetBorder("BOTTOM",1,CLR_BLACK,.F.)
+oSection1:Cell("QTD_COMP")    :SetBorder("BOTTOM",1,CLR_BLACK,.F.)  
+oSection1:Cell("Valor_Compra"):SetBorder("BOTTOM",1,CLR_BLACK,.F.)
+oSection1:Cell("REGRA_BONI")  :SetBorder("BOTTOM",1,CLR_BLACK,.F.)
+oSection1:Cell("DESC_BONI")   :SetBorder("BOTTOM",1,CLR_BLACK,.F.)
+oSection1:Cell("NUM_PED")     :SetBorder("BOTTOM",1,CLR_BLACK,.F.)
+oSection1:Cell("COD_CLI")     :SetBorder("BOTTOM",1,CLR_BLACK,.F.)  
+oSection1:Cell("NOME_CLI")    :SetBorder("BOTTOM",1,CLR_BLACK,.F.)
+oSection1:Cell("REGIAO")      :SetBorder("BOTTOM",1,CLR_BLACK,.F.)
+oSection1:Cell("GRUPO")       :SetBorder("BOTTOM",1,CLR_BLACK,.F.)
+oSection1:Cell("ES")          :SetBorder("BOTTOM",1,CLR_BLACK,.F.)
+oSection1:Cell("COD_VEND")    :SetBorder("BOTTOM",1,CLR_BLACK,.F.)  
+oSection1:Cell("VENDEDOR")    :SetBorder("BOTTOM",1,CLR_BLACK,.F.)  
+
+Return oReport
+
+
+Static Function BFATR11C(oReport)
+
+Local cAlias := GetNextAlias()
+Local oSection1 := oReport:Section(1)
+
+oSection1:BeginQuery()
+
+BeginSql alias cAlias
+	SELECT SUBSTRING(C5_EMISSAO,7,2)+'/'+SUBSTRING(C5_EMISSAO,5,2)+'/'+SUBSTRING(C5_EMISSAO,1,4) AS EMISSAO,   
+	//SELECT C5_EMISSAO AS EMISSAO,
+	PR.C6_PRODUTO AS BONIFICADO,
+	B1.B1_DESC AS DESC_PROD,
+	PR.C6_QTDVEN AS QTD_BONI, 
+	(PR.C6_PRCVEN*PR.C6_QTDVEN) AS Valor_Boni, 
+	PR2.C6_PRODUTO AS COMPRADO, 
+	B2.B1_DESC AS DESC_PRODC,
+	PR2.C6_QTDVEN AS QTD_COMP,
+	(PR2.C6_PRCVEN*PR2.C6_QTDVEN) AS Valor_compra, 
+	PR.C6_X_REGRA AS REGRA_BONI,
+	ZQ.ZZQ_DESCRI AS DESC_BONI, 
+	PR.C6_NUM AS NUM_PED,
+	PR.C6_CLI AS COD_CLI,
+	A1.A1_NOME AS NOME_CLI,
+	A1.A1_REGIAO AS REGIAO,
+	A1.A1_GRPVEN AS GRUPO,
+	A1.A1_EST AS ES,
+	C5.C5_VEND1 AS COD_VEND,
+	A3.A3_NREDUZ AS VENDEDOR
+	FROM %table:SC6% PR, %table:ZZQ% ZQ, %table:ZZR% ZR,
+	%table:SC6% PR2, %table:SC5% C5, %table:SA1% A1, 
+	%table:SA3% A3, %table:SB1% B1, %table:SB1% B2
+	WHERE PR.%notDel%
+	AND ZQ.%notDel%
+	AND C5.%notDel%
+	AND A3.%notDel%
+	AND PR.C6_PRODUTO = ZQ.ZZQ_CODPRO
+	AND PR.C6_X_REGRA = ZQ.ZZQ_CODREG
+	AND ZQ.ZZQ_CODREG = ZR.ZZR_CODREG
+	AND PR.C6_FILIAL = PR2.C6_FILIAL
+	AND PR.C6_NUM = PR2.C6_NUM
+	AND PR.C6_CLI = PR2.C6_CLI
+	AND PR.C6_LOJA = PR2.C6_LOJA
+	AND C5.C5_NUM = PR.C6_NUM
+	AND C5.C5_FILIAL = PR.C6_FILIAL
+	AND C5.C5_CLIENTE = PR.C6_CLI
+	AND C5.C5_LOJACLI = PR.C6_LOJA
+	AND ZR.ZZR_CODPRO = PR2.C6_PRODUTO
+	AND C5.C5_CLIENTE = A1.A1_COD
+	AND C5.C5_LOJACLI = A1.A1_LOJA
+	AND C5_VEND1 = A3_COD
+	AND A1_VEND = A3_COD
+	AND PR.C6_PRODUTO = B1.B1_COD
+	AND PR2.C6_PRODUTO = B2.B1_COD
+	AND C5.C5_EMISSAO BETWEEN %exp:MV_PAR01% AND %exp:MV_PAR02%
+	AND ZQ.ZZQ_TIPO = '1'
+	AND PR.C6_X_REGRA <> ' '
+	AND PR2.C6_X_REGRA = ' ' 
+EndSql
+
+
+aQuery:= GetLastQuery()//funcao que mostra todas as informações da query, util para visualizar na aba Comandos     
+
+
+oSection1:EndQuery()
+oSection1:Print()     
+
+Return
+
+Static Function BFATR11B(cPerg)
+  //PutSx1(cGrupo,cOrdem,cPergunt,cPerSpa,cPerEng  	,cVar    ,cTipo,nTam,nDec,nPres,cGSC,cValid		,cF3	, cGrpSxg,cPyme	,cVar01		,cDef01,cDefSpa1,cDefEng1,cCnt01, cDef02,cDefSpa2,cDefEng2,cDef03		,cDefSpa3,cDefEng3 , cDef04		,cDefSpa4,cDefEng4, cDef05		,cDefSpa5,cDefEng5, aHelpPor,aHelpEng,aHelpSpa,cHelp)
+	PutSX1(cPerg, "01", "Emissao de"      , "", "", "mv_ch1", "D", TAMSX3("C5_EMISSAO")[1] , 0, 0, "G", "",  , "", "", "mv_par01", "","","","","","","","","","","","","","","","")
+	PutSX1(cPerg, "02", "Emissao ate"     , "", "", "mv_ch2", "D", TAMSX3("C5_EMISSAO")[1] , 0, 0, "G", "",  , "", "", "mv_par02", "","","","","","","","","","","","","","","","")
+	//PutSX1(cPerg, "03", "Região de"          , "", "", "mv_ch3", "C", TAMSX3("ACA_GRPREP")[1] , 0, 0, "G", "","ACA", "", "", "mv_par03", ""   ,"","","",""   ,"","","","","","","","","","","")
+    //PutSX1(cPerg, "04", "Região ate"         , "", "", "mv_ch4", "C", TAMSX3("ACA_GRPREP")[1] , 0, 0, "G", "","ACA", "", "", "mv_par04", ""   ,"","","",""   ,"","","","","","","","","","","")
+    //PutSX1(cPerg, "05", "Bloqueado?"         , "", "", "mv_ch5", "C", 1                       , 0, 0, "G", "",     , "", "", "mv_par05", "Sim","","","","Não","","","","","","","","","","","")
+Return

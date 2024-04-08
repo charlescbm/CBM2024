@@ -1,0 +1,262 @@
+#INCLUDE "PROTHEUS.CH"      
+#INCLUDE "RWMAKE.CH"
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³RPCPR01   ºAutor  ³Daniel Pelegrinelli º Data ³  23/11/05   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Verifica se existe insumos para a producao de acordo       º±±
+±±º          ³ com o local padrao de cada produto.                        º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ MP8   - Brascola                                           º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+USER FUNCTION RPCPR01()
+
+Local _cCod   	:= ""
+Local _cLoc   	:= ""
+Local _cQuant 	:= ""
+Local _nQuant 	:= 0
+Local _nQtOp  	:= 0
+Local _cQryG1 	:= ""
+Local _aAreaAt	:= GETAREA()
+Local _aAreaC2	:= SC2->(GETAREA())
+Local _aAreaB1	:= SB1->(GETAREA())
+Local _aItens 	:= {}
+Local oListBox1   
+Local _cQut 	:= ""  
+Local _cSald 	:= "" 
+Local _cDif 	:= "" 
+Local _cAtu 	:= ""
+Local _cEmp 	:= ""
+Local _cRes 	:= ""
+Local _lok    
+Local _nBase
+Local _cRev
+                      
+_lok     := .f.
+_cCod   := M->C2_PRODUTO
+_nQtOp  := M->C2_QUANT
+_cLoc   := '10'//GETMV("BR_ESTPROD")
+
+IF SUBSTR(_cLoc,1,1) == '"'
+_cLoc := SUBSTR(_cLoc,2,2)
+ENDIF
+
+IF _nQtOp = 0  .OR. EMPTY(_cCod)
+	Return(_nQtOp)
+endif
+          
+DBSELECTAREA("SB1")
+DBSETORDER(1)
+DBSEEK(xFilial()+_cCod)
+_cRev := SB1->B1_REVATU
+ 
+//IF SM0->M0_CODFIL == '01' 
+//_cLoc:= '10'
+
+// Cleiton - 02/10/2008
+// Alterado para trazer valores zerados quando nao existir no SB2. Solicitado por Rodolfo.
+// _cQryG1 := " SELECT G1_COD COD , G1_COMP COMPONENTE, G1_QUANT QTDNEC ,(B2_QATU - B2_QEMP-B2_RESERVA) SALDO_DISPONIVEL , "
+// _cQryG1 += " B2_QATU ATUAL, B2_QEMP EMPENHO,B2_RESERVA RESERVA, B1_TIPO TIPO , B2_LOCAL ARM "
+// _cQryG1 += " FROM "+RETSQLNAME("SB2")+" SB2, "+RETSQLNAME("SG1")+" SG1, "+RETSQLNAME("SB1")+" SB1 "
+// _cQryG1 += " WHERE G1_COD = '"+_cCod+"' "
+// _cQryG1 += " AND B2_COD = G1_COMP  "
+// _cQryG1 += " AND G1_COMP = B1_COD "
+// _cQryG1 += " AND G1_FILIAL = '"+xFilial("SG1")+"'
+// _cQryG1 += " AND B1_TIPO NOT IN ('MO','BN') " 
+// _cQryG1 += " AND ((G1_REVFIM >= '"+_cRev+"' AND G1_REVINI <= '"+_cRev+"'))"  // OR (G1_REVFIM = 'ZZZ'))  "
+// _cQryG1 += " AND B2_LOCAL = '"+_cLoc+"' "
+// _cQryG1 += " AND B2_FILIAL = '"+xFilial("SB2")+"' "
+// _cQryG1 += " AND B2_FILIAL = G1_FILIAL "
+// _cQryG1 += " AND SB2.D_E_L_E_T_ <> '*' "
+// _cQryG1 += " AND SG1.D_E_L_E_T_ <> '*' "
+// _cQryG1 += " AND SB1.D_E_L_E_T_ <> '*' " 
+
+/*
+  	_cQryG1 := "SELECT 	G1_COD COD, G1_COMP COMPONENTE, G1_QUANT QTDNEC,G1_PERDA PERDA,                             "
+	_cQryG1 += "        ISNULL(B2_QATU - B2_QEMP-B2_RESERVA, 0) SALDO_DISPONIVEL,                                   "
+	_cQryG1 += "    	ISNULL(B2_QATU, 0) ATUAL, ISNULL(B2_QEMP, 0) EMPENHO,                                       "
+	_cQryG1 += "        ISNULL(B2_RESERVA, 0) RESERVA, B1_TIPO TIPO ,                                               "
+	_cQryG1 += "    	ISNULL(B2_LOCAL, '') ARM                                                                    "
+	_cQryG1 += "FROM 	" + RETSQLNAME("SG1") + " SG1                                                               "
+	_cQryG1 += "LEFT  JOIN " + RETSQLNAME("SB2") + " SB2 ON (B2_COD = G1_COMP AND B2_LOCAL = '" + _cLoc + "'        "
+	_cQryG1 += "                                         AND B2_FILIAL = '" + xFilial("SG1") + "'                   "
+	_cQryG1 += "                                         AND B2_FILIAL = G1_FILIAL AND SB2.D_E_L_E_T_ <> '*')       "
+	_cQryG1 += "INNER JOIN " + RETSQLNAME("SB1") + " SB1 ON (B1_TIPO NOT IN ('MO','BN') AND SB1.D_E_L_E_T_ <> '*')  "
+	_cQryG1 += "WHERE 	G1_COD = '" + _cCod + "'                                                                    "
+	_cQryG1 += "    AND G1_COMP = B1_COD                                                                            "
+	_cQryG1 += "    AND G1_FILIAL = '" + xFilial("SG1") + "'                                                        "
+	_cQryG1 += "    AND ((G1_REVFIM >= '" + _cRev + "' AND G1_REVINI <= '" + _cRev + "'))                           "
+	_cQryG1 += "    AND SG1.D_E_L_E_T_ <> '*'                                                                       "
+*/
+
+	_cQryG1 := "SELECT 	G1_COD COD, G1_COMP COMPONENTE, G1_QUANT QTDNEC,G1_PERDA PERDA,                             "
+	_cQryG1 += "        SUM(ISNULL(B2_QATU - B2_QEMP-B2_RESERVA, 0)) SALDO_DISPONIVEL,                                   "
+	_cQryG1 += "    	SUM(ISNULL(B2_QATU, 0)) ATUAL, SUM(ISNULL(B2_QEMP, 0)) EMPENHO,                                       "
+	_cQryG1 += "        SUM(ISNULL(B2_RESERVA, 0)) RESERVA, B1_TIPO TIPO                                               "
+   //	_cQryG1 += "    	ISNULL(B2_LOCAL, '') ARM                                                                    "
+	_cQryG1 += "FROM 	" + RETSQLNAME("SG1") + " SG1                                                               "
+	_cQryG1 += "LEFT  JOIN " + RETSQLNAME("SB2") + " SB2 ON (B2_COD = G1_COMP AND B2_LOCAL IN ( '" + _cLoc + "','11')        "
+	_cQryG1 += "                                         AND B2_FILIAL = '" + xFilial("SG1") + "'                   "
+	_cQryG1 += "                                         AND B2_FILIAL = G1_FILIAL AND SB2.D_E_L_E_T_ <> '*')       "
+	_cQryG1 += "INNER JOIN " + RETSQLNAME("SB1") + " SB1 ON (B1_TIPO NOT IN ('MO','BN') AND SB1.D_E_L_E_T_ <> '*')  "
+	_cQryG1 += "WHERE 	G1_COD = '" + _cCod + "'                                                                    "
+	_cQryG1 += "    AND G1_COMP = B1_COD                                                                            "
+	_cQryG1 += "    AND G1_FILIAL = '" + xFilial("SG1") + "'                                                        "
+	_cQryG1 += "    AND ((G1_REVFIM >= '" + _cRev + "' AND G1_REVINI <= '" + _cRev + "'))                           "
+	_cQryG1 += "    AND SG1.D_E_L_E_T_ <> '*'                                                                       "
+    _cQryG1 += "    GROUP BY G1_COD,G1_COMP,G1_QUANT,G1_PERDA,B1_TIPO                                                 "
+
+
+
+
+
+// Cleiton - 02/10/2008
+
+/*
+ELSE
+_cQryG1 := " SELECT G1_COD COD , G1_COMP COMPONENTE, G1_QUANT QTDNEC ,SUM((B2_QATU - B2_QEMP-B2_RESERVA)) SALDO_DISPONIVEL , "
+_cQryG1 += " SUM(B2_QATU) ATUAL, SUM(B2_QEMP) EMPENHO,SUM(B2_RESERVA) RESERVA, B1_TIPO TIPO  "
+_cQryG1 += " FROM "+RETSQLNAME("SB2")+" SB2, "+RETSQLNAME("SG1")+" SG1, "+RETSQLNAME("SB1")+" SB1 "
+_cQryG1 += " WHERE G1_COD = '"+_cCod+"' "
+_cQryG1 += " AND B2_COD = G1_COMP  "
+_cQryG1 += " AND G1_COMP = B1_COD "
+_cQryG1 += " AND G1_FILIAL = '"+xFilial("SG1")+"'
+_cQryG1 += " AND B1_TIPO NOT IN ('MO','BN') " 
+_cQryG1 += " AND ((G1_REVFIM >= '"+_cRev+"' AND G1_REVINI = '"+_cRev+"') OR (G1_REVFIM = 'ZZZ'))  "
+_cQryG1 += " AND B2_LOCAL IN ('"+_cLoc+"','10') "
+_cQryG1 += " AND B2_FILIAL = '"+xFilial("SB2")+"' "
+_cQryG1 += " AND B2_FILIAL = G1_FILIAL "
+_cQryG1 += " AND SB2.D_E_L_E_T_ <> '*' "
+_cQryG1 += " AND SG1.D_E_L_E_T_ <> '*' "
+_cQryG1 += " AND SB1.D_E_L_E_T_ <> '*' " 
+_cQryG1 += " GROUP BY G1_COD ,G1_COMP ,SG1.G1_QUANT,B1_TIPO  " 
+
+ENDIF
+
+*/
+
+
+dbUseArea(.T.,"TOPCONN",TcGenQry(,,_cQryG1),'TMP',.F.,.T.)
+
+TMP->(DBGOTOP())
+
+IF TMP->(EOF())
+	//ALERT("Produto sem Estrutura Cadastrada","Produto:"+_cCod)
+	ALERT("Produto sem Saldo Inicial","Produto:"+_cCod)
+	  
+	
+	DBSELECTAREA("TMP")
+	If Select("TMP") > 0
+		TMP->(DBCLOSEAREA())
+	Endif
+	
+	RESTAREA(_aAreaAt)
+	
+	Return(_nQtOp)
+ENDIF
+
+_cPerdaPA:=0        	// ZANARDO VARIAVEL QUE IRA GUARDAR A PERDA DO PA/PI PARA ACRESCER NO COMPONENTE 12/12/08
+
+DO WHILE TMP->(!EOF())
+_nBase := Posicione("SB1",1,xfilial("SB1")+_cCod,"B1_QB")
+
+IF SB1->B1_TIPO $ 'PA*PI'     	// ZANARDO IF QUE GUARDA A PERDA DE PA/PI PARA ACRESCER NO COMPONENTE 12/12/08
+	_cPerdaPA:=PERDA
+ELSE
+	_cPerdaPA:=0
+ENDIF
+
+_nQut := (TMP->QTDNEC * _nQtOp)/_nBase                                       
+
+_nPerda:= TMP->PERDA*((100+_cPerdaPA))/100  	// CRIA UMA VARIAVEL COM A PERDA DO COMPONENTE ACRESCIDA DA PERDA EM % DO PA/PI
+
+_nQut := _nQut+(_nQut*_nPerda/100)
+
+If _nQut > TMP->SALDO_DISPONIVEL  	  
+
+_cQut  :=  Transform(_nQut,"@E 999,999,999.999")                                                                     
+_cSald :=  Transform(TMP->SALDO_DISPONIVEL,"@E 999,999,999.999")
+_cDif  :=  Transform(TMP->SALDO_DISPONIVEL - _nQut,"@E 999,999,999.999")
+_cAtu  :=  Transform(TMP->ATUAL,"@E 999,999,999.999")
+_cEmp  :=  Transform(TMP->EMPENHO,"@E 999,999,999.999")
+_cRes  :=  Transform(TMP-> RESERVA,"@E 999,999,999.999")
+
+ //if SM0->M0_CODFIL == '01'                       
+	AADD(_aItens,{TMP->COD , TMP->COMPONENTE, _cQut ,  _cSald ,_cDif ,_cAtu, _cEmp,_cRes ,'10+11', TMP->TIPO}) //TMP->ARM
+ //ELSE	
+ //	AADD(_aItens,{TMP->COD , TMP->COMPONENTE, _cQut ,  _cSald ,_cDif ,_cAtu, _cEmp,_cRes ,'10+11', TMP->TIPO})
+ //ENDIF
+_lok := .t.
+Endif                                
+
+dbskip()
+
+ENDDO
+      
+DBSELECTAREA("SB1")
+SB1->(DBCLOSEAREA())
+
+If _lok
+	DEFINE FONT oFont NAME "Arial" SIZE 0,-12 BOLD
+	DEFINE MSDIALOG oDlg FROM 096,042 TO 350,580 TITLE "Saldo Nao Disponivel" PIXEL
+	@ 11,3 To 113,264 Title OemToAnsi(" Não Disponivel para Produção - "+_cCod+"   ")
+	@ 030,012 LISTBOX oListBox1 VAR cListBox1 Fields HEADER ;
+								OEMTOANSI("Componente"),;
+								OEMTOANSI("Qtd Necessaria"),;
+								OEMTOANSI("Saldo_Disponivel"),;
+								OEMTOANSI("Diferenca"),;							
+								OEMTOANSI("Saldo_Atual"),;
+								OEMTOANSI("Empenho"),;
+								OEMTOANSI("Reserva"),;
+							   	OEMTOANSI("Arm"),;
+								OEMTOANSI("Tipo") ;
+								FIELDSIZES ;
+								GetTextWidth(0,"BBBBBBBBBBB"),; 
+								GetTextWidth(0,"BBBBBBBBBBB"),;
+								GetTextWidth(0,"BBBBBBBBBBB"),;
+								GetTextWidth(0,"BBBBBBBBBBB"),;
+								GetTextWidth(0,"BBBBBBBBBBB"),;
+								GetTextWidth(0,"BBBBBBBBBBB"),;
+								GetTextWidth(0,"BBBBBBBBBBB"),;
+							   	GetTextWidth(0,"BBBB"),;
+								GetTextWidth(0,"BBBB");
+								SIZE 245,060 NOSCROLL PIXEL
+	oListBox1:SetArray(_aItens)
+	oListBox1:bLine 		:= {|| {	   _aItens[oListBox1:nAt,2],;
+											_aItens[oListBox1:nAt,3],;
+											_aItens[oListBox1:nAt,4],;
+											_aItens[oListBox1:nAt,5],;
+											_aItens[oListBox1:nAt,6],;
+											_aItens[oListBox1:nAt,7],;
+											_aItens[oListBox1:nAt,8],;
+								 			_aItens[oListBox1:nAt,9],;
+											_aItens[oListBox1:nAt,10] }}
+	
+ 
+	@ 095,230 BmpButton Type 1 Action  oDlg:End()
+	ACTIVATE DIALOG oDlg CENTERED
+
+Endif       
+
+DBSELECTAREA("TMP")
+If Select("TMP") > 0
+	TMP->(DBCLOSEAREA())                                                 
+	
+	
+Endif
+
+RESTAREA(_aAreaB1)
+RESTAREA(_aAreaC2)
+RESTAREA(_aAreaAt)
+
+_aItens := {}     
+
+RETURN(_nQtOp)
+
+

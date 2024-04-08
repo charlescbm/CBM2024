@@ -593,8 +593,8 @@ While !EOF() .And. SC6->C6_FILIAL == xFilial('SC6') .And. SC6->C6_NUM == _cPV   
 
 	nPLiqui += ( SC6->C6_QTDVEN * SB1->B1_PESO )
 	nPBruto += ( SC6->C6_QTDVEN * SB1->B1_PESBRU )
-	//nVol3   += Round(SC6->C6_QTDVEN * SB1->B1_XALTURA * SB1->B1_XLARG * SB1->B1_XCOMPR,4)   	
-	nVol3   += Round(SC6->C6_QTDVEN * SB1->B1_XVOL,4)   	
+	nVol3   += Round(SC6->C6_QTDVEN * SB1->B1_XALTURA * SB1->B1_XLARG * SB1->B1_XCOMPR,5)   	
+	//nVol3   += Round(SC6->C6_QTDVEN * SB1->B1_XVOL,4)   	
 	nVolCx  += SC6->C6_QTDVEN
 
 	select SC6
@@ -797,7 +797,7 @@ _nLin += _NCBLINFO+(_NCBLINFO/2)
 //oPrn:Say(_nLin,120,OemToAnsi('2) NO CASO DE VENDA PARA REVEDAS, A SUBSTITUIÇÃO TRIBUTÁRIA INCIDENTE EM SERINGAS, AGULHAS, ETC, SERÁ COBRADO NA NF'),oFont08F)
 oPrn:Say(_nLin,120,OemToAnsi('2) VALIDADE: 7 DIAS'),oFont08F)
 _nLin += _NCBLINFO+(_NCBLINFO/2)
-oPrn:Say(_nLin,120,OemToAnsi('3)PEDIDO MINIMO: R$ 1.600,00 '),oFont08F)
+oPrn:Say(_nLin,120,OemToAnsi('3)PEDIDO MINIMO: R$ 1.500,00 '),oFont08F)
 _nLin += _NCBLINFO
 oPrn:Say(_nLin,120,OemToAnsi('4)FRETE : CIF/FOB(DEPENDE DA REGIAO'),oFont08F)
 _nLin += _NCBLINFO

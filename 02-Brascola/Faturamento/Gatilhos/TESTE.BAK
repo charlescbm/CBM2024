@@ -1,0 +1,18 @@
+#INCLUDE "Protheus.ch"
+#INCLUDE "TopConn.ch"
+#INCLUDE "TbiConn.ch"
+#INCLUDE "Font.ch"
+
+Static Function TESTEY(dtos(cData)) 
+
+Local lRet := .T.
+                              
+If ( cData > dDatabase)
+	If MsgYesNo (" ATENÇÃO !!! Pedido " + SC6->C6_NUM + " com data de liberação"+chr(13)+chr(10)+" maior que Data atual. Deseja Continuar ? " )
+		lRet := .T.
+	Else
+		lRet := .F.
+	Endif	
+EndIf   
+
+Return lRet

@@ -1,0 +1,354 @@
+#include "protheus.ch"
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³MT100LOK  ºAutor  ³Andreza Favero      º Data ³  11/01/05   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³Ponto de entrada nas linhas da nf de entrada para checar a  º±±
+±±º          ³necessidade de digitacao do centro de custo.                º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ Especifico Brascola                                        º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºAlteracoes³ 05.01.07 - Elias Reis - Verifica se o usuario consta no    º±±
+±±º          ³            parametro BR_000014, para permitir digitacao    º±±
+±±º          ³            de  documentos que geram financeiro sem um      º±±
+±±º          ³            pedido de compras                               º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+User Function Mt100lok()
+
+Local aArea	:= GetArea()
+Local lOk	:= .t.
+Local cItem	:= BuscAcols("D1_ITEM")
+Local cProduto	:= BuscAcols("D1_COD")
+Local cCCusto	:= BuscAcols("D1_CC")
+Local cRateio	:= BuscAcols("D1_RATEIO")
+Local nQuant	:= BuscAcols("D1_QUANT")
+Local cAlmox	:= BuscAcols("D1_LOCAL")
+Local cLote 	:= BuscAcols("D1_LOTECTL")
+Local cLotFor 	:= BuscAcols("D1_LOTEFOR")
+Local cConta	:= BuscAcols("D1_CONTA")  
+Local dValid	:= BuscAcols("D1_DTVALID")
+Local cLocDev	:= GetMv("BR_LCDEVOL")
+Local cTes	:= BuscAcols("D1_TES")
+Local lAtuEst	:= .f.
+Local lGeraDup  := .f.
+Local cMes := strzero(MONTH(DDATABASE),2)
+Local cAno := substr(alltrim(str(YEAR(DDATABASE))),3,2)
+Local nCont := 1 
+Private cParam := getmv("MV_PRXLOTE")
+//Private cRotina := Alltrim(Funname()) //Fernando: 14/06/13
+
+
+//Local cLocFrac	:= GetMv("BR_LOCFRAC")
+
+If !(aCols[n,Len(aHeader)+1])  // testa se a linha esta deletada
+
+	
+	SB1->(dbSetOrder(1))
+	SB1->(MsSeek(xFilial("SB1")+cProduto,.T.))
+	SF4->(dbSetOrder(1))
+	SF4->(MsSeek(xFilial("SF4")+cTes,.T.))
+	If (Alltrim(SB1->B1_grupo) == "92").and.(SF4->F4_estoque != "S")
+		Aviso(	"Regra de Compras",;
+			"Para produtos do grupo 92, utilizar TES que movimente estoque!",;
+			{"&Ok"},,;
+			"Prouto: "+AllTrim(cProduto) )
+		lOk := .f.
+	Endif
+
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Nao e permitida a entrada de produto PA com quantidade fracionada.³
+	//³Incluido em 15/12/05 por Andreza Favero                           ³
+	//³                                                                  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+/*	
+	DbSelectArea("SF4")
+	DbSetOrder(1)
+	
+	If MsSeek(xFilial("SF4")+cTes)
+		If SF4->F4_ESTOQUE == "S"
+			lAtuEst	:= .t.
+		Else
+			lAtuEst	:= .f.
+		EndIf
+		
+		//Verifica a geracao de duplicatas para a customizao
+		//feita abaixo por elias reis, em 16.01.07
+		If SF4->F4_DUPLIC == "S"
+			lGeraDup := .T.
+		EndIf
+	EndIf
+*/	
+/*
+	DbSelectArea("SB1")
+	DbSetOrder(1)
+	
+	If MsSeek(xFilial("SB1")+cProduto)
+		cConta	:= SB1->B1_CONTA
+		cGrupo  := SB1->B1_GRUPO
+	EndIf
+
+	If Alltrim(SB1->B1_TIPO) == "3" .and. nQuant <> Int(nQuant) 
+		Aviso(	"Documento de entrada",;
+		"Produtos do tipo PA (Produto Acabado) com quantidade fracionada não podem ser adquiridos. Verifique! " ,;
+		{"&Ok"},,;
+		"Produto: "+AllTrim(cProduto) )
+		lOk	:= .f.
+	EndIf
+	
+	If substr(cTipo,1,1) == "N" .and. Alltrim(SB1->B1_TIPO) $ '1*2*3*' .AND.  EMPTY(cLotFor) .AND. SB1->B1_RASTRO == 'L'
+		msgalert("Para a entrada de Materia Prima/Produto Acabado/Embalagem informar o Campo lote Fornec e a Data de Validade. Verifique!")
+		lOk	:= .f.
+	ElseIf substr(cTipo,1,1) == "N" .and. Alltrim(SB1->B1_TIPO) $ '1*2*3*' .AND.  !EMPTY(cLotFor) .AND. SB1->B1_RASTRO == 'L' // incluido por Charles para criar Lote Brascola  
+		
+		// Validação que verifica se item lote fornecedor ja foi digitado//
+		///////////////////////////////////////////////////////////////////
+		   
+		   If cItem == '0001'
+		   					
+		      Lote()
+		      
+		      nCont := 1
+		      
+		   Else     
+		   
+		    
+  				While nCont <> N 
+					
+					If cProduto == (aCols[nCont][2]) .and. cLotFor == aCols[nCont][8]
+						(aCols[n][38]) := aCols[nCont][38]
+						nCont := N
+					Else
+						nCont := nCont+1
+						dbSkip()
+					Endif					
+ 				EndDo
+ 				
+ 				If Empty((aCols[n][38]))
+					lote()
+				Endif
+ 				
+ 			Endif
+	EndIf
+ */
+/*	
+	If substr(cTipo,1,1) == "N" .and. SB1->B1_TIPO == 'EM' .AND.  EMPTY(cLote) .AND. SB1->B1_RASTRO == 'L'
+		nPos1 := ascan(aHeader,{|m| alltrim(m[2]) == "D1_LOTECTL" })
+		nPos2 := ascan(aHeader,{|m| alltrim(m[2]) == "D1_DTVALID" })
+		aCols[n,nPos1]:= '999999'
+		aCols[n,nPos2]:= stod('20101231')
+		lOk	:= .T.
+	ENDIF
+*/	
+	//If substr(cTipo,1,1) == "D" .and. cAlmox  <> '40' .and. !(Upper(AllTrim(cUserName))$Upper(GetMv("BR_000076")))
+	//	Aviso(	"Documento de entrada",;
+	//	"Para devolucoes de venda interna utilizar o almoxarifado 40 . Verifique!" ,;
+	//	{"&Ok"},,;
+	//	"Almoxarifado atual: "+AllTrim(cAlmox) )
+	//	lOk	:= .f.
+	//EndIf
+	
+   
+	If substr(cTipo,1,1) == "D" .and. !cAlmox $ cLocDev
+		Aviso(	"Documento de entrada",;
+		"Para devolucoes de venda utilizar o almoxarifado "+Alltrim(cLocDev)+" . Verifique!" ,;
+		{"&Ok"},,;
+		"Almoxarifado atual: "+AllTrim(cAlmox) )
+		lOk	:= .f.
+	EndIf    
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Validação para nao deixar dar entrada em nota normal dos produtos ³
+	//³tipo 1, 2 e 3 sem data de validade                                ³
+	//³Implantado por Charles no dia 03/04/2014 - solicitação - Lab e Log³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		
+	SB1->(dbSetOrder(1))
+	SB1->(MsSeek(xFilial("SB1")+cProduto,.T.))
+	If (Alltrim(SB1->B1_TIPO) $ ('1/2/3')) .and. substr(cTipo,1,1) == "N" .and. Empty(dValid)
+		Msgalert("Produtos do tipo 1, 2 e 3, Nao podem ser lancados sem data de validade",;
+			{"&Ok"},,;
+			"Prouto: "+AllTrim(cProduto) )
+		lOk := .f.
+	Endif
+	
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Consistencia da digitacao do centro de custo.                     ³
+	//³                                                                  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	
+	If !Empty(cConta)
+		DbSelectArea("CT1")
+		DbSetOrder(1)
+	
+		If MsSeek(xFilial("CT1")+cConta)
+			If CT1->CT1_CCOBRG == "1" .AND. Empty(cCCusto) //.and. cRateio <> "1"		// obriga a digitacao de centro de custo
+				Aviso(	"Regra Contábil",;
+				"Conta definida na regra de contabilização exige a digitação do centro de custo ou rateio de centro de custo.",;
+				{"&Ok"},,;
+				"Conta: "+AllTrim(cConta) )
+				lOk	:= .f.
+			EndIf
+		EndIf
+	EndIf
+	
+	If !Empty(cCCusto)
+		DbSelectArea("CTT")
+		DbSetOrder(1)
+	
+		If !MsSeek(xFilial("CTT")+cCCusto)
+			Aviso(	"Regra Contábil",;
+			"O centro de custo informado nao existe.",;
+			{"&Ok"},,;
+			"C.Custo: "+AllTrim(cCCusto) )
+			lOk	:= .f.
+		Else
+			If CTT->CTT_CLASSE == "1"
+				Aviso(	"Regra Contábil",;
+				"O centro de custo informado é sintético. Escolha um centro de custo analítico.",;
+				{"&Ok"},,;
+				"C.Custo: "+AllTrim(cCCusto) )
+				lOk	:= .f.
+			EndIf
+			
+			If CTT->CTT_BLOQ == "1"
+				Aviso(	"Regra Contábil",;
+				"O centro de custo informado está bloqueado e, portanto, não pode ser usado.",;
+				{"&Ok"},,;
+				"C.Custo: "+AllTrim(cCCusto) )
+				lOk	:= .f.
+			EndIf	
+		EndIf
+	EndIf
+
+
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Validacao de o usuario logado pode lancar documentos de ³
+	//³entrada sem fazer mencao ao pedido de compras.          ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If lOk
+		_cPedido := BuscAcols("D1_PEDIDO")
+		If Len(AllTrim(_cPedido))==0 .And. substr(cTipo,1,1)='N'
+			If SF4->F4_DUPLIC=="S"
+				If !(Upper(AllTrim(cUserName))$Upper(GetMv("BR_000007"))) .AND. (!l103Auto)//Fernando: 14/06/13
+					Aviso(	"Pedido de Compra",;
+					"Usuário sem permissão para lancar documentos que movimentam financeiro "+Chr(13)+Chr(10)+;    
+					" sem Pedido de Compra.",;
+					{"&Ok"},,;
+					"Usuário : "+AllTrim(cUserName))
+					lOk	:= .f.
+				Endif
+			Endif
+		EndIf
+	EndIf
+
+/*	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Validacao se o prestador de servico possui saldo no mes ³
+	//³para lancamento de NOTA FISCAL.                         ³
+	//³Elias Reis - 16.01.07                                   ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If lOk .And. lGeraDup
+		_aArray := U_RFISA05(CA100FOR,CLOJA,FirstDay(DDEMISSAO),LastDay(DDEMISSAO))
+		If _aArray[1]
+			//Compara se o saldo retornado e' maior ou igual ao saldo a ser lancado
+			nPosTotal := Ascan(aHeader,{|m|Alltrim(m[2])=="D1_TOTAL"}) // Posicao do Campo na Matriz
+			_nSaldo   := 0
+		   	For ix := 1 To Len(aCols)
+		   		 _nSaldo += aCols[ix,nPosTotal]
+		   	End
+			
+			If _aArray[2] < _nSaldo
+				Aviso(	"Valor do Prestador de Serviços",;
+				"Este prestador ultrapassou o valor mensal previsto em contrato, " + Chr(13)+Chr(10) +;
+				"ou o contrato está fora da vigência !",;
+				{"&Ok"},,;
+				"Cod. : "+CA100FOR)
+				lOk	:= .f.
+			EndIf
+		EndIf
+	Endif
+*/	
+	// Para não enviar ao CQ, na entrada da nota, as importações.
+ //	If ( SA2->A2_EST = 'EX' ) .And. ( SB1->B1_TIPOCQ = 'Q' )
+ //		_nPos1:= ASCAN( aHeader, {|m| Alltrim(m[2] ) == "D1_LOCAL"  } )
+//		aCols[ n, _nPos1 ]:= '95'
+ //   EndIf
+
+ 	/*If substr(cTipo,1,1) == "D" .and. xfilial("SF1") == '04'
+  		_nPos1:= ASCAN( aHeader, {|m| Alltrim(m[2] ) == "D1_LOCAL"  } )
+   		aCols[ n, _nPos1 ]:= '41'
+    EndIf*/
+EndIf
+
+/*
+if xfilial("SD1") = '04' .and. substr(cCCUSTO,1,1) <> '4'
+MSGALERT("CENTRO DE CUSTO NÃO PERTENCE A JOINVILLE")
+lOk:=.f.
+ELSEIF xfilial("SD1") = '01' .and. substr(cCCUSTO,1,1) <> '1'
+MSGALERT("CENTRO DE CUSTO NÃO PERTENCE A SÃO BERNARDO")
+lOk:=.f.
+endif
+*/              
+
+Return(lOk) 
+
+// Gera novo lote Interno para item de entrada//
+/////////////////////////////////////////////////
+
+Static Function Lote()
+		
+	cLote := "" 
+	_cFilial:=xfilial("SD1")  
+		
+	cMes := strzero(MONTH(DDATABASE),2)
+	cAno := substr(alltrim(str(YEAR(DDATABASE))),3,2) 
+	
+	Do Case
+	   Case cMes = '01'
+	   		cMes = 'A'
+	   Case cMes = '02'
+	   		cMes = 'B'
+	   Case cMes = '03'
+	   		cMes = 'C'  		
+	   Case cMes = '04'
+	   		cMes = 'D'
+	   Case cMes = '05'
+	   		cMes = 'E'
+	   Case cMes = '06
+	   		cMes = 'F'
+	   Case cMes = '07'
+	   		cMes = 'G'
+	   Case cMes = '08'
+	   		cMes = 'H'  		
+	   Case cMes = '09'
+	   		cMes = 'I'
+	   Case cMes = '10'
+	   		cMes = 'J'
+	   Case cMes = '11'
+	   		cMes = 'L'
+	   Case cMes = '12'
+	   		cMes = 'M'   		
+	EndCase  
+	cLote := 'N'+cAno+cMes+cParam  
+	
+	(aCols[n][38]) := cLote
+
+	
+	dbselectarea("SX6")
+	dbsetorder(1)
+	dbseek(_cFilial+"MV_PRXLOTE")
+		if reclock("SX6",.F.)
+			replace X6_CONTEUD with strzero(val(cParam)+1,4)
+			msunlock()
+		EndIf 
+Return()

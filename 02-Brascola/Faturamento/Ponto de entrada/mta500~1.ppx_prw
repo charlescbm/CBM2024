@@ -1,0 +1,116 @@
+#line 1 "N:\PROTHE~1\INCLUDE\RWMAKE.CH"
+#line 1 "N:\PROTHE~1\INCLUDE\stdwin.ch"
+#line 14 "RWMAKE.CH"
+#line 2 "n:\PROTHE~1\MYPROJ~1\FATURA~1\PONTOD~1\MTA500~1.PRW"
+#line 1 "N:\PROTHE~1\INCLUDE\TOPCONN.CH"
+#line 4 "n:\PROTHE~1\MYPROJ~1\FATURA~1\PONTOD~1\MTA500~1.PRW"
+Function U_MTA500FTR()
+
+
+Local aRegs 	:= {}
+Local cFiltro	:= ""
+Local cQry1   	:= ""
+Local _cFilMarkb:= ""
+Local ped       := ""
+Local cValor    := Alltrim(Str(mv_par12 ,14,2))
+Local cGrupo    := ""
+Local cEst      := ""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+cGrupo:= AllTrim( MV_PAR14 )
+
+If !Empty( AllTrim( MV_PAR15 ) )
+	cGrupo+=  ";" + AllTrim( MV_PAR15 )
+EndIf
+
+cGrupo:= StrTran( cGrupo, ";", "-" )
+cGrupo:= StrTran( cGrupo, "*", "-" )
+
+cEst:= AllTrim( MV_PAR16 )
+
+cEst:= StrTran( cEst, ";", "-" )
+cEst:= StrTran( cEst, "*", "-" )
+
+_cFilMarkb:= "C6_FILIAL == '" + xFilial("SC6") + "' .And. "
+_cFilMarkb+= "C6_NUM >= '"    + MV_PAR04       + "' .And. "
+_cFilMarkb+= "C6_NUM <= '"    + MV_PAR05       + "' .And. "
+_cFilMarkb+= "C6_PRODUTO >= '"+ MV_PAR07       + "' .And. "
+_cFilMarkb+= "C6_PRODUTO <= '"+ MV_PAR08       + "' .And. "
+_cFilMarkb+= "C6_BLQ<>'R ' .And. C6_BLQ<>'S ' .And. "
+_cFilMarkb+= "(C6_QTDVEN - C6_QTDENT)>0 .And. "
+_cFilMarkb+= "C6_RESERVA == '" + Space(Len( SC6->C6_RESERVA )) + "' .And. "
+_cFilMarkb+= "C6_ENTREG >= CtoD('" + DtoC( MV_PAR10 ) + "') .And. "
+_cFilMarkb+= "C6_ENTREG <= CtoD('" + DtoC( MV_PAR11 ) + "') .And. "
+
+If !Empty( cGrupo )
+	_cFilMarkb+= "!Posicione( 'SA1', 1 , xFilial('SA1') + C6_CLI + C6_LOJA, 'A1_GRPVEN' ) $ '" + cGrupo + "' .And. "
+EndIf
+
+If !Empty( MV_PAR16 )
+	_cFilMarkb+= "!Posicione( 'SA1', 1 , xFilial('SA1') + C6_CLI + C6_LOJA, 'A1_EST' ) $ '" + cEst   + "' .And. "
+EndIf
+
+_cFilMarkb+= "U_VALPEDBRW( C6_FILIAL, C6_NUM ) < " + cValor
+
+
+Return(_cFilMarkb)
+
+Function U_ValPedbrw(cFilAux,cNumPedAux)
+
+Local cQry    := ""
+Local nSaldPed:= 0
+
+cQry += "SELECT SUM((SC6.C6_QTDVEN-SC6.C6_QTDENT)*SC6.C6_PRCVEN) AS SALPED"
+cQry += "  FROM " +RetSQLName("SC6")+" SC6 "
+cQry += "  WHERE SC6.C6_FILIAL = '"+cFilAux+"'"
+cQry += "    AND SC6.C6_NUM = '"+cNumPedAux+"'"
+cQry += "    AND SC6.C6_BLQ <> 'R '"
+cQry += "    AND SC6.C6_BLQ <> 'S '"
+cQry += "    AND SC6.C6_QTDVEN > SC6.C6_QTDENT"
+cQry += "    AND SC6.D_E_L_E_T_ <> '*' "
+dbUseArea(.T., "TOPCONN", TCGENQRY(,,cQry), "TRAB" , .F. , .T. )
+dbGoTop()
+
+nSaldPed:= TRAB->SALPED
+
+dbCloseArea()
+
+DbSelectArea("SC6")
+
+Return(nSaldPed)

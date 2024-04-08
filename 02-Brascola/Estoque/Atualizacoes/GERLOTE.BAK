@@ -1,0 +1,29 @@
+#INCLUDE "rwmake.ch" 
+#INCLUDE "protheus.ch"   
+#INCLUDE "TopConn.ch"
+
+USER FUNCTION GERLOT()
+
+Local cAlias := Alias(),nRecno:=0,nOrder:=0,cRet:=""
+Local cNumLote:="",lFim:=.F.
+
+If GetMV('MV_PRXLOTQ', .T.)
+		dbSelectArea('SX6')
+		Do While !lFim
+			If MSRLock(Recno())
+				cNumLote := Right(Alltrim(X6_CONTEUD),5)
+				Replace X6_CONTEUD With Soma1(cNumLote)
+				Replace X6_CONTENG With X6_CONTEUD
+				Replace X6_CONTSPA With X6_CONTEUD
+				MsRUnlock(Recno())
+				lFim := .T.
+			Endif
+		EndDo
+	EndIf
+	dbSelectArea(cAlias)
+
+
+
+_LOTE:=cNumLote
+
+RETURN(_LOTE)

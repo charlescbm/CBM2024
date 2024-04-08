@@ -216,8 +216,8 @@ User Function SF2460I()
 		SD2->(msUnlock())
 
 		//Calcula Cubagem
-		//nCuba += Round(SD2->D2_QUANT * SB1->B1_XALTURA * SB1->B1_XLARG * SB1->B1_XCOMPR,4)   	
-		nCuba += Round(SD2->D2_QUANT * SB1->B1_XVOL,4)   	
+		nCuba += Round(SD2->D2_QUANT * SB1->B1_XALTURA * SB1->B1_XLARG * SB1->B1_XCOMPR,5)   	
+		//nCuba += Round(SD2->D2_QUANT * SB1->B1_XVOL,4)   	
 
 		SD2->(DbSkip())
 	EndDo

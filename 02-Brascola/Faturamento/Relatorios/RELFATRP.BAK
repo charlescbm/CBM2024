@@ -1,0 +1,333 @@
+#INCLUDE "rwmake.ch"
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณRELFATRP  บSERGIO LACERDA              บ Data ณ  09/08/05   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ    Faturamento por representantes                          บฑฑ
+ฑฑบ          ณ                                                            บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP                                                        บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+User Function RELFATRP()
+
+//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
+//ณ Declaracao de Variaveis                                             ณ
+//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
+Local cDesc1         := "Este programa tem como objetivo imprimir relatorio "
+Local cDesc2         := "de acordo com os parametros informados pelo usuario."
+Local cDesc3         := "RELATORIO DE FATURAMENTO POR REPRESENTANTE"
+Local cPict          := ""
+Local titulo         := "RELATORIO DE FATURAMENTO POR REPRESENTANTE"
+Local nLin           := 80
+Local Cabec1         := "Cliente/Loja Nome Cliente                                 Emissao NF   Nr. NF/Serie    Vlr. Total        Dt. Saida NF"
+Local Cabec2         := ""
+Local Cabec3         := "Produto        Descricao                                 Quantidade            NR. Pedido "
+Local Cabec4         := "Duplicata   Parcela     Valor Dupl.          Vencimento"
+Local imprime        := .T.
+Local aOrd           := {}
+Local cRepres        := ""
+
+Private lEnd         := .F.
+Private lAbortPrint  := .F.
+Private CbTxt        := ""
+Private limite       := 132
+Private tamanho      := "M"
+Private nomeprog     := "RELFAT" // Coloque aqui o nome do programa para impressao no cabecalho
+Private nTipo        := 15
+Private aReturn      := { "Zebrado", 1, "Administracao", 1, 2, 1, "", 1 }
+Private nLastKey     := 0
+Private cPerg        := U_CRIAPERG("RELFAT")
+Private cbtxt        := Space(10)
+Private cbcont       := 00
+Private CONTFL       := 01
+Private m_pag        := 01
+Private wnrel        := "RELFAT" // Coloque aqui o nome do arquivo usado para impressao em disco
+Private aRegs        := {}
+Private cString 	 := ''
+
+AADD( aRegs,{ cPerg, "01", "Da  Data ?"         ," Da  Data ?"         , "Da  Data ?"         , "mv_ch1", "D", 8, 0, 0, "G", "", "MV_PAR01", ""   ,"", "", "", "", ""   , "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" } )
+AADD( aRegs,{ cPerg, "02", "Ate Data ?"         ," Ate Data ?"         , "Ate Data ?"         , "mv_ch2", "D", 8, 0, 0, "G", "", "MV_PAR02", ""   ,"", "", "", "", ""   , "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" } )
+Aadd( aRegs,{ cPerg, "03", "Imprime Detalhes  ?"," Imprime Detalhes  ?", "Imprime Detalhes  ?", "mv_ch3", "N", 1, 0, 0, "C", "", "mv_par03", "Sim","", "", "", "", "Nao", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "" } )
+lValidPerg(aRegs)
+Pergunte( cPerg, .f. )                         
+
+//04/02/13 - Marcelo - Filtro dos Representantes
+////////////////////////////////////////////////
+If (u_BXRepAdm()) //Parametro/Presitente/Diretor
+	cRepres := "" //Liberar para todos
+Else
+	cRepres := u_BXRepLst("SQL") //Lista dos Representantes
+	If Empty(cRepres)
+		Help("",1,"BRASCOLA",,OemToAnsi("Sem acesso ao cadastro de representantes! Favor verificar."),1,0) 
+		Return
+	Endif
+Endif
+
+//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
+//ณ Monta a interface padrao com o usuario...                           ณ
+//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
+wnrel:= SetPrint( cString, NomeProg, cPerg, @titulo, cDesc1, cDesc2, cDesc3, .T., aOrd, .T., Tamanho,, .T. )
+
+If nLastKey == 27
+	Return
+Endif
+
+SetDefault(aReturn,cString)
+
+If nLastKey == 27
+	Return
+Endif
+
+nTipo:= If( aReturn[4] == 1, 15, 18 )
+
+//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
+//ณ Processamento. RPTSTATUS monta janela com a regua de processamento. ณ
+//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
+RptStatus({|| RunReport(Cabec1,Cabec2,Titulo,nLin,Cabec3,Cabec4,cRepres ) },Titulo)
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบFuno    ณRUNREPORT บ Autor ณ AP6 IDE            บ Data ณ  09/08/05   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDescrio ณ Funcao auxiliar chamada pela RPTSTATUS. A funcao RPTSTATUS บฑฑ
+ฑฑบ          ณ monta a janela com a regua de processamento.               บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ Programa principal                                         บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+/*/
+Static Function RunReport( Cabec1, Cabec2, Titulo, nLin, Cabec3, Cabec4, cRepres )
+
+Local _aRegs2	:= {}
+Local _NumVez   := 0
+Local _TotACliNF:= 0
+Local _TotACliDP:= 0
+Local _TotGCliNF:= 0
+Local _TotGCLIDP:= 0
+Local _TotGRepNF:= 0
+Local _TotGRepDP:= 0
+Local _CodVend  := ''
+Local _NomVend  := ''
+Local _CodCli   := ''
+Local _NumDoc   := ''
+Local _Serie    := ''
+Local cQuery    := ''
+Local _dDataDe := MV_PAR01
+Local _dDataAte:= MV_PAR02
+
+//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
+//ณ SETREGUA -> Indica quantos registros serao processados para a regua ณ
+//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
+SetRegua(RecCount())
+
+If Empty( cRepres )
+	AADD( _aRegs2, { "FATAUX", "01", "Representante", "Representante", "Representante", "MV_CH1", "C", 6, 0, 0, "G", "", "MV_PAR01", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "SA3", "", "", "", "", "" } )
+	lValidPerg( _aRegs2 )
+	Pergunte( 'FATAUX', .t. )
+	cRepres:= MV_PAR01
+EndIf
+
+cQuery:= "SELECT SF2.F2_FILIAL, SF2.F2_DOC, SF2.F2_SERIE, SF2.F2_EMISSAO, SF2.F2_CLIENTE, SF2.F2_LOJA, SF2.F2_VEND1, "
+cQuery+= "SF2.F2_VALMERC, SF2.F2_DUPL, SF2.F2_DTSAIDA, SA1.A1_NOME, SD2.D2_COD, SD2.D2_UM, SD2.D2_PEDIDO, SD2.D2_QUANT, SB1.B1_DESC, SD2.D2_ITEM "
+cQuery+= "FROM " + RetSqlName("SF2") + " SF2, " + RetSqlName("SD2") + " SD2, " + RetSqlName("SB1") + " SB1, " + RetSqlName("SA1") + " SA1 "
+cQuery+= "WHERE SF2.F2_EMISSAO BETWEEN '" + DtoS(_dDataDe) + "' AND '" + DtoS(_dDataAte) + "' "
+cQuery+= "AND SF2.F2_FILIAL = '"  + xFilial("SF2") + "' "
+cQuery+= "AND SF2.F2_TIPO   = 'N' "
+cQuery+= "AND SF2.F2_VEND1 IN (" + cRepres + ") "
+cQuery+= "AND SF2.D_E_L_E_T_ <> '*' "
+cQuery+= "AND SD2.D2_FILIAL  = SF2.F2_FILIAL "
+cQuery+= "AND SD2.D2_DOC     = SF2.F2_DOC "
+cQuery+= "AND SD2.D2_SERIE   = SF2.F2_SERIE "
+cQuery+= "AND SD2.D_E_L_E_T_ <> '*' "
+cQuery+= "AND SA1.A1_FILIAL  = '" + xFilial("SF4") + "' "
+cQuery+= "AND SA1.A1_COD     = SF2.F2_CLIENTE "
+cQuery+= "AND SA1.A1_LOJA    = SF2.F2_LOJA "
+cQuery+= "AND SA1.D_E_L_E_T_ <> '*' "
+cQuery+= "AND SB1.B1_FILIAL  = '" + xFilial("SB1") + "' "
+cQuery+= "AND SB1.B1_COD     = SD2.D2_COD "
+cQuery+= "AND SB1.D_E_L_E_T_ <> '*' "
+cQuery+= "ORDER BY F2_FILIAL, F2_VEND1, F2_DOC, F2_SERIE, D2_ITEM"
+
+cQuery := ChangeQuery(cQuery)
+
+//MemoWrite( "\QUERYSYS\FATDIA.SQL", cQuery )
+
+DbUseArea( .t., "TOPCONN", TcGenQry(,,cQuery), 'TRB', .f., .t. )
+
+DbSelectArea('TRB')
+DbGotop()
+
+SetRegua( RecCount() )
+
+While !Eof()
+	_TotGCliNF:= 0
+	_TotGCliDP:= 0
+	
+	DbSelectArea('SA3')
+	DbSetOrder(1)
+	
+	If DbSeek( XFILIAL('SA3') + TRB->F2_VEND1 , .f. )
+		_CodVend:= TRB->F2_VEND1
+		_NomVend:= AllTrim( SA3->A3_NOME )
+	Else
+		_CodVend:= TRB->F2_VEND1
+		_NomVend:= 'Nao cadastrado!...'
+	EndIf
+	
+	DbSelectArea('TRB')
+	
+	While !Eof() .And. ( _CodVend == TRB->F2_VEND1 )
+		
+		If lAbortPrint
+			@ nLin,000 PSAY "*** CANCELADO PELO OPERADOR ***"
+			Return
+		Endif
+		
+		_TotACliNF:= 0
+		_TotACliDP:= 0
+		_CodCli   := TRB->F2_CLIENTE
+		
+		DbSelectArea('TRB')
+		
+		While !Eof() .And. ( _CodCli == TRB->F2_CLIENTE )
+			If nLin > 55
+				nLin:= Cabec( Titulo, Cabec1, Cabec2, NomeProg, Tamanho, nTipo )
+				
+				@ ++nLin, 001 PSAY AllTrim( _CodVend ) + " - " + Alltrim( _NomVend )
+				++nLin
+			Endif
+			
+			@ ++nLin, 001 PSAY AllTrim( TRB->F2_CLIENTE ) + '/' + TRB->F2_LOJA
+			@   nLin, 013 PSAY AllTrim( TRB->A1_NOME )
+			@   nLin, 059 PSAY STOD( TRB->F2_EMISSAO )
+			@   nLin, 072 PSAY AllTrim( TRB->F2_DOC )     + '/' + TRB->F2_SERIE
+			@   nLin, 082 PSAY TRB->F2_VALMERC PICTURE '@E 9,999,999,999.99'
+			@   nLin, 106 PSAY StoD( TRB->F2_DTSAIDA )
+			
+			_TotACliNF+= TRB->F2_VALMERC
+			
+			_NumDoc:= TRB->F2_DOC
+			_Serie := TRB->F2_SERIE
+			
+			If MV_PAR03 == 2 // Sintetico
+				While !Eof() .And. ( _NumDoc + _Serie == TRB->F2_DOC + TRB->F2_SERIE )
+					DbSkip()
+				EndDo
+			Else // Analitico
+				nLin+= 2
+				
+				@   nLin, 001 PSAY "ITENS:"
+				@ ++nLin, 001 PSAY Cabec3
+				
+				While !Eof() .And. ( _NumDoc + _Serie == TRB->F2_DOC + TRB->F2_SERIE )
+					If nLin > 55
+						nLin:= Cabec( Titulo, Cabec1, Cabec2, NomeProg, Tamanho, nTipo )
+						@ ++nLin, 001 PSAY AllTrim( _CodVend ) + ' - ' + Alltrim( _NomVend )
+						++nLin
+					EndIf
+					
+					@ ++nLin, 001 PSAY AllTrim( TRB->D2_COD )
+					@   nLin, 016 PSAY Left( TRB->B1_DESC, 33 )
+					@   nLin, 052 PSAY TRB->D2_QUANT PICTURE "@E 9,999,999,999.99"
+					@   nLin, 080 PSAY TRB->D2_PEDIDO
+					
+					DbSkip()
+				EndDo
+				
+				nLin+= 2
+				
+				@   nLin, 001 PSAY "DUPLICATA(S):"
+				@ ++nLin, 001 PSAY Cabec4
+				
+				DbSelectArea('SE1')
+				DbSetOrder(1)
+				
+				If DbSeek( xFilial("SE1") + _Serie + _NumDoc, .f. )
+					While !Eof() .And. SE1->E1_PREFIXO == _Serie .And. SE1->E1_NUM == _NumDoc
+						If nLin > 55
+							nLin:= Cabec( Titulo, Cabec1, Cabec2, NomeProg, Tamanho, nTipo )
+							@ ++nLin, 001 PSAY AllTrim( _CodVend ) + ' - ' + Alltrim( _NomVend )
+							++nLin
+						EndIf
+						
+						@ ++nLin, 001 PSAY SE1->E1_NUM
+						@   nLin, 013 PSAY SE1->E1_PARCELA
+						@   nLin, 018 PSAY SE1->E1_VLCRUZ PICTURE "@E 9,999,999,999.99"
+						@   nLin, 047 PSAY DTOC(SE1->E1_VENCREA)
+						
+						_TotACliDP+= SE1->E1_VLCRUZ
+						DbSkip()
+					EndDo
+					
+					nLin++
+				Else
+					nLin+= 2
+				EndIf
+				
+			EndIf
+			
+			DbSelectArea('TRB')
+			
+		EndDo
+		
+		@ ++nLin, 001 PSAY 'TOTAL DO CLIENTE (MERCADORIA) ----------> R$'
+		@   nLin, 050 PSAY _TotACliNF PICTURE '@E 9,999,999,999.99'
+		@ ++nLin, 001 PSAY 'TOTAL DO CLIENTE (DUPLICATA)  ----------> R$'
+		@   nLin, 050 PSAY _TotACliDP PICTURE '@E 9,999,999,999.99'
+		
+		++nLin
+		
+		_TotGCliNF+= _TotACliNF
+		_TotGCliDP+= _TotACliDP
+		
+		DbSelectArea('TRB')
+		
+	EndDo
+	
+	@ ++nLin, 001 PSAY 'TOTAL REPRESENTANTE (MERCADORIA) -------> R$'
+	@   nLin, 050 PSAY _TotGCliNF PICTURE '@E 9,999,999,999.99'
+	
+	@ ++nLin, 001 PSAY 'TOTAL REPRESENTANTE (DUPLICATA)  -------> R$'
+	@   nLin, 050 PSAY _TotGCliDP PICTURE '@E 9,999,999,999.99'
+	
+	_TotGRepNF+= _TotGCliNF
+	_TotGRepDP+= _TotGCliDP
+	
+	++_NumVez
+	
+EndDo
+
+If ( nLin <> 80 ) .And. ( _NumVez > 1 )
+	If nLin > 60
+		Cabec( Titulo, Cabec1, Cabec2, NomeProg, Tamanho, nTipo )
+		nLin:= 8
+	Endif
+	
+	@++nLin , 001 PSAY 'TOTAL GERAL (MERCADORIA) ---------------> R$'
+	@  nLin , 050 PSAY _TotGRepNF PICTURE "@E 9,999,999,999.99"
+	
+	@++nLin , 001 PSAY 'TOTAL GERAL (DUPLICATA)  ---------------> R$'
+	@  nLin , 050 PSAY _TotGRepDP PICTURE "@E 9,999,999,999.99"
+EndIf
+
+DbSelectArea('TRB')
+DbCloseArea()
+
+If aReturn[5] == 1
+	DbCommitAll()
+	OurSpool(wnrel)
+Endif
+
+MS_FLUSH()
+
+Return

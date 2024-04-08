@@ -1,0 +1,168 @@
+/*
++----------------------------------------------------------------------------+
+!                         FICHA TECNICA DO PROGRAMA                          !
++----------------------------------------------------------------------------+
+!   DADOS DO PROGRAMA                                                        !
++------------------+---------------------------------------------------------+
+!Tipo              ! Atualização                                             !
++------------------+---------------------------------------------------------+
+!Modulo            ! FAT - Faturamento                                       !
++------------------+---------------------------------------------------------+
+!Nome              ! PE01NFESEFAZ                                            !
++------------------+---------------------------------------------------------+
+!Descricao         ! P.E. antes da geração do XML para NFESEFAZ              !
++------------------+---------------------------------------------------------+
+!Autor             ! PAULO AFONSO ERZINGER JUNIOR                            !
++------------------+---------------------------------------------------------+
+!Data de Criacao   ! 22/12/2011                                              !
++------------------+---------------------------------------------------------+
+*/
+
+#include "protheus.ch"
+
+User Function PE01NFESEFAZ()
+
+Local aProd		:= PARAMIXB[1]
+Local cMensCli	:= PARAMIXB[2]
+Local cMensFis	:= PARAMIXB[3]
+Local aDest		:= PARAMIXB[4] 
+Local aNota   	:= PARAMIXB[5]
+Local aInfoItem	:= PARAMIXB[6]
+Local aDupl		:= PARAMIXB[7]
+Local aTransp	:= PARAMIXB[8]
+Local aEntrega	:= PARAMIXB[9]
+Local aRetirada	:= PARAMIXB[10]
+Local aVeiculo	:= PARAMIXB[11]
+Local aReboque	:= PARAMIXB[12]    
+
+Local aRetorno	:= {}
+
+Local cRedesp   := ""
+Local cEndRed   := ""
+Local cA1Mens   := ""
+Local cAliasSD2 := "SD2" 
+Local cTpRed    := ""
+
+For i:=1 to Len(aProd)
+	dbSelectArea("SB1")
+	dbSetOrder(1)
+	dbGoTop()
+	If dbSeek(xFilial("SB1")+aProd[i,2])
+		If !Empty(SB1->B1_X_DESCB)
+			aProd[i,4] := SB1->B1_X_DESCB
+		EndIf
+	EndIf
+Next i
+
+dbSelectArea("SF2")
+dbSetOrder(1)
+dbGoTop()
+If dbSeek(xFilial("SF2")+PADR(aNota[2],TAMSX3("F2_DOC")[1])+aNota[1])
+	dbSelectArea("SA1")
+	dbSetOrder(1)
+	dbGoTop()
+	If dbSeek(xFilial("SA1")+SF2->F2_CLIENTE+SF2->F2_LOJA)
+		cTpRed := SA1->A1_x_tpred //Tipo de Redespacho
+		If SA1->A1_INTNFE == 'S'
+			For i:=1 to Len(aProd)
+				dbSelectArea("SA7")
+				dbSetOrder(1)
+				dbGoTop()
+				If dbSeek(xFilial("SA7")+SF2->F2_CLIENTE+SF2->F2_LOJA+aProd[i,2])
+					If !Empty(SA7->A7_CODCLI)
+						aProd[i,25] := 'cProdCliente:'+'"'+SA7->A7_CODCLI+'"'
+					EndIf
+					If !Empty(SA7->A7_DESCCLI)
+						aProd[i,4] := SA7->A7_DESCCLI
+					EndIf
+				EndIf
+			Next i
+		EndIf
+		
+		cA1Mens := SA1->A1_MENNOTA
+	EndIf
+
+	If !Empty(SF2->F2_REDESP)
+		dbSelectArea("SA4")
+		dbSetOrder(1)
+		dbGoTop()
+		If dbSeek(xFilial("SA4")+SF2->F2_REDESP)
+			cRedesp := Alltrim(SA4->A4_COD)+"-"+Alltrim(SA4->A4_NREDUZ)
+			cEndRed := Alltrim(SA4->A4_END) + " - " + Alltrim(SA4->A4_BAIRRO) + " - " + Alltrim(SA4->A4_MUN) + " - " + ALLTRIM(SA4->A4_EST) + " - "
+			cEndRed += "CNPJ: " + TRANSFORM(SA4->A4_CGC, "@R 99.999.999/9999-99") + " - IE: " + ALLTRIM(SA4->A4_INSEST)
+		EndIf
+	EndIf
+	
+	dbSelectArea("SD2")
+	dbSetOrder(3)
+	MsSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA)
+			
+	Do While  !SD2->(Eof ()) .And. ((cAliasSD2)->D2_DOC == SF2->F2_DOC .AND. (cAliasSD2)->D2_SERIE == SF2->F2_SERIE. And. (cAliasSD2)->D2_TIPO == "N")
+		If SD2->D2_PICM == 4  
+			cMensCli += iif(!Empty(cMensCli)," - ","")
+		  	cMensCli += "Item "+ ALLTRIM(SD2->D2_ITEM)+" - Alíquota de 4% ICMS cfme Resolução do Senado Federal N. 13/2012." //Fernando - 28/02/14: "Valor da Importação R$ "+ STR(SD2->D2_PRCVEN, 14, 2)+"."
+		EndIf
+		SD2->(DbSkip ())
+	EndDo 
+
+	If SF2->F2_TIPO == 'N'
+		cMensCli += iif(!Empty(cMensCli)," - ","")
+		cMensCli += "Pedido:"+aInfoItem[1][1]+" - Vendedor: "+SF2->F2_VEND1
+	EndIf
+	
+	If !Empty(cRedesp)
+		cMensCli += iif(!Empty(cMensCli)," - ","")
+		If !Empty(cTpRed)
+			cMensCli += "Redespacho ("+iif(cTpRed=="C","CIF","FOB")+"): " + cRedesp
+		Else
+			cMensCli += "Redespacho: " + cRedesp
+		Endif
+	EndIf
+
+	If !Empty(cEndRed)
+		cMensCli += iif(!Empty(cMensCli)," - ","")
+		cMensCli += "End. Redespacho: " + cEndRed
+	EndIf
+	
+	If SF2->F2_TIPO == 'N'
+		cMensCli += iif(!Empty(cMensCli)," - ","")
+		cMensCli += "Declaramos que os produtos estao adequadamente acondicionados para suportar os riscos normais de carregamentos, "
+		cMensCli += "descarregamentos, transporte e transbordos, conforme regulamentacao em vigor, art.6 e art.22 do decreto 96044 de 18/05/88. "
+		cMensCli += "Pagamento desta nota fiscal através de boleto. Caso não recebe boleto ate 2 dias antes, entrar em contato fone 08007241727. " 
+		cMensCli += "Confira a mercadoria no ato da entrega. Não aceitamos reclamações posteriores. Devoluções/Troca acesse www.brascola.com.br ou ligue 0800.727.1727."
+	EndIf
+	
+	cMensCli += cA1Mens
+EndIf
+
+//O retorno deve ser exatamente nesta 
+//ordem e passando o conteúdo completo dos arrays
+//pois no rdmake nfesefaz é atribuido o retorno completo para as respectivas variáveis
+//Ordem:
+//		aRetorno[1] -> aProd
+//		aRetorno[2] -> cMensCli
+//		aRetorno[3] -> cMensFis
+//		aRetorno[4] -> aDest
+//		aRetorno[5] -> aNota
+//		aRetorno[6] -> aInfoItem
+//		aRetorno[7] -> aDupl
+//		aRetorno[8] -> aTransp
+//		aRetorno[9] -> aEntrega
+//		aRetorno[10] -> aRetirada
+//		aRetorno[11] -> aVeiculo
+//		aRetorno[11] -> aReboque
+
+aadd(aRetorno,aProd)
+aadd(aRetorno,cMensCli)
+aadd(aRetorno,cMensFis)
+aadd(aRetorno,aDest)
+aadd(aRetorno,aNota)
+aadd(aRetorno,aInfoItem)
+aadd(aRetorno,aDupl)
+aadd(aRetorno,aTransp)
+aadd(aRetorno,aEntrega)
+aadd(aRetorno,aRetirada)
+aadd(aRetorno,aVeiculo)
+aadd(aRetorno,aReboque)
+
+Return aRetorno

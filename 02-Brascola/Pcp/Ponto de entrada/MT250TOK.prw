@@ -1,0 +1,42 @@
+#include "rwmake.ch"
+#include "topconn.ch"
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³ MT250TOK ºAutor  ³ Marcelo da Cunha   º Data ³  09/04/14   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Ponto de entrada para validar se OP foi liberada no CQ     º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+User Function MT250TOK()
+*********************
+LOCAL lRetu := .T., lAchei := .F., aSeg := GetArea()
+LOCAL lValQual := SuperGetMV("BR_000048",.F.,.F.)
+
+//Valido apontamento de producao
+////////////////////////////////
+If (INCLUI).and.(lValQual).and.!Empty(M->D3_op).and.((M->D3_quant+M->D3_perda) > 0)
+	QPK->(dbSetOrder(1)) //OP
+	QPK->(dbSeek(xFilial("QPK")+M->D3_op,.T.))
+	While !QPK->(Eof()).and.(xFilial("QPK") == QPK->QPK_filial).and.(QPK->QPK_op == M->D3_op)
+		If !Empty(QPK->QPK_laudo).and.(QPK->QPK_laudo$"ABC")
+			lAchei := .T.
+			Exit
+		Endif
+		QPK->(dbSkip())
+	Enddo
+	If (!lAchei)
+		Help("",1,"BRASCOLA",,OemToAnsi("A OP "+Alltrim(M->D3_op)+" nao foi inspeciodada! Favor verificar com o CQ."),1,0) 
+		lRetu := .F.
+	Endif
+	RestArea(aSeg)
+Endif
+
+Return (lRetu)

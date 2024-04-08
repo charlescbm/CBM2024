@@ -1,0 +1,81 @@
+<html>
+<head>
+<meta http-equiv="Content-Language" content="pt-br">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>Pesquisa de Satisfação </title>
+</head>
+<body bgcolor="#FFFFFF">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr>
+   <td align="left" width=410px><IMG hspace=0 src="http://extranet.brascola.com.br/brascotopo.jpg" align=baseline border=0></td>
+   <td align="left"><IMG width="100%" height=113px hspace=0 src="http://extranet.brascola.com.br/brascotopo1.jpg" align=baseline border=0></td>
+   <td align="right" width=261px><IMG hspace=0 src="http://extranet.brascola.com.br/brascotopo2.jpg" align=baseline border=0></td>
+</tr>
+</table>
+<br>
+<SPAN style="FONT-SIZE: 12pt; COLOR: green; FONT-FAMILY: Verdana; FONT-WEIGHT:bold">PESQUISA DE SATISFAÇÃO</SPAN>
+<br><br>
+<SPAN style="FONT-SIZE: 10pt; COLOR: black; FONT-FAMILY: Verdana">
+<% If !Empty(HttpSession->__c001Mensg) %>
+
+<%= HTMLAlltrim(HttpSession->__c001Mensg) %>
+
+<% Else %>
+Em busca de melhor atende-lo, a Brascola gostaria de solicitar sua opinião com relação ao nosso atendimento número <%= HttpSession->__c001Codigo %>.
+<hr>
+<FORM name="form" action="u_BWA001ATU.apw" method="post">
+<INPUT type="hidden" name="cCodigo" value="<%= HttpSession->__c001Codigo %>">
+<INPUT type="hidden" name="cChave" value="<%= HttpSession->__c001Chave %>">
+1) Sua solicitação foi atendida?&nbsp;
+<select name="cOpcao1">
+    <option value="NONE">---</option>
+    <option value="SIM">Sim</option>
+    <option value="NAO">Não</option>
+</select>
+<br>2) O tempo de atendimento foi satisfatório?&nbsp;
+<select name="cOpcao2">
+    <option value="NONE">---</option>
+    <option value="SIM">Sim</option>
+    <option value="NAO">Não</option>
+</select>
+<br>3) Qual é a sua opinião com relação ao atendimento?&nbsp;
+<select name="cOpcao3">
+    <option value="REGULAR">Regular</option>
+    <option value="BOM">Bom</option>
+    <option value="OTIMO">Ótimo</option>
+</select>
+<br>
+<INPUT type="submit" value="Enviar respostas"></TD>
+</FORM>
+<% Endif %>
+<hr>
+Atenciosamente,<br>
+Adm CAEC (Central de Atendimento Especial ao Cliente)<br>
+</SPAN> 
+<br>
+<table border=0 cellpadding="0" width="100%">
+<TR>
+<td width="20%"><IMG hspace=0 src="http://extranet.brascola.com.br/brascowork.gif" align=baseline border=0></td>
+<TD WIDTH="1%" BGCOLOR="#DCDCDC">&nbsp;</TD>
+<TD>
+<DIV>&nbsp;</DIV>
+<DIV align="left"><STRONG><SPAN style="FONT-SIZE: 10pt; COLOR: black; FONT-FAMILY: Verdana">Departamento de TI<br>BRASCOLA Ltda.</SPAN></STRONG></DIV>
+<DIV>&nbsp;</DIV>
+</TD></TR>
+<TR><TD COLSPAN="3" BGCOLOR="#F0F0F0">
+<DIV align="left"><SPAN style="FONT-SIZE: 7.5pt; COLOR: gray; FONT-FAMILY: Verdana">Site:
+<A style="COLOR: #808080; TEXT-DECORATION: underline; text-underline: single" href="http://www.brascola.com.br">www.brascola.com.br</A>&nbsp;
+Fone: (47) 0800-7241727 / CEP: 89219-600<BR>Rua Dona Francisca, 8300 - Bloco D - Distrito Industrial Norte / Joinville-SC-Brasil
+</SPAN></DIV>
+</TD></TR>
+<TR><TD COLSPAN="3">
+<FONT face="Webdings" color="#008080"><FONT size="6">P</FONT><SPAN lang="PT-BR"
+style="FONT-SIZE: 7.5pt; COLOR: #008080; FONT-FAMILY: Verdana">&nbsp;<B>Antes de
+imprimir</B> pense em sua responsabilidade e compromisso com o <B>MEIO
+AMBIENTE</B></SPAN></FONT>
+</TD></TR>
+</table>
+</body>
+</html>

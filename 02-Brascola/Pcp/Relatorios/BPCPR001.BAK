@@ -1,0 +1,4826 @@
+#INCLUDE "PROTHEUS.CH"
+#INCLUDE "RWMAKE.CH"
+#Include "QIPR041.CH"
+/*/
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Fun‡…o    ³ RPCPR03  ³ Autor ³ Jeferson Simao        ³ Data ³ 08.08.08 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Ordens de Producao                                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe e ³ RPCPR03                                                    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Exclusivo Brascola                                         ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+*/
+User Function BPCPR001()
+
+Local titulo  	 := "Ordens de Producao"
+Local cString 	 := "SC2"
+Local cDesc   	 := "Este programa ira imprimir a Rela‡„o das Ordens de Produ‡„o"
+Local aOrd    	 := {}	 // {"Por Numero","Por Produto","Por Centro de Custo","Por Prazo de Entrega"}
+Local aOpLiq  	 := {} 
+Local aRegs 	 := {}
+
+Private aReturn  := {"Zebrado", 1, "Administracao", 1, 2, 1, "",1 }
+Private cPerg    := U_CriaPerg( "BPCPR001" )
+Private nLastKey := 0
+Private lItemNeg := .F.
+Private cFolha   := "N"
+Private cPAPI    := ""
+Private tamanho  := "P"
+Private nomeprog := "BPCPR001"
+Private wnrel    := "BPCPR001"
+Private cOPDe    := ""
+Private cOPAte   := ""
+Private cLiquidos:= ""
+Private lEnd     := .F.
+Private _MV_PAR05:= 0
+
+DbSelectArea("SBM")
+DbSetOrder(1)
+
+If DbSeek( xFilial("SBM") + "1004" )
+	cLiquidos:= SBM->BM_DESC
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica as perguntas selecionadas                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+AAdd( aRegs, { cPerg, "01", "Da O.P. ?"		, "", "", "MV_CH1", "C", 13, 0, 0, "G", "", "MV_PAR01", "", "", "", ""		, "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "SC2", "S", "", "", "" } )
+AAdd( aRegs, { cPerg, "02", "Ate a O.P. ?"	, "", "", "MV_CH2", "C", 13, 0, 0, "G", "", "MV_PAR02", "", "", "", "ZZZZZZ", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "SC2", "S", "", "", "" } )
+
+lValidPerg(aRegs)
+
+Pergunte( cPerg, .F. )
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas para parametros                         ³
+//³ MV_PAR01            // Da OP                                 ³
+//³ MV_PAR02            // Ate a OP                              ³
+//³ MV_PAR03            // Da data                               ³
+//³ MV_PAR04            // Ate a data                            ³
+//³ MV_PAR05            // Imprime roteiro de operacoes          ³
+//³ MV_PAR06            // Imprime codigo de barras              ³
+//³ MV_PAR07            // Imprime Nome Cientifico               ³
+//³ MV_PAR08            // Imprime Op Encerrada                  ³
+//³ MV_PAR09            // Impr. por Ordem de                    ³
+//³ MV_PAR10            // Impr. OP's Firmes, Previstas ou Ambas ³
+//³ MV_PAR11            // Impr. Item Negativo na Estrutura      ³
+//³ MV_PAR12            // Imprime ficha de acompanhamento:      ³
+//³                     // 1 - Junto c/O.P. / 2 - Sozinha        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+//Apenas os parametros OP De até estão disponiveis
+MV_PAR03:= CTOD("01/01/2001")
+MV_PAR04:= CTOD("01/01/2099")
+MV_PAR05:= 1
+MV_PAR06:= 2
+MV_PAR07:= 2
+MV_PAR08:= 1
+MV_PAR09:= 2
+MV_PAR10:= 1
+MV_PAR11:= 1
+MV_PAR12:= 2
+
+If !ChkFile( "SH8", .F. )
+	Help( " ", 1, "SH8EmUso" )
+	Return
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Envia controle para a funcao SETPRINT                        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+wnrel:= SetPrint( cString, wnrel, cPerg, @titulo, cDesc, "", "", .F., aOrd,, Tamanho )
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Gera e grava lote e validade nas OPs                         ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cOPDe    := MV_PAR01
+cOPAte   := MV_PAR02
+_MV_PAR05:= MV_PAR05
+
+U_GeraLote( MV_PAR01, MV_PAR02 )
+
+lItemNeg:= GetMv("MV_NEGESTR") .And. MV_PAR11 == 1
+
+If nLastKey == 27
+	DbSelectArea("SH8")
+	Set Filter To
+	DbCloseArea()
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Retira o SH8 da variavel cFopened ref. a abertura no MNU     ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	ClosFile("SH8")
+	DbSelectArea("SC2")
+	Return
+Endif
+
+SetDefault( aReturn, cString )
+
+If nLastKey == 27
+	DbSelectArea("SH8")
+	Set Filter To
+	dbCloseArea()
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Retira o SH8 da variavel cFopened ref. a abertura no MNU     ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	ClosFile("SH8")
+	dbSelectArea("SC2")
+	Return
+Endif
+
+RptStatus( { |lEnd| R820Imp( @lEnd, wnRel, Titulo,Tamanho ) }, Titulo )
+
+// Rotina para impressão das ops com produtos liquidos
+// RptStatus( { |lEnd| R820ImpLiq( @lEnd, wnRel, Titulo, Tamanho ) }, Titulo )
+
+EXECBLOCK( 'QIPR041A', .F., .F., { "BPCPR001", cOPDe, cOPAte } )
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³ R820Imp  ºAutor  ³Microsiga           º Data ³  01/05/11   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³                                                            º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                        º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function R820Imp( lEnd, wnRel, Titulo,Tamanho )
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis                                             ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local CbCont, Cabec1, Cabec2
+Local Limite     := 80
+Local nQuant     := 1
+Local nTipo      := 18
+Local cProduto   := Space( Len(SC2->C2_PRODUTO) )
+Local cQtd,i,nBegin
+Local cIndSC2    := CriaTrab( NIL, .F.), nIndSC2
+Local cNaoImp    := RetZ1() // Determina quais tipos de produtos nao devem aparecer na OP
+
+Private aArray   := {}
+Private Li       := 80
+Private cTipo	 := '  '
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas para Impressao do Cabecalho e Rodape    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cTtxt := SPACE(10)
+cbCont:= 0
+M_Pag := 0
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Monta os Cabecalhos                                          ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cabec1:= ""
+cabec2:= ""
+
+DbSelectArea("SC2")
+DbGoTop()
+
+If aReturn[8] == 4
+	IndRegua( "SC2", cIndSC2, "C2_FILIAL + C2_DATPRF"      ,,, "Selecionando Registros..." )
+	DbGoTop()
+Else
+	DbSetOrder( aReturn[8] )
+EndIf
+
+DbSeek( xFilial() )
+
+SetRegua( LastRec() )
+
+While !SC2->(Eof())
+	M_PAG:= 0
+	
+	If lEnd
+		@ Prow() + 1, 001 PSay "CANCELADO PELO OPERADOR"
+		Exit
+	EndIf
+	
+	IncRegua()
+	
+	If	( ( SC2->C2_FILIAL + SC2->C2_NUM + SC2->C2_ITEM + SC2->C2_SEQUEN + SC2->C2_ITEMGRD ) < ( xFilial() + MV_PAR01 ) ) .Or. ;
+		( ( SC2->C2_FILIAL + SC2->C2_NUM + SC2->C2_ITEM + SC2->C2_SEQUEN + SC2->C2_ITEMGRD ) > ( xFilial() + MV_PAR02 ) )
+		SC2->(DbSkip())
+		Loop
+	EndIf
+	
+	If	( SC2->C2_DATPRF < MV_PAR03 ) .Or. ( SC2->C2_DATPRF > MV_PAR04 )
+		SC2->(DbSkip())
+		Loop
+	EndIf
+	
+	// Não imprime OP encerrada
+	If !( Empty(SC2->C2_DATRF) ) .And. MV_PAR08 == 2
+		SC2->(DbSkip())
+		Loop
+	Endif
+	
+	// Ordens firmes, previstas ou ambas
+	If !MtrAValOP( MV_PAR10, 'SC2' )
+		SC2->(DbSkip())
+		Loop
+	EndIf
+	
+	cProduto:= SC2->C2_PRODUTO
+	nQuant  := aSC2Sld()
+
+	DbSelectArea("SB1")
+	DbSeek( xFilial() + cProduto )
+	
+	// imprime liquidos separado
+	If AllTrim(SB1->B1_GRUPO) = "1004"
+		AADD( aOpLiq, { SB1->B1_COD, SB1->B1_GRUPO } )
+	EndIf
+	
+	cTipo:= B1_TIPO
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Adiciona o primeiro elemento da estrutura , ou seja , o Pai  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	aArray:= {}
+	AddAr820(nQuant)
+	
+	MontStruc( SC2->C2_NUM + SC2->C2_ITEM + SC2->C2_SEQUEN + SC2->C2_ITEMGRD, nQuant )
+	
+	// Ordem de impressão por codigo ou por ordem
+	If MV_PAR09 == 1
+		aSort( aArray, 2,, { |x, y| ( x[1] + x[8] ) < ( y[1] + y[8] ) } )
+	Else
+		aSort( aArray, 2,, { |x, y| ( x[8] + x[1] ) < ( y[8] + y[1] ) } )
+	EndIf
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Imprime cabecalho                                       ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	
+	cFolha:= "N"
+	CabecOp( Tamanho, cFolha ) // Normal
+
+	CabItens()
+	
+	lLiquidos:= .f.
+	
+	If Len( aArray ) > 1
+		cSeqAux:= aArray[2][8]
+	Else
+		cSeqAux:= "   "
+	EndIf
+	
+	For I := 2 To Len(aArray)
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Se nao couber, salta para proxima folha                 ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If Li > 63
+			CbcGeral()
+			//// @ Li, 000 PSay "---------------|------------------------------|----------|--|--|------------|---"
+			@ Li, 000 PSay "---|-------|-------------------------------------------|----------|--|----------"
+			++Li		   
+			CabItens()
+		EndIf 
+		
+		If !( aArray[I][3] $ cNaoImp ) // Se estiver contido no cNaoImp, nao imprime
+
+			nContLin:= -1
+		
+			// Continuação da descrição do produto.
+			For nBegin:= 1 To Len( Alltrim( aArray[I][2] ) ) Step 43
+				If ++nContLin = 0
+					If SubStr( cSeqAux, 1, 1) <> SubStr( aArray[I][8], 1, 1 )
+						// @ Li,000 PSay "Proxima Etapa  |                              |          |  |  |            |   "
+						@ ++Li,000 PSay "   |PRX ETP|                                           |          |  |          "
+						cSeqAux:= aArray[I][8]
+					EndIf
+					
+					@ ++Li, 000 PSay aArray[I][8]					// SEQUENCIA
+					@   Li, 003 PSay "|"
+					@   Li, 004 PSay Substr( aArray[I][1], 1, 7 )	// CODIGO PRODUTO
+					@   Li, 011 PSay "|"
+					@   Li, 012 PSay Substr( aArray[I][2], nBegin, 43 )
+					@   Li, 055 PSay "|"
+					@   Li, 056 PSay Transform( aArray[I][5], "@E 999999.999" )	// QUANTIDADE
+					@   Li, 066 PSay "|" + aArray[I][4] + "|"				   		// UNIDADE DE MEDIDA
+					//// @ Li, 061 PSay aArray[I][6] + "|"						// ALMOXARIFADO
+					//// @ Li, 064 PSay Substr( aArray[I][7],  1, 12 )			// LOCALIZACAO
+	
+					//// @ ++Li, 000 PSay "---|-------|-------------------------------------------|----------|--|----------"
+	        	                        // 0         1         2         3         4         5         6         7         8
+	            	                    // 012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
+	                	                // 123 1234567 123456789012345678901234567890 1234567890 12 12345678901234567890123
+				Else
+					If !Empty( Substr( aArray[I][2], nBegin, 43 ) )
+						@ ++Li, 000 PSay "   |       |"
+						@   Li, 012 PSay Substr( aArray[I][2], nBegin, 43 )
+						@   Li, 055 PSay "|          |  |          "
+					EndIf	
+				EndIf
+
+				@ ++Li, 000 PSay "---|-------|-------------------------------------------|----------|--|----------"
+		
+			Next
+	
+		EndIf
+		
+		//++Li
+
+	Next
+	
+	/*
+	If lLiquidos
+	//li:=99
+	@ Li,20 PSay Alltrim(cLiquidos)
+	Li++
+	@ Li,00 PSay __PrtThinLine()
+	Li++
+	For I := 2 To Len(aArray)
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Se nao couber, salta para proxima folha                 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If li > 63
+	Li := 0
+	CabecOp(Tamanho,cFolha) // imprime cabecalho da OP
+	li++
+	CabItens()
+
+	EndIf
+	
+	If !(aArray[I][3] $ cNaoImp) // Se estiver contido no cNaoImp, na imprimir
+	// Verifica se é Liquido nao imprime
+	SB1->(dbseek(xfilial("SB1")+aArray[I][1]))
+	if alltrim(SB1->B1_GRUPO) <> '1004'
+	Loop
+	endif
+	
+	@ Li,0 PSay aArray[I][1]    	 				   	// CODIGO PRODUTO
+	For nBegin := 1 To Len(Alltrim(aArray[I][2])) Step 31
+	@li,016 PSay Substr(aArray[I][2],nBegin,31)
+	li++
+	Next nBegin
+	
+	Li--
+	cQtd := Alltrim(Transform(aArray[I][5],PesqPictQt("D4_QUANT",14)))
+	@ Li,(46+11-Len(cQtd)) PSay cQtd				// QUANTIDADE
+	@ Li,57 PSay "|"+aArray[I][4]+"|"			  	// UNIDADE DE MEDIDA
+	@ li,61 PSay aArray[I][6]+"|"                  	// ALMOXARIFADO
+	@ li,64 PSay Substr(aArray[I][7],1,12)         	// LOCALIZACAO
+	@ li,76 PSay "|"+aArray[I][8]                  	// SEQUENCIA
+	Li++
+	@ Li,00 PSay __PrtThinLine()
+	Li++
+	EndIf
+	Next I
+	Endif
+	*/
+	
+	If _MV_PAR05 == 1
+		// Imprime o roteiro das operações
+		RotOper()
+	Endif
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Imprimir Relacao de medidas para Cliente == HUNTER DOUGLAS.  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	DbSelectArea("SX3")
+	DbSetOrder(1)
+
+	DbSeek("SMX")
+	
+	If Found() .And. SC2->C2_DESTINA == "P"
+		R820Medidas()
+	EndIf
+	
+	// 	Imprime ficha de acompanhamento
+	If MV_PAR12 == 1
+		Li:= 0
+		// Imprime apontamento
+		ImpRap( aArray )
+		aArray:= {}
+	EndIf
+	
+	cLote  := ""
+	cNumSer:= ""
+	cLote  := If( cLote   == NIL .Or. Len( cLote )   == 0, CriaVar( "QPK_LOTE"   ), cLote   )
+	cNumSe := If( cNumSer == NIL .Or. Len( cNumSer ) == 0, CriaVar( "QPK_NUMSER" ), cNumSer )
+	
+	// RPCPR03A(SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN+SC2->C2_ITEMGRD,cLote,cNumSer) //Roteiro de Inspecao
+	// RPCPR03B(SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN+SC2->C2_ITEMGRD,cLote,cNumSer) //PickList
+	// por Thiago em 12/01/09 para executar de um relatorio só
+	// U_PlistBra(SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN+SC2->C2_ITEMGRD) //PickList
+	// U_PlistBra(SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN+SC2->C2_ITEMGRD,SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN+SC2->C2_ITEMGRD)
+
+	DbSelectArea("SC2")
+	DbSkip()
+
+EndDo
+
+DbSelectArea("SH8")
+DbCloseArea()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Retira o SH8 da variavel cFopened ref. a abertura no MNU     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ClosFile("SH8")
+
+DbSelectArea("SC2")
+
+If aReturn[8] == 4
+	RetIndex("SC2")
+	Ferase(cIndSC2+OrdBagExt())
+EndIf
+
+Set Filter To
+DbSetOrder(1)
+
+If aReturn[5] = 1
+	Set Printer TO
+	dbCommitall()
+	ourspool(wnrel)
+Endif
+
+MS_FLUSH()
+
+U_PlistBra( cOPDe, cOPAte )
+
+Return
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³ Fun‡…o   ³ AddAr820 ³ Autor ³ Wanderley Goncalves   ³ Data ³ 05/11/04 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Descri‡…o³ Adiciona um elemento ao Array                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Sintaxe  ³ AddAr820(ExpN1)                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpN1 = Quantidade da estrutura                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATROP                                                     ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+*/
+Static Function AddAr820( nQuantItem )
+
+Local cDesc	  := SB1->B1_DESC
+Local cRoteiro:= ""
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se imprime nome cientifico do produto. Se Sim    ³
+//³ verifica se existe registro no SB5 e se nao esta vazio    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If MV_PAR07 == 1
+	DbSelectArea("SB5")
+	DbSeek(xFilial()+SB1->B1_COD)
+	
+	If Found() .And. !Empty( B5_CEME )
+		cDesc:= B5_CEME
+	EndIf
+
+ElseIf MV_PAR07 == 2
+	cDesc:= SB1->B1_DESC
+Else
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica se imprime descricao digitada ped.venda, se sim  ³
+	//³ verifica se existe registro no SC6 e se nao esta vazio    ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+	If SC2->C2_DESTINA == "P"
+
+		DbSelectArea("SC6")
+		DbSetOrder(1)
+		
+		DbSeek( xFilial() + SC2->C2_PEDIDO + SC2->C2_ITEM )
+		
+		If Found() .And. !Empty( C6_DESCRI ) .And. ( C6_PRODUTO == SB1->B1_COD )
+			cDesc:= C6_DESCRI
+		ElseIf C6_PRODUTO <> SB1->B1_COD
+			DbSelectArea("SB5")
+			DbSeek( xFilial() + SB1->B1_COD )
+
+			If Found() .And. !Empty( B5_CEME )
+				cDesc:= B5_CEME
+			EndIf
+		EndIf
+
+	EndIf
+
+EndIf
+
+//// cDesc:= SubStr(cDesc,1,30)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se imprime ROTEIRO da OP ou PADRAO do produto    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If !Empty( SC2->C2_ROTEIRO )
+	cRoteiro:= SC2->C2_ROTEIRO
+Else
+	If !Empty( SB1->B1_OPERPAD )
+		cRoteiro:= SB1->B1_OPERPAD
+	Else
+		DbSelectArea("SG2")
+		If DbSeek( xFilial() + SC2->C2_PRODUTO + "01" )
+			RecLock( "SB1", .F. )
+				Replace B1_OPERPAD With "01"
+			MsUnLock()
+			cRoteiro:= "01"
+		EndIf
+	EndIf
+EndIf
+
+DbSelectArea("SB2")
+DbSeek( xFilial() + SB1->B1_COD + SD4->D4_LOCAL )
+
+DbSelectArea("SD4")
+
+AADD( aArray, { SB1->B1_COD, cDesc, SB1->B1_TIPO, SB1->B1_UM, nQuantItem, D4_LOCAL, SB2->B2_LOCALIZ, D4_TRT, cRoteiro } )
+
+Return
+
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³ Fun‡…o   ³ MontStruc³ Autor ³ Wanderley Goncalves   ³ Data ³ 05/11/04 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Descri‡…o³ Monta um array com a estrutura do produto                  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Sintaxe  ³ MontStruc(ExpC1,ExpN1,ExpN2)                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ ExpC1 = Codigo do produto a ser explodido                  ³±±
+±±³          ³ ExpN1 = Quantidade base a ser explodida                    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATROP                                                     ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+/*/
+Static Function MontStruc( cOp, nQuant )
+
+DbSelectArea("SD4")
+DbSetOrder(2)
+
+DbSeek( xFilial() + cOp )
+
+While !Eof() .And. ( D4_FILIAL + D4_OP ) == ( xFilial() + cOp )
+	DbSelectArea("SB1")
+	
+	DbSeek( xFilial() + SD4->D4_COD )
+
+	If SD4->D4_QUANT > 0 .Or. ( lItemNeg .And. SD4->D4_QUANT < 0)
+		AddAr820( SD4->D4_QUANT )
+	EndIf
+
+	DbSelectArea("SD4")
+	DbSkip()
+EndDo
+
+DbSetOrder(1)
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³ CabecOp  ºAutor  ³Microsiga           º Data ³  01/05/11   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³  Cabecalho da Ordem de Producao.                           º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function CabecOp( Tamanho, cFolha )
+
+// Cabeçalho geral
+CbcGeral()
+     
+@   Li, 00 PSay "Produto: " + aArray[1][1] + " " + aArray[1][2] // Descricao
+@ ++Li, 00 PSay "Emissao: " + DtoC( dDataBase )					// Emissao
+@   Li, 72 PSay "Fol: " + Transform( M_PAG, '999' )				// Folha
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Imprime nome do cliente quando OP for gerada            ³
+//³ por pedidos de venda                                    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If SC2->C2_DESTINA == "P"
+	DbSelectArea("SC5")
+	DbSetOrder(1)
+	
+	If DbSeek( xFilial() + SC2->C2_PEDIDO, .F. )
+		DbSelectArea("SA1")
+		DbSetOrder(1)
+		
+		DbSeek( xFilial() + SC5->C5_CLIENTE + SC5->C5_LOJACLI )
+		@ ++Li, 00 PSay "Cliente :"
+		@   Li, 10 PSay SC5->C5_CLIENTE + "-" + SC5->C5_LOJACLI + " " + A1_NOME
+		DbSelectArea("SG1")
+	EndIf
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Imprime a quantidade original quando a quantidade da    ³
+//³ Op for diferente da quantidade ja entregue              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If SC2->C2_QUJE + SC2->C2_PERDA > 0
+	@ ++Li, 00 PSay "Qtde.Prod.:"
+	@   Li, 12 PSay aSC2Sld()		Picture '@E 999999999'
+	@   Li, 26 PSay "Qtde.Orig.:"
+	@   Li, 38 PSay SC2->C2_QUANT	Picture '@E 999999999'
+Else
+	@ ++Li, 00 PSay "Quantidade :"
+	@   Li, 15 PSay SC2->C2_QUANT - SC2->C2_QUJE Picture '@E 999999999'
+Endif
+
+// Verifica se produto é PA para 0impressão de informações de peso por embalagem
+DbSelectArea("SB1")
+DbSetOrder(1)
+
+If DbSeek( xFilial() + SC2->C2_PRODUTO )
+	// Cleiton
+	@  Li,50 PSay "UM: "   + B1_UM
+	@  Li,65 PSay "Tipo: " + B1_TIPO
+
+	// Cleiton
+	
+	@ ++Li,00 PSay "Peso Liquido: " + Transform( SB1->B1_PESO  , '@E 999,999.9999' )
+	@   Li,50 PSay "Peso Brut: "    + Transform( SB1->B1_PESBRU, '@E 999,999.9999' )
+
+	If SB1->B1_QE > 0
+		@ ++Li, 00 PSay "Peso por unidade: " + Transform( SB1->B1_PESO / SB1->B1_QE, '@E 9,999,999.9999' ) 
+	Else
+		@ ++Li, 00 PSay "Peso por unidade: " + Transform( SB1->B1_PESO             , '@E 9,999,999.9999' )
+	EndIf
+
+	@ Li,50 PSay "Peso Total: " + Transform( SB1->B1_PESO * IIf( SC2->C2_QUJE + SC2->C2_PERDA > 0, SC2->C2_QUANT, ( SC2->C2_QUANT - SC2->C2_QUJE ) ),  '@E 9,999,999.9999' )
+EndIf
+  
+@ ++Li, 15 PSay "Prev.Inicio: " + DtoC( SC2->C2_DATPRI )
+@   Li, 40 PSay "Prev. Fim:"    + DtoC( SC2->C2_DATPRF )
+
+@ ++Li, 00 PSay "C.Custo: " + SC2->C2_CC
+
+If SC2->C2_STATUS == "S"
+	@ Li, 42 PSay "Status: OP Sacramentada"
+ElseIf SC2->C2_STATUS == "U"
+	@ Li, 42 PSay "Status: OP Suspensa"
+ElseIf SC2->C2_STATUS $ " N"
+	@ Li, 42 PSay "Status: OP Normal"
+EndIf
+
+If !( Empty( SC2->C2_OBS ) )
+	@ ++Li, 00 PSay "Observacao: "
+	For nBegin:= 1 To Len( AllTrim( SC2->C2_OBS ) ) Step 65
+		@ Li,014 PSay Substr( SC2->C2_OBS,nBegin, 65 )
+		++Li
+	Next
+EndIf
+
+@ ++Li, 00 PSay __PrtFatLine()
+
+If cFolha = "S" // utilizado somente para novo cabeçlho em outra folha
+	cFolha = "N"
+	Return()
+EndIf
+
+@ ++Li, 00 PSay "     Quantidade      Data        Hora            Quantidade      Data       Hora
+
+For nI:= 1 to 3
+	Li+= 2
+	@ Li,00 PSay StrZero( nI, 2 ) + ") ___________  ___/___/___   ______       " + StrZero(( nI + 3 ), 2 )  + ") ___________  ___/___/___   ______"
+Next
+
+++Li
+
+@ ++Li,00 PSay "Quantidade:  __________________________          Visto  ________________________"
+
+++Li
+
+If SB1->B1_TIPO = 'PA'
+	@ ++Li,00 PSay "% Rendimento:  ________________________"
+EndIf	
+
+++Li
+
+@ ++Li, 00 PSay __PrtFatLine()
+@ ++Li, 31 Psay "Narrativa da Ordem"
+@ ++Li, 00 PSay __PrtFatLine()
+
+Return( Li )
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³ CbcGeral ºAutor  ³Microsiga           º Data ³  01/05/11   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³  Cabecalho da Ordem de Producao.                           º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function CbcGeral()
+
+Local nBegin
+Local cCabec1:= SM0->M0_NOME + "        O R D E M   D E   P R O D U C A O       NRO : "
+//                XXXXXXXXXXXXXXX|XXXXXXXXXXXXXXXXXXXXXXXXXXXXX |999999,999|XX|XX|XXXXXXXXXXX |XXX
+//	              012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901
+//                0         1         2         3         4         5         6         7         8         9        10        11        12        13
+
+Li:= 0
+
+Cabec( "", "", "", "", Tamanho, 18, { cCabec1 + SC2->C2_NUM + SC2->C2_ITEM + SC2->C2_SEQUEN }, .F. )
+
+++Li
+
+// Impressao do codigo de barras
+If ( MV_PAR06 == 1 ) .And. aReturn[5] # 1
+	oPr  := ReturnPrtObj()
+	cCode:= ( SC2->C2_NUM + SC2->C2_ITEM + SC2->C2_SEQUEN + SC2->C2_ITEMGRD )
+	MSBAR3( "CODE128", 0.8 ,8.5 ,AllTrim(cCode), oPr,Nil,Nil,Nil,nil , 1.5 ,Nil,Nil,Nil) 
+	Li+= 5
+EndIf 
+
+@ Li, 32 PSay "Lote: "     + SC2->C2_LOTECTL
+@ Li, 62 PSay "Validade: " + DtoC( SC2->C2_DTVALID )
+
+Li+= 2
+
+Return
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³ Fun‡…o   ³ RotOper  ³ Autor ³ Wanderley Goncalves   ³ Data ³ 05/11/04 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Descri‡…o³ Imprime Roteiro de Operacoes                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Sintaxe  ³ RotOper()                                                  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATROP                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+*/
+Static Function RotOper()
+
+Local lSH8
+Private nCabRot:= 0
+
+DbSelectArea("SG2")
+
+If DbSeek( xFilial() + aArray[1][1] + aArray[1][9], .F. )
+	
+	cRotOper()
+	
+	While !Eof() .And. ( G2_FILIAL + G2_PRODUTO + G2_CODIGO ) = ( xFilial() + aArray[1][1] + aArray[1][9] )
+		
+		DbSelectArea("SH4")
+		
+		DbSeek( xFilial() + SG2->G2_FERRAM )
+		
+		DbSelectArea("SH8")
+		DbSetOrder(1)
+		
+		DbSeek( xFilial() + SC2->C2_NUM + SC2->C2_ITEM + SC2->C2_SEQUEN + SC2->C2_ITEMGRD + SG2->G2_OPERAC )
+		lSH8:= IIf( Found(), .T., .F. )
+		
+		If lSH8
+			While !Eof() .And. ( SH8->H8_FILIAL + SH8->H8_OP + SH8->H8_OPER ) == ( xFilial() + SC2->C2_NUM + SC2->C2_ITEM + SC2->C2_SEQUEN + SC2->C2_ITEMGRD + SG2->G2_OPERAC )
+				ImpRot( lSH8 )
+				DbSelectArea("SH8")
+				DbSkip()
+			EndDo
+		Else
+			ImpRot( lSH8 )
+		EndIf
+		
+		DbSelectArea("SG2")
+		DbSkip()
+		
+	EndDo
+	
+Endif
+
+Return
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³ Fun‡…o   ³ ImpRot   ³ Autor ³ Wanderley Goncalves   ³ Data ³ 05/11/04 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Descri‡…o³ Imprime Roteiro de Operacoes                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Sintaxe  ³ ImpRot()                                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATROP                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+*/
+Static Function ImpRot( lSH8 )
+
+Local nBegin
+Local cCabec2:= "RECURSO                       FERRAMENTA               OPERACAO"
+
+DbSelectArea("SH1")
+DbSeek( xFilial() + IIf( lSH8, SH8->H8_RECURSO, SG2->G2_RECURSO ) )
+
+If Li > 63
+	CbcGeral()
+	nCabRot:= 0
+EndIf
+
+// Para imprimir somente uma vez
+If nCabRot = 0
+	@ ++Li, 00 PSay __PrtFatLine()
+	@ ++Li, 00 PSay cCabec2
+	@ ++Li, 00 PSay __PrtFatLine()
+	nCabRot:= 1
+EndIf
+	
+@ ++Li, 00 PSay IIf( lSH8, SH8->H8_RECURSO, SG2->G2_RECURSO ) + " " + SUBS( SH1->H1_DESCRI, 1, 25 )
+@   Li, 33 PSay SG2->G2_FERRAM + " " + Subs( SH4->H4_DESCRI, 1, 20 )
+@   Li, 61 PSay SG2->G2_OPERAC
+
+For nBegin:= 1 To Len( Alltrim( SG2->G2_DESCRI ) ) Step 16
+	If nBegin > 1
+		++Li
+	EndIf	
+
+	@ Li, 064 PSay Substr( SG2->G2_DESCRI, nBegin, 16 )
+
+	If Li > 63
+		CbcGeral()
+		nCabRot:= 0
+	EndIf
+Next
+
+Li+=1
+      
+@Li,00 Psay 'QTD MOD:.'+rtrim(str(SG2->G2_MAOOBRA,2))
+
+Li+=1
+
+If SG2->G2_OPERAC == "20" .And. cTipo = '4'
+	//@ ++Li, 00 PSay "INICIO  ALOC.: " +IIf( lSH8, DTOC( SH8->H8_DTINI ), Space(8) ) + " " +IIf( lSH8, SH8->H8_HRINI, Space(5)) + 
+	@ ++Li, 00 PSay "  INICIO  REAL : ____/ ____/____ ___:___"
+	//@ ++Li, 00 PSay "TERMINO ALOC.: " +IIf( lSH8, DTOC( SH8->H8_DTFIM ), Space(8) ) + " " +IIf( lSH8, SH8->H8_HRFIM, Space(5)) + 
+    @ ++Li, 00 PSay	"  TERMINO REAL : ____/ ____/____ ___:___"
+	@ ++Li, 00 PSay "*** Abastecer ***"
+      ++Li
+EndIf
+
+If Li > 63
+	CbcGeral()
+	nCabRot:= 0
+EndIf
+
+//@ ++Li, 00 PSay "INICIO  ALOC.: " +IIf( lSH8, DTOC( SH8->H8_DTINI ), Space(8) ) + " " +IIf( lSH8, SH8->H8_HRINI, Space(5)) + "  INICIO  REAL : ____/ ____/____ ___:___"
+@ ++Li, 00 PSay " INICIO  REAL : ____/ ____/____ ___:___"
+//@ ++Li, 00 PSay "TERMINO ALOC.: " +IIf( lSH8, DTOC( SH8->H8_DTFIM ), Space(8) ) + " " +IIf( lSH8, SH8->H8_HRFIM, Space(5)) + "  TERMINO REAL : ____/ ____/____ ___:___"
+@ ++Li, 00 PSay " TERMINO REAL : ____/ ____/____ ___:___"
+@ ++Li, 00 PSay "Quantidade :"
+@   Li, 13 PSay IIf( lSH8, SH8->H8_QUANT, aSC2Sld() ) Picture PesqPictQt( "H8_QUANT", 14 )
+
+If cTipo = '1'
+	@   Li, 30 PSay "Quantidade Produzida :               Perdas :"
+	@ ++Li, 00 PSay "Visto : "
+Else
+	@   Li, 30 PSay "Quantidade Produzida :"
+	@ ++Li, 00 PSay "Visto : "	
+EndIf	
+
+@ ++Li, 001 PSay "--------------------------------------------------------------------------------"
+++Li
+
+Return
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³ Fun‡…o   ³ RotOper  ³ Autor ³ Paulo Boschetti       ³ Data ³ 18/07/92 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Descri‡…o³ Imprime Roteiro de Operacoes                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Sintaxe  ³ RotOper()                                                  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATROP                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+*/
+Static Function cRotOper()
+
+Local cCabec1:= SM0->M0_NOME + "              ROTEIRO DE OPERACOES              NRO : "
+
+If Li > 63
+	Li:= 0
+	CbcGeral()
+Endif
+
+@ ++Li, 00 PSay __PrtFatLine()
+@ ++Li, 00 PSay cCabec1 + SC2->C2_NUM + SC2->C2_ITEM + SC2->C2_SEQUEN + SC2->C2_ITEMGRD
+////@ ++Li, 00 PSay __PrtFatLine()
+////@ ++Li, 00 PSay "Produto: " + aArray[1][1]
+
+////ImpDescr( aArray[1][2] )
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Imprime a quantidade original quando a quantidade da    ³
+//³ Op for diferente da quantidade ja entregue              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+/*/ Retirado em 27/01/11
+If SC2->C2_QUJE + SC2->C2_PERDA > 0
+	@ ++Li, 00 PSay "Qtde Prod.: "
+	@   Li, 12 PSay aSC2Sld()		PICTURE PesqPictQt( "C2_QUANT", 12 )
+	@   Li, 26 PSay "Qtde Orig.: "
+	@   Li, 38 PSay SC2->C2_QUANT	PICTURE PesqPictQt( "C2_QUANT", 12 )
+Else
+	@ ++Li, 00 PSay "Quantidade :"
+	@   Li, 14 PSay aSC2Sld()		PICTURE PesqPictQt( "C2_QUANT", 12 )
+EndIf
+
+@ ++Li, 00 PSay "C.Custo: " + SC2->C2_CC
+/*/
+
+Return
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³ Fun‡…o   ³ Verilim  ³ Autor ³ Paulo Boschetti       ³ Data ³ 18/07/92 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Descri‡…o³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Sintaxe  ³ Verilim()                                                  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ 			                                          		  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATROP                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+*/
+Static Function Verilim()
+
+If Li > 63
+	Li:= 0
+	cRotOper()
+Endif
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ BARCODE  ³ Autor ³ Ricardo Dutra          ³ Data ³ 16/08/93 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Programa para imprimir codigo de barras                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ CodBar(ExpC1)								                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ Generico                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+#define ESC	27
+Static Function BarCode(cCodigo)
+Local nLargura := 40	// largura de impressao do codigo
+Local i, j, l, k, nCarac, cTexto, cEsc, cCode, nLimite, nImp, nBorda, nLin
+Local aV0 := { Replicate(Chr(0),7), Chr(0) + Chr(0) + Chr(0) }
+Local aV1 := { Replicate(Chr(127),6), Chr(127) + Chr(127) }
+Local aImp [50]
+
+nLin := 0							// imprime codigo comeco formulario
+cEsc := Chr(ESC)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Reseta a impressora na posicao atual - comeco formulario           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+@ 0,0 PSay cEsc + "@"				// reseta a impressora nesta posicao
+
+cTexto := cCodigo
+cTexto := "*" + cTexto + "*"		// caracteres de inicio e fim
+
+nImp := 1
+aImp [nImp] := ""
+nLimite := Len(cTexto)
+
+FOR i := 1 TO nLimite
+	nCarac := Asc (Substr (cTexto, i, 1))
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Atribui um codigo a cada caracter                        ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	
+	IF nCarac == 42					// *
+		cCode := "2122121222"
+	ELSEIF nCarac == 32				// branco
+		cCode := "2112221222"
+	ELSEIF nCarac == 48				// 0
+		cCode := "2221121222"
+	ELSEIF nCarac == 49				// 1
+		cCode := "1221222212"
+	ELSEIF nCarac == 50				// 2
+		cCode := "2211222212"
+	ELSEIF nCarac == 51				// 3
+		cCode := "1211222222"
+	ELSEIF nCarac == 52				// 4
+		cCode := "2221122212"
+	ELSEIF nCarac == 53				// 5
+		cCode := "1221122222"
+	ELSEIF nCarac == 54				// 6
+		cCode := "2211122222"
+	ELSEIF nCarac == 55				// 7
+		cCode := "2221221212"
+	ELSEIF nCarac == 56				// 8
+		cCode := "1221221222"
+	ELSEIF nCarac == 57				// 9
+		cCode := "2211221222"
+	ELSEIF nCarac == 65				// A
+		cCode := "1222212212"
+	ELSEIF nCarac == 66				// B
+		cCode := "2212212212"
+	ELSEIF nCarac == 67				// C
+		cCode := "1212212222"
+	ELSEIF nCarac == 68				// D
+		cCode := "2222112212"
+	ELSEIF nCarac == 69				// E
+		cCode := "1222112222"
+	ELSEIF nCarac == 70				// F
+		cCode := "2212112222"
+	ELSEIF nCarac == 71				// G
+		cCode := "2222211212"
+	ELSEIF nCarac == 72				// H
+		cCode := "1222211222"
+	ELSEIF nCarac == 73				// I
+		cCode := "2212211222"
+	ELSEIF nCarac == 74				// J
+		cCode := "2222111222"
+	ELSEIF nCarac == 75				// K
+		cCode := "1222222112"
+	ELSEIF nCarac == 76				// L
+		cCode := "2212222112"
+	ELSEIF nCarac == 77				// M
+		cCode := "1212222122"
+	ELSEIF nCarac == 78				// N
+		cCode := "2222122112"
+	ELSEIF nCarac == 79				// O
+		cCode := "1222122122"
+	ELSEIF nCarac == 80				// P
+		cCode := "2212122122"
+	ELSEIF nCarac == 81				// Q
+		cCode := "2222221112"
+	ELSEIF nCarac == 82				// R
+		cCode := "1222221122"
+	ELSEIF nCarac == 83				// S
+		cCode := "2212221122"
+	ELSEIF nCarac == 84				// T
+		cCode := "2222121122"
+	ELSEIF nCarac == 85				// U
+		cCode := "1122222212"
+	ELSEIF nCarac == 86				// V
+		cCode := "2112222212"
+	ELSEIF nCarac == 87				// W
+		cCode := "1112222222"
+	ELSEIF nCarac == 88				// X
+		cCode := "2122122212"
+	ELSEIF nCarac == 89				// Y
+		cCode := "1122122222"
+	ELSEIF nCarac == 90				// Z
+		cCode := "2112122222"
+	ENDIF
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Adiciona barras ou espacos ao array de impressao, sendo :     ³
+	//³ - barra grossa  = 6 * Chr(127)                				      ³
+	//³ - barra fina    = 2 * Chr(127)								         ³
+	//³ - espaco grosso = 7 * Chr(0)                                  ³
+	//³ - espaco fino   = 3 * Chr(0) 								         ³
+	//³																               ³
+	//³ As barras e espacos sao alocados de acordo com os caracteres  ³
+	//³ de cCode, tomados 2 a 2, sendo que o primeiro designa as bar- ³
+	//³ ras e o segundo, os espacos. 								         ³
+	//³ Se o caracter for 1 => barra/espaco grosso					      ³
+	//³ Se o caracter for 2 => barra/espaco fino					         ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	FOR j := 1 to 9 STEP 2
+		aImp[nImp] := aImp[nImp] + aV1 [val(substr(cCode,j,1))] + ;
+		aV0 [val(substr(cCode,j + 1,1))]
+	NEXT
+	
+	l := len(aImp[nImp])
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Se tamanho do string atual de impressao for maior que 120,				 ³
+	//³copia o que ultrapassou para o proximo string								 ³
+	//³Limita o string atual para 120 + caracteres de controle de imp grafica³
+	//³Incrementa contador de strings													 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	IF l > 120
+		aImp[nImp+1] := Right(aImp[nImp],l -120)
+		aImp[nImp] := cEsc + "L" + Chr(120) + Chr(0) + Left(aImp[nImp],120)
+		nImp++
+	ENDIF
+NEXT
+
+j := Len(aImp[nImp])
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Borda esquerda da etiqueta para centrar o codigo   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+nBorda := (nLargura - (j + (nImp - 1) * 120 ) / Len(cTexto)) / 2
+
+IF nBorda < 0
+	return -2		// Codigo muito grande p/largura especificada
+ENDIF
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Acrescenta caracteres de controle grafico ao ultimo string   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+aImp[nImp] := cEsc + "L" + Chr(j)+Chr(0) + aImp[nImp] + cEsc + "3" + Chr(1)
+
+FOR l := 1 to 4					// imprime quatro linhas
+	FOR k := 1 to 3				// imprime tres vezes
+		FOR i := 1 to nImp		// contador de strings
+			@ nLin,nBorda+(i-1)*10 PSay aImp[i]
+		NEXT
+		nLin++
+	NEXT
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Seta tamanho de linha para posicionar para a proxima         ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	@ nLin,1 PSay cEsc + "3" + Chr(18)
+	nLin++
+NEXT
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Seta tamanho de linha p/ posicionar cursor proxima coluna de texto ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+@ nLin,1 PSay  cEsc + "3" + Chr(24)
+nLin++
+
+@ nLin,1 PSay cEsc + "2"			// cancela espacamentos de linha progrados
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Imprime o numero da OP expandido e centralizado, embaixo do codigo ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cNumOp := Replicate(" ",3) + cTexto		// para centralizar
+@ nLin,nBorda PSay Chr(14) + cNumOp	    // imprime expandido
+nLin++
+@ nLin,0 PSay Chr(20)					// volta ao normal
+
+RETURN
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ ImpDescr ³ Autor ³ Marcos Bregantim      ³ Data ³ 31.08.93 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Imprimir descricao do Produto.                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ ImpProd(Void)                                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATROP                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ImpDescr(cDescri)
+Local nBegin
+
+For nBegin := 1 To Len(Alltrim(cDescri)) Step 50
+	@li,025 PSay Substr(cDescri,nBegin,50)
+	li++
+Next nBegin
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³R820Medidas³ Autor ³ Jose Lucas           ³ Data ³ 25.01.94 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Imprime o registros referentes as medidas do Pedido Filho. ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ R820Medidas(Void)                                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATROP                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function R820Medidas()
+
+Local aArrayPro := {}, lImpItem := .T.
+Local nCntArray := 0,a01 := "",a02 := ""
+Local nX:=0,nI:=0,nL:=0,nY:=0
+Local cNum:="", cItem:="",lImpCab := .T.
+Local nBegin, cProduto:="", cDesc, cDescri, cDescri1, cDescri2
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Imprime Relacao de Medidas do cliente quando OP for gerada ³
+//³ por pedidos de vendas.                                     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+DbSelectArea("SC5")
+DbSetOrder(1)
+
+If DbSeek( xFilial() + SC2->C2_PEDIDO, .F. )
+	cNum    := SC2->C2_NUM
+	cItem   := SC2->C2_ITEM
+	cProduto:= SC2->C2_PRODUTO
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Imprimir somente se houver Observacoes.                      ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	IF !Empty( SC5->C5_OBSERVA )
+		IF Li > 53
+			@ 03, 001 PSay "HUNTER DOUGLAS DO BRASIL LTDA"
+			@ 05, 008 PSay "CONFIRMACAO DE PEDIDOS  -  " + IIf( SC5->C5_VENDA == "01", "ASSESSORIA","DISTRIBUICAO" )
+			@ 05, 055 PSay "No. RMP    : " + SC5->C5_NUM + "-" + SC5->C5_VENDA
+			@ 06, 055 PSay "DATA IMPRES: " + DtoC( dDataBase )
+			li := 07
+		EndIf
+
+		@ ++Li, 001 PSay "--------------------------------------------------------------------------------"
+
+		cDescri := SC5->C5_OBSERVA
+
+		@ ++Li, 001 PSay " OBSERVACAO: "
+		@   Li, 018 PSay SubStr( cDescri, 1, 60 )
+
+		For nBegin:= 61 To Len( Trim( cDescri ) ) Step 60
+			cDesc:= Substr( cDescri, nBegin, 60 )
+			@ ++Li,018 PSay cDesc
+		Next
+		
+		cDescri1:= SC5->C5_OBSERV1
+		
+		@ ++Li, 018 PSay SubStr( cDescri1, 1, 60 )
+
+		For nBegin:= 61 To Len( Trim( cDescri1 ) ) Step 60
+			cDesc:= Substr(cDescri1,nBegin,60)
+			@ ++li, 018 PSay cDesc
+		Next
+		
+		cDescri2 := SC5->C5_OBSERV2
+		@ ++li, 018 PSay SubStr( cDescri2, 1, 60 )
+
+		For nBegin:= 61 To Len( Trim( cDescri2 ) ) Step 60
+			cDesc:=Substr(cDescri2,nBegin,60)
+			@ ++Li, 018 PSay cDesc
+		Next
+
+		@ ++Li,001 PSay "--------------------------------------------------------------------------------"
+
+		li++
+
+	EndIf
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Carregar as medidas em array para impressao.                 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	DbSelectArea("SMX")
+	DbSetOrder(2)
+	
+	DbSeek(xFilial()+cNum+cProduto)
+	
+	While !Eof() .And. M6_FILIAL + M6_NRREL + M6_PRODUTO == xFilial() + cNum + cProduto
+		IF M6_ITEM == cItem
+			AADD( aArrayPro, M6_ITEM + " - " + M6_PRODUTO )
+			++nCntArray
+			cCnt:= StrZero( nCntArray, 2 )
+			aArray&cCnt:= {}
+			
+			While !Eof() .And. M6_FILIAL + M6_NRREL + M6_PRODUTO == xFilial() + cNum + cProduto
+				If M6_ITEM == cItem
+					AADD( aArray&cCnt,{ Str( M6_QUANT, 9, 2 ), " PECAS COM ", M6_COMPTO } )
+				EndIf
+				DbSkip()
+			EndDo
+		Else
+			DbSkip()
+		EndIf
+	EndDo
+	
+	cCnt:= StrZero( nCntArray+1, 2 )
+	aArray&cCnt:= {}
+	
+	For nX:= 1 TO Len( aArrayPro )
+		If li > 58
+			R820CabMed()
+		EndIF
+		
+		@ li,009 PSay aArrayPro[nx]
+		Li+=2
+
+		DbSelectArea("SMX")
+		DbSetOrder(2)
+		
+		DbSeek( xFilial() + cNum + Subs(aArrayPro[nX], 06, 15 ) )
+		While !Eof() .And. M6_FILIAL + M6_NRREL + M6_PRODUTO == xFilial() + cNum+Subs(aArrayPro[nX], 06, 15 )
+			If li > 58
+				R820CabMed()
+			EndIf
+			
+			IF M6_ITEM == Subs( aArrayPro[nX], 1, 2 )
+				@ ++Li,002 PSay M6_QUANT
+				@   Li,013 PSay "PECAS COM"
+				@   Li,023 PSay M6_COMPTO
+				@   Li,035 PSay M6_OBS
+			EndIf
+			DbSkip()
+		End
+		li++
+	Next
+
+	@ Li,001 PSay "--------------------------------------------------------------------------------"
+
+EndIf
+
+Return Nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³R820CabMed ³ Autor ³ Jose Lucas           ³ Data ³ 25.01.94 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Imprime o cabecalho referentes as medidas do Pedido Filho. ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ R820CabMed(Void)                                           ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATROP                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function R820CabMed()
+
+Local cCabec1 := SM0->M0_NOME+"               RELACAO DE MEDIDAS             NRO :"	//STR0037
+
+Li := 0
+
+Li++
+@Li,00 PSay __PrtFatLine()
+Li++
+@Li,00 PSay cCabec1
+@Li,67 PSay SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN+SC2->C2_ITEMGRD
+Li++
+@Li,00 PSay __PrtFatLine()
+Li++
+Li++
+Return Nil
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ ImpRAP   ³ Autor ³ Wanderley Goncalves Jr³ Data ³ 13.12.04 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Imprime Relatorio de Apontamento de Producao               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATROP			                                          ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ImpRap(aArray)
+
+
+/*
+
+Relatorio de Apontamento de Producao da OP Numero 99999999999
+
+
+Produto: 99999999 - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX                       Inicio Previsao: 99/99/99
+Fim Previsao:    99/99/99
+Emissao: 99/99/99      Quantidade: 999999 UM
+
+1         2         3         4         5         6         7         8         9        10        11        12        13
+123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
+
+Data  |Recurso|Numero  |Quantidade|Data Inicio|Hs Inicio|Data Termino|Hs Termino|Quantidade| Nome |
+Producao|       |Operacao|Produzida |    Real   |  Real   |     Real   |     Real |  Perdas  |Operad|
+-----------------------------------------------------------------------------------------------------
+*/
+
+
+Local Titulo  := "Relatorio de Apontamento de Producao"
+Local cCabec  := "OP No. "
+Local cCabec2 := "Data |Recurso| Numero |Quant.|Dt.Inicio|Hs Inicio|Dt.Term.|Hs Term.|Quantd| Nome |"
+Local cCabec3 := "Prod.|       |Operacao|Prod. |  Real   |   Real  |  Real  |  Real  |Perdas|Operad|"
+Local cLinha  := "     |       |        |      |         |         |        |        |      |      |"
+Local cTraco  := Repl("-",Len(cLinha))
+
+cCabec := cCabec + SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN+SC2->C2_ITEMGRD //Numero da OP
+
+//Cabec("","","","",Tamanho,18,{cCabec1+SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN},.F.)
+
+//@ Li, 00 PSAY AvalImp(220)
+//aReturn[4] := 1
+//SetDefault(areturn,"SC2")
+
+Li := cabec(titulo,cCabec,"","MATROP","G",15)
+
+Li++
+
+@ li, 02 PSAY "Produto: " + SC2->C2_PRODUTO
+@ li, 52 PSAY "Inicio Previsao: " + DTOC(SC2->C2_DATPRI)
+li++
+@ li, 11 PSAY AllTrim(aArray[1][2])
+@ li, 52 PSAY "Fim Previsao:    " + DTOC(SC2->C2_DATPRF)
+li++
+@ li, 02 PSAY "Emissao: " + Dtoc(dDataBase)
+@ li, 52 PSAY "Quantidade: "
+
+If SC2->C2_QUJE + SC2->C2_PERDA > 0
+	@Li,64 PSay SC2->C2_QUANT	PICTURE PesqPictQt("C2_QUANT",14)
+Else
+	@Li,64 PSay SC2->C2_QUANT - SC2->C2_QUJE	PICTURE PesqPictQt("C2_QUANT",14)
+Endif
+
+@ Li,Pcol()+1 PSay aArray[1][4] // Unidade de Medida
+
+Li+= 2
+
+@ Li, 00 PSay cTraco
+Li++
+@ Li, 00 PSay cCabec2
+Li++
+@ Li, 00 PSay cCabec3
+Li++
+@ Li, 00 PSay cTraco
+Li++
+Do While Li <= 60
+	@ Li,00 Psay cLinha
+	Li++
+	@ Li,00 Psay cTraco
+	Li++
+EndDo
+
+Return(.T.)
+
+
+
+Static Function IncSX1()
+// Inclui Pergunta se deseja imprimir somente o RAP ou a OP completa.
+dbSelectArea("SX1")
+dbSetOrder(1)
+
+cPerg    := U_CriaPerg("MTR820")
+aRegs    := {}
+
+AADD(aRegs,{cPERG,"12","Imp.Ficha Acomp.   ?"," "," ","mv_chC","C", 1,0,0,"C","","MV_PAR12","Sim","Sim","Sim","","","Nao","Nao","Nao","","","","","","","","","","","","","","","","","   ","","","",""})
+
+For i:=1 to Len(aRegs)
+	If !dbSeek(cPerg+aRegs[i,2])
+		RecLock("SX1",.T.)
+		For j:=1 to FCount()
+			FieldPut(j,aRegs[i,j])
+		Next
+		MsUnlock()
+		dbCommit()
+	Endif
+Next
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³ RetZ1()  ºAutor  ³Microsiga           º Data ³  01/05/11   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³   Qual produto deve aparecer na estrutura.                 º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function RetZ1()
+
+Local aArea:= GetArea()
+Local cText:= ""
+
+DbSelectArea("SX5")
+DbSetOrder(1)
+
+DbSeek( xFilial("SX5") + "Z1" )
+
+While AllTrim( X5_TABELA ) == "Z1" .And. !Eof()
+	cText+= "*" + AllTrim( X5_CHAVE )
+	DbSkip()
+EndDo
+
+RestArea(aArea)
+
+Return(cText)
+
+//--------------------------------
+Static Function CabOpFl2(cPAPI)
+//--------------------------------
+Local cCabec1 := SM0->M0_NOME+"        O R D E M   D E   P R O D U C A O       NRO :"	//STR0010
+Local cCabec2 := "  C O M P O N E N T E S                                  |  |  |            |   "//STR0011
+Local cCabec3 := "CODIGO          DESCRICAO                      QUANTIDADE|UM|AL|LOCALIZACAO |SEQ"//STR0012
+//								           012345678901234567890123456789012345678901234567890123456789012345678901234567890
+//                        			       1         2         3         4         5         6         7         8
+
+
+
+Local Tamanho := "P"
+Local nBegin
+
+If li # 5
+	li := 0
+Endif
+
+Cabec("","","","",Tamanho,18,{cCabec1+SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN},.F.)
+
+Li++  // =2
+IF (MV_PAR06 == 1) .And. aReturn[5] # 1
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Imprime o codigo de barras do numero da OP              ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	oPr := ReturnPrtObj()
+	cCode := (SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN+SC2->C2_ITEMGRD)
+	MSBAR3("CODE128",2.5,0.5,Alltrim(cCode),oPr,Nil,Nil,Nil,nil ,1.5 ,Nil,Nil,Nil)
+	Li += 5
+ENDIF
+@Li,32 PSay "Lote: " + SC2->C2_LOTECTL
+@Li,62 PSay "Validade: " + Dtoc(SC2->C2_DTVALID)
+Li+=2
+@Li,00 PSay "Produto: "+aArray[1][1]+ " " +aArray[1][2]	//STR0013
+Li++
+@Li,00 PSay "Emissao:"+DTOC(dDatabase)						//STR0014
+@Li,73 PSay "Fol:"+TRANSFORM(m_pag,'999')				//STR0015
+Li++
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Imprime nome do cliente quando OP for gerada            ³
+//³ por pedidos de venda                                    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If SC2->C2_DESTINA == "P"
+	dbSelectArea("SC5")
+	dbSetOrder(1)
+	If dbSeek(xFilial()+SC2->C2_PEDIDO,.F.)
+		dbSelectArea("SA1")
+		dbSetOrder(1)
+		dbSeek(xFilial()+SC5->C5_CLIENTE+SC5->C5_LOJACLI)
+		@Li,00 PSay "Cliente :"	//STR0016
+		@Li,10 PSay SC5->C5_CLIENTE+"-"+SC5->C5_LOJACLI+" "+A1_NOME
+		dbSelectArea("SG1")
+		Li++
+	EndIf
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Imprime a quantidade original quando a quantidade da    ³
+//³ Op for diferente da quantidade ja entregue              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If SC2->C2_QUJE + SC2->C2_PERDA > 0
+	@Li,00 PSay "Qtde Prod.:"	//STR0017
+	@Li,11 PSay aSC2Sld()	  //	PICTURE PesqPictQt("C2_QUANT",14)+" Unid.Med. "aArray[1][4]
+	@Li,26 PSay "Qtde Orig.:"			//STR0018
+	@Li,37 PSay SC2->C2_QUANT	//PICTURE PesqPictQt("C2_QUANT",14)+" Unid.Med. "aArray[1][4]
+Else
+	@Li,00 PSay "Quantidade :"			//STR0019
+	@Li,15 PSay SC2->C2_QUANT - SC2->C2_QUJE	//PICTURE PesqPictQt("C2_QUANT",14)+" Unid.Med. "aArray[1][4]
+Endif
+
+Li++
+// Verifica se produto é PA para impressão de informações de peso por embalagem
+DbSelectArea("SB1")
+dBsEToRDER(1)
+If dbSeek(xFilial()+SC2->C2_PRODUTO)
+	//If B1_TIPO = "PA"
+	@Li,00 PSay "Peso Liquido:     " + Str(SB1->B1_PESO,11,4)
+	@Li,50 PSay "Peso Bruto: "       + Str(SB1->B1_PESBRU,11,4)
+	Li++
+	If SB1->B1_QE > 0
+		"Peso Liquido:     "
+		@Li,00 PSay "Peso por unidade: " + Str((SB1->B1_PESO/SB1->B1_QE),11,4)
+	Else
+		@Li,00 PSay "Peso por unidade: " + Str((SB1->B1_PESO),11,4)
+	EndIf
+	@Li,50 PSay "Peso Total: " + Str((SB1->B1_PESO * Iif(SC2->C2_QUJE + SC2->C2_PERDA > 0,;
+	SC2->C2_QUANT,(SC2->C2_QUANT - SC2->C2_QUJE))),11,4)
+	Li++
+	//EndIf
+EndIf
+
+//@Li,56 PSay STR0020	//"INICIO             F I M"
+//Li++
+// sera impresso acima na linha da quantidade - Cristina
+//@Li,00 PSay STR0021+aArray[1][4]			//"Unid. Medida : "
+@Li,30 PSay "Prev.Inicio: " +DTOC(SC2->C2_DATPRI)	//"Prev. : "
+@Li,60 PSay "Prev. Fim:   " +DTOC(SC2->C2_DATPRF)	//"Prev. : "
+Li++
+@ Li,00 PSay "C.Custo: "+SC2->C2_CC				//STR0023
+//@Li,42 PSay STR0024+DTOC(SC2->C2_DATAJI)	//"Ajuste: "
+//@Li,62 PSay STR0024+DTOC(SC2->C2_DATAJF)	//"Ajuste: "
+//Li++
+If SC2->C2_STATUS == "S"
+	@Li,42 PSay "Status: OP Sacramentada"	//STR0025
+ElseIf SC2->C2_STATUS == "U"
+	@Li,42 PSay "Status: OP Suspensa"		//STR0026
+ElseIf SC2->C2_STATUS $ " N"
+	@Li,42 PSay "Status: OP Normal"			//STR0027
+EndIf
+//@Li,42 PSay STR0028							//	"Real  :   /  /      Real  :   /  / "
+Li++
+
+If !(Empty(SC2->C2_OBS))
+	@Li,00 PSay "Observacao: "						//STR0029
+	For nBegin := 1 To Len(Alltrim(SC2->C2_OBS)) Step 65
+		@li,012 PSay Substr(SC2->C2_OBS,nBegin,65)
+		li++
+	Next nBegin
+EndIf
+
+@Li,00 PSay __PrtFatLine()
+
+Li++
+//@ Li,10 PSay "***** CONSULTAR AS FICHAS DE METODOS ANTES DE PRODUZIR *****"
+Li++
+
+@Li,00 PSay __PrtFatLine()
+li++
+
+@ Li, 00 PSay "     Quantidade      Data        Hora            Quantidade      Data       Hora
+Li++
+For nI := 1 to 5
+	@ Li,00 PSay StrZero(nI,2)     +") ___________  ___/___/___   ______       "+;
+	StrZero((nI+5),2) +") ___________  ___/___/___   ______"
+	Li+=2
+Next
+@Li,00 PSay __PrtFatLine()
+
+Li++
+@ Li,31 Psay "Narrativa da Ordem"
+//Li+=6
+
+// proxima folha
+Li := 0
+@Li,00 PSay __PrtFatLine()
+Li++
+
+@Li,00 PSay cCabec2
+Li++
+@Li,00 PSay __PrtFatLine()
+Li++
+@Li,00 PSay cCabec3
+Li++
+@Li,00 PSay __PrtFatLine()
+Li++
+Return()
+
+
+//------------------------------------------------------
+Static Function ImpLiq(lEnd,wnRel,titulo,tamanho)
+//------------------------------------------------------
+// Imprime somente liquidos
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis                                             ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local CbCont,cabec1,cabec2
+Local limite     := 80
+Local nQuant     := 1
+Local nTipo      := 18
+Local cProduto   := SPACE(LEN(SC2->C2_PRODUTO))
+Local cQtd,i,nBegin
+Local cIndSC2    := CriaTrab(NIL,.F.), nIndSC2
+Local cNaoImp := RetZ1() // Determina quais tipos de produtos nao devem aparecer na OP
+
+Private aArray   := {}
+Private li       := 80
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas para Impressao do Cabecalho e Rodape    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cbtxt    := SPACE(10)
+cbcont   := 0
+m_pag    := 0
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Monta os Cabecalhos                                          ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cabec1 := ""
+cabec2 := ""
+dbSelectArea("SC2")
+DbGoTop()
+If aReturn[8] == 4
+	#IFDEF TOP
+		IndRegua("SC2",cIndSC2,"C2_FILIAL+C2_DATPRF",,,"Selecionando Registros...")	//STR0008
+	#ELSE
+		IndRegua("SC2",cIndSC2,"C2_FILIAL+DTOS(C2_DATPRF)",,,"Selecionando Registros...")	//STR0008
+	#ENDIF
+	dbGoTop()
+Else
+	dbSetOrder(aReturn[8])
+EndIf
+
+dbSeek(xFilial())
+
+SetRegua(LastRec())
+
+While !Eof()
+	
+	IF lEnd
+		@ Prow()+1,001 PSay "CANCELADO PELO OPERADOR"	//STR0009
+		Exit
+	EndIF
+	
+	IncRegua()
+	
+	If C2_FILIAL+C2_NUM+C2_ITEM+C2_SEQUEN+C2_ITEMGRD < xFilial()+MV_PAR01 .or. C2_FILIAL+C2_NUM+C2_ITEM+C2_SEQUEN+C2_ITEMGRD > xFilial()+MV_PAR02
+		dbSkip()
+		Loop
+	EndIf
+	
+	If  C2_DATPRF < MV_PAR03 .Or. C2_DATPRF > MV_PAR04
+		dbSkip()
+		Loop
+	Endif
+	
+	If !(Empty(C2_DATRF)) .And. MV_PAR08 == 2
+		dbSkip()
+		Loop
+	Endif
+	
+	//-- Valida se a OP deve ser Impressa ou n„o
+	If !MtrAValOP(MV_PAR10, 'SC2')
+		dbSkip()
+		Loop
+	EndIf
+	
+	
+	//If MV_PAR12 == 1 // Imprime tudo.
+	
+	cProduto  := SC2->C2_PRODUTO
+	nQuant    := aSC2Sld()
+	
+	
+	dbSelectArea("SB1")
+	dbSeek(xFilial()+cProduto)
+	
+	// imprime liquidos separado
+	
+	if alltrim(SB1->B1_GRUPO) <> "1004"
+		dbSelectArea("SC2")
+		dbSkip()
+		Loop
+	endif
+	
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Adiciona o primeiro elemento da estrutura , ou seja , o Pai  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	AddAr820(nQuant)
+	
+	MontStruc(SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN+SC2->C2_ITEMGRD,nQuant)
+	
+	If MV_PAR09 == 1
+		aSort( aArray,2,, { |x, y| (x[1]+x[8]) < (y[1]+y[8]) } )
+	Else
+		aSort( aArray,2,, { |x, y| (x[8]+x[1]) < (y[8]+y[1]) } )
+	ENDIF
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Imprime cabecalho                                       ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cabecOp(Tamanho,cFolha) // Normal
+	cFolha := "S"
+	CabecOp(Tamanho,cFolha) // cabeçalho solicitado em nova pagina Parametro cFolha
+	// novo cabeçalho conforme solicitado
+	
+	For I := 2 TO Len(aArray)
+		
+		If !(aArray[I][3] $ cNaoImp) // Se estiver contido no cNaoImp, na imprimir
+			
+			@Li ,   0 PSay aArray[I][1]    	 				   	// CODIGO PRODUTO
+			
+			
+			
+			For nBegin := 1 To Len(Alltrim(aArray[I][2])) Step 31
+				
+				SB1->(dbseek(xfilial("SB1")+aArray[I][1]))
+				// Verifica se é Liquido nao imprime
+				if alltrim(SB1->B1_GRUPO) <> '1004'
+					
+					@li,016 PSay Substr(aArray[I][2],nBegin,31)
+					li++
+					
+				endif
+				
+				
+				//li++
+			Next nBegin
+			
+			
+			
+			Li--
+			cQtd := Alltrim(Transform(aArray[I][5],PesqPictQt("D4_QUANT",14)))
+			@Li , (46+11-Len(cQtd)) PSay cQtd					// QUANTIDADE
+			@Li ,  57 PSay "|"+aArray[I][4]+"|"			  	// UNIDADE DE MEDIDA
+			@li ,  61 PSay aArray[I][6]+"|"                  	// ALMOXARIFADO
+			@li ,  64 PSay Substr(aArray[I][7],1,12)         	// LOCALIZACAO
+			@li ,  76 PSay "|"+aArray[I][8]                  	// SEQUENCIA
+			Li++
+			@Li ,  00 PSay __PrtThinLine()
+			Li++
+			
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Se nao couber, salta para proxima folha                 ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			IF li > 63
+				Li := 0
+				CabecOp(Tamanho)		// imprime cabecalho da OP
+			EndIF
+			
+		EndIf
+		
+	Next I
+	
+	If _MV_PAR05 == 1
+		RotOper()   	// IMPRIME ROTEIRO DAS OPERACOES
+	Endif
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Imprimir Relacao de medidas para Cliente == HUNTER DOUGLAS.  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	dbSelectArea("SX3")
+	dbSetOrder(1)
+	dbSeek("SMX")
+	If Found() .And. SC2->C2_DESTINA == "P"
+		R820Medidas()
+	EndIf
+	
+	*	m_pag++
+	
+	If MV_PAR12 == 1 // Imprime tudo.
+		
+		Li := 0					// linha inicial - ejeta automatico
+		
+		ImpRap(aArray) // Imprime Apontamento
+		
+		aArray:={}
+		
+	EndIf
+	dbSelectArea("SC2")
+	dbSkip()
+	
+EndDO
+
+dbSelectArea("SH8")
+dbCloseArea()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Retira o SH8 da variavel cFopened ref. a abertura no MNU     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ClosFile("SH8")
+
+dbSelectArea("SC2")
+If aReturn[8] == 4
+	RetIndex("SC2")
+	Ferase(cIndSC2+OrdBagExt())
+EndIf
+Set Filter To
+dbSetOrder(1)
+
+If aReturn[5] = 1
+	Set Printer TO
+	dbCommitall()
+	ourspool(wnrel)
+Endif
+
+MS_FLUSH()
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³CabItens()ºAutor  ³Microsiga           º Data ³  01/05/11   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Cabecalho dos itens da ordem de producao                   º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function CabItens()
+
+// Local cCabec2:= "  C O M P O N E N T E S                       |          |  |  |            |   "
+//// Local cCabec3:= "CODIGO         |DESCRICAO                     |QUANTIDADE|UM|AL|LOCALIZACAO |SEQ"
+Local cCabec3:= "SEQ|CODIGO |DESCRICAO                                  |QUANT.SOL.|UM|QUANT.REAL.      "
+// @   Li,000 psay cCabec2
+@ ++li,000 psay cCabec3
+//// @ ++Li,000 PSay "===============|==============================|==========|==|==|============|==="
+@ ++Li,000 PSay "===|=======|===========================================|==========|==|=========="
+
+Return
+
+Static Function BPCPR001A(cOrdProd,cLote,cNumser)
+Local CbCont
+Local cOperac	:= ''
+Local cDescEns := Space(30)
+Local nContLi	:= 0
+Local nY       := 0
+Local aTexto	:= {}
+Local aEnsaios := {}
+Local lFirst	:= .T.
+Local cTipoEns	:=	''
+Local cOp		:=	''
+Local cProduto	:=	''
+Local cRoteiro	:=	''
+Local cUnimed	:= ''
+Local cTamAmo	:= ''
+Local cFatCon	:= ''
+Local cTipCon	:= ''
+Local cSkTes	:= ''
+Local cGrupo	:= ''
+Local lProximo	:= .F.
+Local aImpPl	:= {}
+Local nCount	:= 0
+Local aAreaQPK	:= GetArea()
+Local cMemo		:= ''
+Local nMCount	:= ''
+Local nLoop		:= 0
+Local cLinha	:= ""
+Local cALTESP	:= ""
+Local nC        := 0
+Local nCont     := 0
+Local cCarta    := ""
+Local cTexObs   := ""
+Local aTexObs   := ""
+
+PRIVATE cArqTRB	:= ''
+PRIVATE cTitulo    := OemToAnsi("Roteiro de Inspeção")
+PRIVATE cRelatorio := "QIPR041"
+PRIVATE nTamanho   := "M"
+PRIVATE nPagina    := 1
+PRIVATE nRecnoQPK	 := QPK->(Recno())
+PRIVATE lExisAlEsp := Iif(QP6->(FieldPos("QP6_ALTESP")) > 0,.T.,.F.)
+
+Private Titulo	:= cTitulo
+Private Cabec1	:= ""
+Private Cabec2	:= ""
+Private cTamanho:= "M"
+Private nTipo	:= 0
+Private cLoteSc2 := ""
+
+MV_PAR01 := cOrdProd
+MV_PAR02 := cLote
+MV_PAR03 := cNumSer
+MV_PAR04 := cOrdProd
+MV_PAR05 := cLote
+MV_PAR06 := cNumSer
+MV_PAR07 := '  '
+MV_PAR08 := 'ZZ'
+MV_PAR09 := 2
+MV_PAR10 := Space(6)
+MV_PAR11 := Space(2)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas para Impressao do Cabecalho e Rodape	 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+li 		:= 80
+m_pag 	:= 1
+cbTxt		:= Space(10)
+cbCont	:= 00
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se deve comprimir ou nao                            ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+nTipo := If(aReturn[4]==1,15,18)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Chamada da Funcao para gerar arquivo de Trabalho		     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+R040GTrab()
+dbSelectArea("TRB")
+If BOF() .and. EOF()
+	//HELP(" ",1,"RECNO")
+	dbSelectArea("TRB")
+	dbCloseArea()
+	Ferase(cArqTRB+GetDBExtension())
+	dbSelectArea("QPK")
+	Ferase(cArqTRB+OrdBagExt())
+	dbSetOrder( 1 )
+	Return .T.
+Else
+	IndRegua("TRB",cArqTRB,"OP+PRODUT+REVI+ROTEIRO+OPERAC+LABOR+SEQLAB",,,"Selecionando Registros...")      //
+Endif
+
+TRB->(dbGoTop())
+SetRegua(RecCount())
+While TRB->(!EOF())
+	IncRegua()
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica se ‚ nova pagina 							   	     ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If Li > 54
+		Cabec(cTitulo,Cabec1,Cabec2,nomeprog,cTamanho,nTipo)
+	Endif
+	
+	IF ( lEnd )
+		@Prow()+1,001 PSAY OemToAnsi("CANCELADO PELO OPERADOR")	//
+		Exit
+	EndIf
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Posiciona no grupo de produtos 								  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cGrupo := Posicione("QPA",2,xFilial("QPA")+TRB->PRODUT,"QPA_GRUPO")
+	
+	If TRB->OPERAC	!= cOperac
+		cOperac := TRB->OPERAC
+	EndIf
+	
+	If lFirst .Or. cOp != TRB->OP+TRB->LOTE+TRB->NUMSER
+		cOP := TRB->OP+TRB->LOTE+TRB->NUMSER
+		
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Define o Fator Conversao, se nao estiver definido             ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If TRB->UNMED1 == TRB->C2UNIMED
+			cFatCon := TRB->FATCO1
+			cTipCon := TRB->TIPCO1
+		ElseIf TRB->UNMED2 == TRB->C2UNIMED
+			cFatCon := TRB->FATCO2
+			cTipCon := TRB->TIPCO2
+		EndIf
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Calcula o Tamanho da Amostra                                  ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If Superval(cFatCon) <> 0
+			cFatCon := StrTran(cFatcon,",",".")
+			If cTipCon == "D"
+				cTamAmo := Str(TRB->QUANT / Superval(cFatCon))
+			Else
+				cTamAmo := Str(TRB->QUANT * Superval(cFatCon))
+			EndIf
+		Else
+			cTamAmo := Str(TRB->QUANT)
+		EndIf
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ DADOS DO PRODUTO 											 ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		@ Li, 001 PSAY AllTrim(TitSX3("QPK_OP")[1])+REPLICATE(".",41-Len(AllTrim(TitSX3("QPK_OP")[1])))+":"
+		@ Li, 044 PSAY TRB->OP
+		
+		If !Empty(TRB->LOTE)
+			cLoteSc2 := TRB->LOTE
+		ELSE
+			DBSELECTAREA("SC2")
+			DBSETORDER(1)
+			IF DBSEEK( XFILIAL("SC2") + SUBSTR(cOp,1,11))
+				cLoteSc2 := SC2->C2_LOTECTL
+			ENDIF
+		EndIf
+		
+		IF LEN(ALLTRIM(cLoteSc2)) == 0
+			cLoteSc2 := "IMPRIMIR A OP P/GERAR O LOTE"
+		ENDIF
+		
+		@ Li, 064 PSAY "Lote: "//STR0045
+		@ Li, 070 PSAY cLoteSc2
+		
+		If !Empty(TRB->NUMSER)
+			@ Li, 094 PSAY "Nr.Ser.:"//STR0046
+			@ Li, 112 PSAY TRB->NUMSER
+		EndIF
+		
+		Li++
+		@ Li, 001 PSAY AllTrim(TitSX3("QPK_TAMLOT")[1])+REPLICATE(".",41-Len(AllTrim(TitSX3("QPK_TAMLOT")[1])))+":"
+		@ Li, 044 PSAY AllTrim(Str(TRB->QUANT))
+		Li++
+		@ Li, 001 PSAY 'Tam.Amostr'+REPLICATE(".",41-Len('Tam.Amostr'))+':'		//'Tam.Amostr'
+		@ Li, 044 PSAY AllTrim(Str(Int(Val(cTamAmo))))
+		Li++
+		@ Li, 001 PSAY AllTrim(TitSX3("QP6_PRODUT")[1])+" - "+AllTrim(TitSX3("QP6_REVI")[1])+Replicate(".",38-(len(Alltrim(TitSx3("QP6_PRODUT")[1]))+len(Alltrim(TitSx3("QP6_REVI")[1]))))+":"
+		@ Li, 044 PSAY TRB->PRODUT + " - " + TRB->REVI
+		Li++
+		
+		If !Empty(MV_PAR10)
+			@ li,168 PSAY MV_PAR10 + " / " + MV_PAR11 + " - " + Posicione( "SA1", 1, xFilial("SA1")+MV_PAR10+MV_PAR11, "A1_NOME" )
+		EndIf
+		
+		@ Li, 001 PSAY AllTrim(TitSX3("QP6_DESCPO")[1])+REPLICATE(".",41-Len(AllTrim(TitSX3("QP6_DESCPO")[1])))+":"
+		@ Li, 044 PSAY TRB->DESCPO
+		Li++
+		@ Li, 001 PSAY AllTrim(TitSX3("QP6_DTCAD")[1])+"/"+AllTrim(TitSX3("QP6_DTDES")[1])+"/"+AllTrim(TitSX3("QP6_RVDES")[1])+"...:"
+		@ Li, 044 PSAY TRB->DTCAD
+		@ Li, 057 PSAY TRB->DTDES
+		@ Li, 070 PSAY TRB->RVDES
+		Li++
+		@ Li, 001 PSAY AllTrim(TitSX3("QP6_DTINI")[1])+REPLICATE(".",41-Len(AllTrim(TitSX3("QP6_DTINI")[1])))+":"
+		@ Li, 044 PSAY TRB->DTINI
+		If !Empty(TRB->DOCOBR)
+			Li++
+			@ Li, 001 PSAY AllTrim(TitSX3("QP6_DOCOBR")[1])+REPLICATE(".",41-Len(AllTrim(TitSX3("QP6_DOCOBR")[1])))+":"
+			@ Li, 044 PSAY Iif(TRB->DOCOBR=="S",OemToAnsi("Sim"),;   // "Sim"
+			OemToAnsi("Nao"))	// "Nao"
+		EndIf
+		Li++
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Exibe Historico do Produto	 ( campo memo )       ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		cMemo	:= MSMM(TRB->HISTOR)
+		nMCount	:= MlCount( cMemo, 80 )
+		
+		If !Empty(nMCount)
+			@ Li, 001 PSAY AllTrim(TitSX3("QP6_HISTOR")[1])+REPLICATE(".",41-Len(AllTrim(TitSX3("QP6_HISTOR")[1])))+":"
+			For nLoop := 1 To nMCount
+				cLinha := MemoLine( cMemo, 80, nLoop )
+				@li,044 PSAY StrTran( cLinha, Chr(13)+Chr(10), "" )
+				li++
+			Next nLoop
+		EndIf
+		
+		@ Li, 001 PSAY "ROTEIRO  ==> "+ TRB->ROTEIRO		//"ROTEIRO  ==> "
+		Li++
+		lFirst := .F.
+	EndIf
+	@ Li, 001 PSAY "OPERACAO ==> " + TRB->OPERAC + " - " + TRB->DESCRI	//"OPERACAO ==> "
+	Li++
+	@li,000 PSAY __PrtThinLine()
+	Li++
+	
+	/*
+	Ensaio                                             Metodo           Acessorios           Un. Med.  Nominal  L.I.E.   L.S.E.
+	------------------------------------------------------------------------------------------------------------------------------------
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx
+	1         2         3         4         5         6         7         8         9        10        11        12        13
+	0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
+	*/
+	
+	@ Li, 000 PSAY TitSX3("QP7_ENSAIO")[1]
+	@ Li, 051 PSAY TitSX3("QP7_METODO")[1]
+	@ Li, 068 PSAY TitSX3("QP7_ACESSO")[1]
+	@ Li, 089 PSAY "Un. Med."	//"Un. Med."
+	@ Li, 099 PSAY "Nominal"	//"Nominal"
+	@ Li, 108 PSAY "L.I.E."	//"L.I.E."
+	@ Li, 117 PSAY "L.S.E."	//"L.S.E."
+	Li++
+	@li,000 PSAY __PrtThinLine()
+	
+	If lExisAlEsp
+		cALTESP	:= TRB->ALTESP
+	Endif
+	
+	cChave	:=TRB->CHAVE
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Dados dos ensaios 						   ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	aEnsaios := {}
+	dbSelectArea("TRB")
+	While !EOF() .And. cOperac == TRB->OPERAC .And. cOp == TRB->OP+TRB->LOTE+TRB->NUMSER
+		QP1->(dbSetOrder(1))
+		IF QP1->(dbSeek(xFilial("QP1")+TRB->ENSAIO))
+			cDescEns := QP1->QP1_DESCPO
+			cTipoEns := QP1->QP1_TPCART
+		Endif
+		
+		cProduto	:= TRB->PRODUT
+		cRoteiro	:= TRB->ROTEIRO
+		cOperac  := TRB->OPERAC
+		cUnimed  := TRB->C2UNIMED
+		
+		AADD(aEnsaios,{TRB->ENSAIO,cTipoEns,TRB->PLAMO,TRB->DESPLA,cProduto,TRB->REVI,cRoteiro,cOperac,cTamAmo})
+		Li++
+		@ Li, 000 PSAY Iif(TRB->ENSOBR=="S","* ","  ") + TRB->ENSAIO + " " + cDescEns
+		@ Li, 051 PSAY TRB->METODO
+		@ Li, 068 PSAY TRB->ACESSORI
+		
+		If cTipoEns == "X"		//Se o tipo da carta for igual a "TXT"
+			aTexto := {}
+			Aadd(aTexto,Substr(TRB->TEXTO,1,34))
+			Aadd(aTexto,Substr(TRB->TEXTO,35,35))
+			Aadd(aTexto,Substr(TRB->TEXTO,70,31))
+			@ Li, 089 PSAY aTexto[1]
+		Else
+			@ Li, 089 PSAY Posicione("SAH",1,xFilial("SAH")+TRB->UNIMED,"AH_UMRES")
+			@ Li, 099 PSAY AllTrim(TRB->NOMINA)
+			
+			If TRB->MINMAX == "1"
+				@ Li, 108 PSAY AllTrim(TRB->LIE)
+				@ Li, 117 PSAY AllTrim(TRB->LSE)
+			ElseIf TRB->MINMAX == "2"
+				@ Li, 108 PSAY AllTrim(TRB->LIE)
+				@ Li, 118 PSAY ">>>"
+			ElseIf TRB->MINMAX == "3"
+				@ Li, 109 PSAY "<<<"
+				@ Li, 117 PSAY AllTrim(TRB->LSE)
+			EndIf
+		EndIf
+		
+		QQ1->(dbSetOrder(1))
+		QQ1->(dbSeek(xFilial("QQ1")+TRB->PRODUT+TRB->REVI+TRB->OPERAC+TRB->ENSAIO))
+		While  QQ1->(!Eof()) .And. xFilial("QQ1")==QQ1->QQ1_FILIAL 	.And.;
+			QQ1->QQ1_PRODUT == TRB->PRODUT	.And.;
+			QQ1->QQ1_REVI	== TRB->REVI	.And.;
+			QQ1->QQ1_OPERAC == TRB->OPERAC	.And.;
+			QQ1->QQ1_ENSAIO == TRB->ENSAIO
+			If lProximo
+				Li++
+			EndIf
+			
+			If	cTipoEns == "X"	//Se o Tipo da Carta for igual a "TXT"
+				nContLi++
+				If !Empty(aTexto[2]) .And. nContLi==2
+					@ Li,059 PSAY aTexto[2]
+				ElseIf !Empty(aTexto[3]) .And. nContLi==3
+					@ Li,059 PSAY aTexto[3]
+				EndIf
+			EndIf
+			
+			lProximo := .T.
+			QQ1->(dbSkip())
+		EndDo
+		lProximo := .F.
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Imprime restante do aTexto 									 ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If cTipoEns == "X"
+			If nContLi < 2
+				If !Empty (aTexto[2])
+					Li++
+					@ Li, 089 PSAY aTexto[2]
+				EndIf
+			EndIf
+			
+			If nContLi < 3
+				If !Empty (aTexto[3])
+					Li++
+					@ Li, 089 PSAY aTexto[3]
+				Endif
+			EndIf
+			aTexto 	:= {}
+			nContLi	:= 0
+		EndIf
+		
+		Li++
+		@li,000 PSAY __PrtThinLine()
+		
+		If Li > 54
+			Cabec(cTitulo,Cabec1,Cabec2,nomeprog,cTamanho,nTipo)
+			@li,000 PSAY __PrtThinLine()
+			Li++
+			@ Li, 000 PSAY TitSX3("QP7_ENSAIO")[1]
+			@ Li, 051 PSAY TitSX3("QP7_METODO")[1]
+			@ Li, 068 PSAY TitSX3("QP7_ACESSO")[1]
+			@ Li, 089 PSAY "Un. Med."	//"Un. Med."
+			@ Li, 099 PSAY "Nominal"	//"Nominal"
+			@ Li, 108 PSAY "L.I.E."	//"L.I.E."
+			@ Li, 117 PSAY "L.S.E."	//"L.S.E."
+			Li++
+			@li,000 PSAY __PrtThinLine()
+		Endif
+		
+		dbSelectArea("TRB")
+		dbSkip()
+	Enddo
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ CABECALHO DO PLANO DE AMOSTRAGEM³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If Len(aEnsaios) > 0
+		Li+=2
+		
+		@ Li, 000 PSAY AllTrim(TitSX3("QP7_ENSAIO")[1])
+		@ Li, 009 PSAY "Aceite" //"Aceite"
+		@ Li, 018 PSAY "Rejeite" //"Rejeite"
+		@ Li, 027 PSAY "Tam. Amostra" //"Tam. Amostra"
+		@ Li, 040 PSAY 'Plano de Amostragem'	//'Plano de Amostragem'
+		Li++
+		@li,000 PSAY __PrtThinLine()
+		Li++
+		If Li > 54
+			Cabec(cTitulo,Cabec1,Cabec2,nomeprog,cTamanho,nTipo)
+		Endif
+		
+		For nC := 1 To Len(aEnsaios)
+			
+			cCarta := QPCarta(aEnsaios[nC,1])
+			QQH->(dbSetOrder(1))
+			If QQH->(dbSeek(xFilial('QQH')+aEnsaios[nC,5]+aEnsaios[nC,6]+aEnsaios[nC,7]+aEnsaios[nC,8]+aEnsaios[nC,1]))
+				cAmost  := QQH->QQH_AMOST
+				aImpPl  := QEP_RetAmostra(aEnsaios[nC,3],QQH->QQH_AMOST,QQH->QQH_NIVAMO,QQH->QQH_NQA,+Str(Int(Val(aEnsaios[nC,9])),8),"QPK_TAMLOT",.F.)
+				
+				If aEnsaios[nC,3]=="I"
+					For nCount := 1 To Len(aImpPl)
+						@ Li,000 PSAY aEnsaios[nC,1]
+						@ Li,009 PSAY aImpPl[nCount,1]
+						@ Li,018 PSAY aImpPl[nCount,2]
+						@ Li,027 PSAY aImpPl[nCount,3]
+						@ Li,040 PSAY aEnsaios[nC,3]
+						@ Li,042 PSAY Alltrim(aEnsaios[nC,4])+"  Tipo : "+aImpPl[nCount,7] //"  Tipo : "
+						Li++
+					Next nCount
+				Else
+					@ Li,000 PSAY aEnsaios[nC,1]
+					@ Li,009 PSAY aImpPl[2]
+					@ Li,018 PSAY aImpPl[3]
+					@ Li,027 PSAY aImpPl[1]
+					@ Li,040 PSAY aEnsaios[nC,3]
+					@ Li,042 PSAY Substr(aEnsaios[nC,4],1,90)
+					Li++
+				EndIF
+			EndIF
+			
+			If Li > 54
+				Cabec(cTitulo,Cabec1,Cabec2,nomeprog,cTamanho,nTipo)
+			Endif
+		Next
+		@li,000 PSAY __PrtThinLine()
+		Li++
+	EndIf
+	
+	If Li > 54
+		Cabec(cTitulo,Cabec1,Cabec2,nomeprog,cTamanho,nTipo)
+	Endif
+	Li+=2
+	@ Li,001 PSAY "Data        ____ /____ /____"	// "Data        ____ /____ /____"
+	@ Li,062 PSAY "Lote        ____________________________" //"Lote        ____________________________"
+	Li+=2
+	@ Li,001 PSAY "Equipamento _________________________"	//"Equipamento _________________________"
+	Li+=2
+	
+	If Li > 50
+		Cabec(cTitulo,Cabec1,Cabec2,nomeprog,cTamanho,nTipo)
+	Endif
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ IMPRIME MENSAGEM DE NOVAS ESPECIFICACOES 	         ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If lExisAlEsp
+		If cALTESP == "S"
+			Li+=2
+			@ Li, 45 PSAY "*** ORDEM DE PRODUCAO COM NOVAS ESPECIFICACOES ***" //"*** ORDEM DE PRODUCAO COM NOVAS ESPECIFICACOES ***"
+			Li+=2
+		EndIf
+	EndIf
+	
+	@ Li, 01 PSAY "|---------------------------------------------------------------------------------------------------------------------------------|"
+	Li++
+	@ Li, 01 PSAY "|                | "+Left(TitSX3("QPT_INSTR")[1],9)+"  |"+"     Ensaiador     "+"|"+"                                     M E D I C O E S                           "+"|"                                                         //"     Ensaiador     "###"                                     M E D I C O E S                           "
+	Li++
+	@ Li, 01 PSAY "|----------------+------------+-------------------+---------------+---------------+---------------+---------------+---------------|"
+	Li++
+	
+	If Li > 52
+		Cabec(cTitulo,Cabec1,Cabec2,nomeprog,cTamanho,nTipo)
+	Endif
+	/*
+	For nCont := 1 to Len(aEnsaios)
+	If aEnsaios[nCont,2] <> "X"
+	@ Li, 01 PSAY "| " + aEnsaios[nCont,1] + "       |            |                   |               |               |               |               |               |"
+	Li++
+	@ Li, 01 PSAY "|----------------+------------+-------------------+---------------+---------------+---------------+---------------+---------------|"
+	Li++
+	Else
+	@ Li, 01 PSAY "| " + aEnsaios[nCont,1] + "       |            |                   |                                                                               |"
+	Li++
+	@ Li, 01 PSAY "|---------------------------------------------------------------------------------------------------------------------------------|"
+	Li++
+	Endif
+	If Li > 54 .And. Len(aEnsaios) > nCont
+	Cabec(cTitulo,Cabec1,Cabec2,nomeprog,cTamanho,nTipo)
+	@ Li, 01 PSAY "|---------------------------------------------------------------------------------------------------------------------------------|"
+	Li++
+	@ Li, 01 PSAY "|                | "+Left(TitSX3("QPT_INSTR")[1],9)+"  |"+"     Ensaiador     "+"|"+"                                     M E D I C O E S                           "+"|"                                                         //"     Ensaiador     "###"                                     M E D I C O E S                           "
+	Li++
+	@ Li, 01 PSAY "|----------------+------------+-------------------+---------------+---------------+---------------+---------------+---------------|"
+	Li++
+	Endif
+	Next
+	*/
+	aEnsaios:={}
+	Li++
+	@ Li, 01 PSAY "Laudo : "+"_______________________"      //"Laudo : "
+	Li++
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Converte a chave passada como param. p/ chave do texto		  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cTexObs:= QA_Rectxt(cChave,"QIPA010 ")
+	aTexObs := JustificaTXT(cTexObs,130)
+	For nY:=1 to Len(aTexObs)
+		Li++
+		If Li > 60
+			Cabec(cTitulo,Cabec1,Cabec2,nomeprog,cTamanho,nTipo)
+		Endif
+		@ Li, 01 PSAY aTexObs[nY]
+	Next nY
+	
+	Li:=60
+EndDo
+
+If Li != 80
+	roda(CbCont,cbtxt,nTamanho)
+EnDif
+
+QPZ->(dbSetOrder(1))
+QPI->(dbSetOrder(1))
+dbSelectArea("TRB")
+dbCloseArea()
+
+Ferase(cArqTRB+GetDBExtension())
+dbSelectArea("QPK")
+Ferase(cArqTRB+OrdBagExt())
+dbSetOrder( 1 )
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Restaura o registro QPK         ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+RestArea(aAreaQPK)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Encerra a impressao desta ficha ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+/*
+Set Device To Screen
+
+If aReturn[5] == 1
+Set Printer To
+Commit
+Ourspool(wnrel)
+EndIf
+
+MS_FLUSH()
+*/
+Return
+
+
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o	 ³R040GTrab	³ Autor ³ Marcelo Pimentel 	  	³ Data ³ 11.03.98³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Gera arquivo de Trabalho 									  		  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso		 ³ R040GTrab()											            	  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function R040GTrab()
+
+#IFDEF TOP
+	Local cQuery		:= ''
+#ELSE
+	Local cProdRev		:= ''
+	Local nRecQQK		:= 0
+	Local cChaveQPK		:= ''
+	Local cRoteiro		:= ''
+	Local cCond			:= ''
+	Local cRevi			:= ''
+#ENDIF
+
+Local aTam			:= {}
+Local aCampos	    := {}
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Cria Arquivo de Trabalho  									 		  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+aTam:=TamSX3("QQK_CODIGO")	;AADD(aCampos,{"ROTEIRO"  ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QQK_OPERAC")	;AADD(aCampos,{"OPERAC"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QQK_CHAVE" ) ;AADD(aCampos,{"CHAVE"    ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QQK_DESCRI")	;AADD(aCampos,{"DESCRI"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QQK_OPERGR")	;AADD(aCampos,{"OPERGRP"  ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QPK_PRODUT")	;AADD(aCampos,{"PRODUT"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QPK_REVI"  )	;AADD(aCampos,{"REVI"     ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QPK_OP"    )	;AADD(aCampos,{"OP"       ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QPK_LOTE"  )	;AADD(aCampos,{"LOTE"     ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QPK_NUMSER")	;AADD(aCampos,{"NUMSER"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_FATCO1")	;AADD(aCampos,{"FATCO1"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_TIPCO1")	;AADD(aCampos,{"TIPCO1"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_FATCO2")	;AADD(aCampos,{"FATCO2"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_FATCO2")	;AADD(aCampos,{"TIPCO2"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_DESCPO")	;AADD(aCampos,{"DESCPO"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_DTCAD" )	;AADD(aCampos,{"DTCAD"    ,"D",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_DTDES" )	;AADD(aCampos,{"DTDES"    ,"D",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_RVDES" )	;AADD(aCampos,{"RVDES"    ,"C",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_DTINI" )	;AADD(aCampos,{"DTINI"    ,"D",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_DOCOBR")	;AADD(aCampos,{"DOCOBR"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_UNMED1")	;AADD(aCampos,{"UNMED1"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_UNMED2")	;AADD(aCampos,{"UNMED2"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_ENSAIO")	;AADD(aCampos,{"ENSAIO"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_ENSOBR")	;AADD(aCampos,{"ENSOBR"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_UNIMED")	;AADD(aCampos,{"UNIMED"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_NOMINA")	;AADD(aCampos,{"NOMINA"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_LIE"   )	;AADD(aCampos,{"LIE"      ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_LSE"   )	;AADD(aCampos,{"LSE"      ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_ACESSO")	;AADD(aCampos,{"ACESSORI" ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_PLAMO" )	;AADD(aCampos,{"PLAMO"    ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_DESPLA")	;AADD(aCampos,{"DESPLA"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_NIVEL" )	;AADD(aCampos,{"NIVEL"    ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_LABOR" )	;AADD(aCampos,{"LABOR"    ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_SEQLAB")	;AADD(aCampos,{"SEQLAB"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_MINMAX")	;AADD(aCampos,{"MINMAX"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_METODO")	;AADD(aCampos,{"METODO"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP8_TEXTO" )	;AADD(aCampos,{"TEXTO"    ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QPK_TAMLOT")	;AADD(aCampos,{"QUANT"    ,"N",aTam[1],aTam[2]})
+aTam:=TamSX3("QPK_UM"    )	;AADD(aCampos,{"C2UNIMED" ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QPK_EMISSA")	;AADD(aCampos,{"C2EMISSAO","D",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_HISTOR")	;AADD(aCampos,{"HISTOR"   ,"C",aTam[1],aTam[2]})
+If lExisAlEsp
+	aTam:=TamSx3("QP6_ALTESP")	;AADD(aCampos,{"ALTESP"   ,"C",aTam[1],aTam[2]})
+EndIf
+
+
+cArqTRB := CriaTrab(aCampos)
+//Elias 30.01.07
+If Select("TRB")>0
+	TRB->(dbCloseArea())
+EndIf
+
+
+dbUseArea( .T.,, cArqTRB, "TRB", .F., .F. )
+
+dbSelectArea("QPK")
+dbSetOrder(1)
+#IFDEF TOP
+	If TcSrvType() != "AS/400"
+		cQuery := "SELECT "
+		cQuery += " QPK.QPK_OP OP, QPK.QPK_LOTE LOTE, QPK.QPK_NUMSER NUMSER,"
+		cQuery += " QPK.QPK_PRODUT PRODUT,QPK.QPK_REVI REVI,SC2.C2_ROTEIRO ROTEIRO,"
+		cQuery += " QPK.QPK_TAMLOT QUANT,QPK.QPK_UM C2UNIMED,QPK.QPK_EMISSA C2EMISSAO"
+		cQuery += " FROM "
+		cQuery += "	" + RetSQLName("QPK") + " QPK ,"
+		cQuery += "	" + RetSQLName("SC2") + " SC2 ,"
+		cQuery += "	" + RetSQLName("QP6") + " QP6 "
+		
+		cQuery += "WHERE "
+		cQuery += " QPK.QPK_FILIAL = '" + xFilial("QPK") + "'"
+		cQuery += " AND QP6.QP6_FILIAL = '" + xFilial("QP6") + "'"
+		
+		cQuery += " AND QPK.QPK_PRODUT = QP6.QP6_PRODUT"
+		cQuery += " AND QPK.QPK_REVI = QP6.QP6_REVI"
+		cQuery += " AND Substring(QPK.QPK_OP,1,6)  = SC2.C2_NUM"
+		cQuery += " AND Substring(QPK.QPK_OP,7,2)  = SC2.C2_ITEM"
+		cQuery += " AND Substring(QPK.QPK_OP,9,3)  = SC2.C2_SEQUEN"
+		cQuery += " AND Substring(QPK.QPK_OP,12,2) = SC2.C2_ITEMGRD"
+		
+		cQuery += " AND QPK.QPK_OP >='"	   +MV_PAR01 + "'"
+		cQuery += " AND QPK.QPK_LOTE >='"	+MV_PAR02 + "'"
+		cQuery += " AND QPK.QPK_NUMSER >='"	+MV_PAR03 + "'"
+		
+		cQuery += " AND QPK.QPK_OP <='"	    +MV_PAR04 + "'"
+		cQuery += " AND QPK.QPK_LOTE <='"	+MV_PAR05 + "'"
+		cQuery += " AND QPK.QPK_NUMSER <='"	+MV_PAR06 + "'"
+		
+		//FILTRA OS ITENS DELETADOS DA TABELA SC2020
+		cQuery += " AND SC2.D_E_L_E_T_ = ' ' "
+		
+		
+		cQuery += " AND QPK.D_E_L_E_T_ <> '*' "
+		cQuery += " ORDER BY " + SqlOrder(QPK->(IndexKey()))
+		cQuery := ChangeQuery(cQuery)
+		
+		MemoWrite("\QUERYSYS\TRBQPK.SQL",cQuery)
+		
+		dbUseArea(.T., "TOPCONN", TCGenQry(,,cQuery),"TRBQPK", .F., .T.)
+		aTam := TamSx3("QPK_TAMLOT")
+		TcSetField( "TRBQPK", "QUANT"	,"N",aTam[1],aTam[2])
+		TcSetField( "TRBQPK", "C2EMISSAO"	,"D")
+	EndIf
+	
+	While !Eof()
+		cKey   := "QP6_PRODUT+QP6_REVI+QP7_CODREC+QP7_OPERAC+QP7_LABOR+QP7_SEQLAB"
+		cQuery := "SELECT "
+		cQuery += " QP6.QP6_PRODUT PRODUT,QP6.QP6_REVI REVI,QP7.QP7_CODREC CODREC, "
+		cQuery += " QP7.QP7_OPERAC OPERAC, QP7.QP7_LABOR LABOR, QP7.QP7_SEQLAB SEQLAB, "
+		cQuery += " QP6.QP6_FATCO1 FATCO1, QP6.QP6_TIPCO1 TIPCO1, QP6.QP6_FATCO2 FATCO2, "
+		cQuery += " QP6.QP6_TIPCO2 TIPCO2, QP6.QP6_DESCPO DESCPO, QP6.QP6_DTCAD DTCAD, "
+		cQuery += " QP6.QP6_DTDES DTDES, QP6.QP6_RVDES RVDES, QP6.QP6_DTINI DTINI, "
+		cQuery += " QP6.QP6_DOCOBR DOCOBR, QP6.QP6_UNMED1 UNMED1, QP6.QP6_UNMED2 UNMED2, "
+		cQuery += " QQK.QQK_CHAVE CHAVE, QQK.QQK_DESCRI DESCRI, QQK.QQK_OPERGR OPERGRP, "
+		cQuery += " QP7.QP7_ENSAIO ENSAIO, QP7.QP7_ENSOBR ENSOBR, QP7.QP7_UNIMED UNIMED, "
+		cQuery += " QP7.QP7_NOMINA NOMINA, QP7.QP7_LIE LIE, QP7.QP7_NIVEL NIVEL, QP7.QP7_METODO METODO, "
+		cQuery += " QP7.QP7_ACESSO ACESSORI, "
+		If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+			cQuery += " QQ7.QQ7_CLIENT CLIENT,QQ7.QQ7_LOJA LOJA, SA1.A1_NOME DESCLI, "
+		EndIf
+		
+		cQuery += " QP6.QP6_HISTOR HISTOR,"
+		If lExisAlEsp
+			cQuery += " QP6.QP6_ALTESP ALTESP,"
+		EndIf
+		
+		cQuery += " QP7.QP7_LSE LSE, QP7.QP7_PLAMO PLAMO, QP7.QP7_DESPLA DESPLA, "
+		cQuery += " QP7.QP7_MINMAX MINMAX "
+		
+		
+		cQuery += "FROM "
+		If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+			cQuery += "	" + RetSQLName("QQ7") + " QQ7, "
+			cQuery += "	" + RetSQLName("SA1") + " SA1, "
+		EndIf
+		cQuery += "	" + RetSQLName("QPK") + " QPK, "
+		cQuery += "	" + RetSQLName("QP6") + " QP6, "
+		cQuery += "	" + RetSQLName("QQK") + " QQK, "
+		cQuery += "	" + RetSQLName("QP7") + " QP7 "
+		
+		cQuery += "WHERE "
+		cQuery += " QPK.QPK_OP>='"			+TRBQPK->OP + "'"
+		cQuery += " AND QPK.QPK_LOTE>='"	+TRBQPK->LOTE + "'"
+		cQuery += " AND QPK.QPK_NUMSER>='"	+TRBQPK->NUMSER + "'"
+		
+		cQuery += " AND QPK.QPK_OP<='"		+TRBQPK->OP + "'"
+		cQuery += " AND QPK.QPK_LOTE<='"	+TRBQPK->LOTE + "'"
+		cQuery += " AND QPK.QPK_NUMSER<='"	+TRBQPK->NUMSER + "'"
+		
+		cQuery += " AND QP6.QP6_FILIAL = '" + xFilial("QP6") +"'"
+		cQuery += " AND QQK.QQK_FILIAL  = '" + xFilial("QQK") +"'"
+		cQuery += " AND QP7.QP7_FILIAL = '" + xFilial("QP7") +"'"
+		If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+			cQuery += " AND QQ7.QQ7_FILIAL = '" + xFilial("QQ7") +"'"
+		EndIf
+		
+		cQuery += " AND QP6.QP6_PRODUT = '" + TRBQPK->PRODUT +"'"
+		cQuery += " AND QP6.QP6_REVI = '" + TRBQPK->REVI +"'"
+		cQuery += " AND QQK.QQK_PRODUT ='" + TRBQPK->PRODUT +"'"
+		cQuery += " AND QQK.QQK_CODIGO ='" + TRBQPK->ROTEIRO +"'"
+		cQuery += " AND QQK.QQK_OPERAC Between '" + MV_PAR07	+ "' and '" + MV_PAR08 + "'"
+		cQuery += " AND QQK.QQK_REVIPR = QPK.QPK_REVI"
+		cQuery += " AND QP7.QP7_PRODUT = QP6.QP6_PRODUT "
+		cQuery += " AND QP7.QP7_REVI = QPK.QPK_REVI "
+		cQuery += " AND QP7.QP7_CODREC = QQK.QQK_CODIGO "
+		cQuery += " AND QP7.QP7_OPERAC = QQK.QQK_OPERAC "
+		
+		If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+			cQuery += " AND SA1.A1_COD = '"+ MV_PAR10 +"'"
+			cQuery += " AND SA1.A1_LOJA = '" + MV_PAR11 + "'"
+			cQuery += " AND QQ7.QQ7_PRODUT = QP7.QP7_PRODUT "
+			cQuery += " AND QQ7.QQ7_ENSAIO = QP7.QP7_ENSAIO "
+			cQuery += " AND QQ7.QQ7_LABOR = QP7.QP7_LABOR "
+			cQuery += " AND QQ7.QQ7_CODREC = QP7.QP7_CODREC "
+			cQuery += " AND QQ7.QQ7_OPERAC = QP7.QP7_OPERAC "
+			cQuery += " AND QQ7.QQ7_CLIENT = '"+ MV_PAR10 +"'"
+			cQuery += " AND QQ7.QQ7_LOJA = '" + MV_PAR11 + "'"
+		EndIf
+		
+		cQuery += " AND QPK.D_E_L_E_T_ <> '*'"
+		cQuery += " AND QP6.D_E_L_E_T_ <> '*'"
+		cQuery += " AND QQK.D_E_L_E_T_ <> '*'"
+		cQuery += " AND QP7.D_E_L_E_T_ <> '*'"
+		
+		If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+			cQuery += " AND QQ7.D_E_L_E_T_ <> '*'"
+		EndIf
+		
+		cQuery += " ORDER BY " + SqlOrder(cKey)
+		
+		//		cQuery := ChangeQuery(cQuery)
+		
+		
+		MemoWrite("\QUERYSYS\TRBQPKTR1.SQL",cQuery)
+		dbUseArea(.T., "TOPCONN", TcGenQry(,,cQuery), 'TR1')
+		
+		TcSetField( "TR1", "DTCAD"	,"D")
+		TcSetField( "TR1", "DTDES"	,"D")
+		TcSetField( "TR1", "DTINI"	,"D")
+		
+		
+		QQK->(DbSetOrder(1))
+		
+		While !Eof()
+			If	MV_PAR09 == 1	 //Imprime somente a ultima operacao
+				If 	QQK->(dbSeek(xFilial("QQK")+TR1->PRODUT+TR1->REVI+If(Empty(TR1->CODREC),;
+					"01", TR1->CODREC)))
+					dbSelectArea("QQK")
+					nRecQQK := Recno()
+					While !Eof().And. xFilial("QQK")	==	QQK_FILIAL	.And.;
+						QQK_PRODUT+QQK_REVIPR+QQK_CODIGO==TR1->PRODUT+TR1->REVI+If(Empty(TR1->CODREC),;
+						"01", TR1->CODREC)
+						nRecQQK := Recno()
+						dbSkip()
+					EndDo
+					dbGoTo(nRecQQK)
+					dbSelectArea("TR1")
+					If TR1->OPERAC <> QQK->QQK_OPERAC
+						DbSkip()
+						Loop
+					Endif
+				Endif
+			EndIf
+			RecLock("TRB",.T.)
+			TRB->OP  		:= TRBQPK->OP
+			
+			//			IF LEN(ALLTRIM(TRBQPK->LOTE)) == 0
+			//				DBSELECTAREA("SC2")
+			//				DBSETORDER(1)
+			//				IF DBSEEK(XFILIAL("SC1") + SUBSTR(TRBQPK->OP,1,6) + SUBSTR(TRBQPK->OP,7,2) + SUBSTR(TRBQPK->OP,9,3))
+			//				IF DBSEEK(XFILIAL("SC1") + TRBQPK->OP )
+			//					TRB->LOTE := SC2->C2_LOTECTL
+			//				ENDIF
+			//			ELSE
+			TRB->LOTE      := TRBQPK->LOTE
+			//			ENDIF
+			//			DBSELECTAREA("TRB")
+			TRB->NUMSER    := TRBQPK->NUMSER
+			TRB->QUANT		:= TRBQPK->QUANT
+			TRB->C2UNIMED	:= TRBQPK->C2UNIMED
+			TRB->C2EMISSAO	:= TRBQPK->C2EMISSAO
+			TRB->ROTEIRO	:= TR1->CODREC
+			TRB->OPERAC		:= TR1->OPERAC
+			TRB->CHAVE		:= TR1->CHAVE
+			TRB->DESCRI		:= TR1->DESCRI
+			TRB->OPERGRP	:= TR1->OPERGRP
+			TRB->PRODUT		:= TR1->PRODUT
+			TRB->REVI		:= TR1->REVI
+			TRB->FATCO1		:= TR1->FATCO1
+			TRB->TIPCO1		:= TR1->TIPCO1
+			TRB->FATCO2		:= TR1->FATCO2
+			TRB->TIPCO2		:= TR1->TIPCO2
+			TRB->DESCPO		:= TR1->DESCPO
+			TRB->DTCAD		:= TR1->DTCAD
+			TRB->DTDES		:= TR1->DTDES
+			TRB->RVDES		:= TR1->RVDES
+			TRB->DTINI		:= TR1->DTINI
+			TRB->DOCOBR		:= TR1->DOCOBR
+			TRB->UNMED1		:= TR1->UNMED1
+			TRB->UNMED2		:= TR1->UNMED2
+			TRB->ENSAIO 	:= TR1->ENSAIO
+			TRB->ENSOBR		:= TR1->ENSOBR
+			TRB->UNIMED 	:= TR1->UNIMED
+			TRB->NOMINA 	:= TR1->NOMINA
+			TRB->LIE 		:= TR1->LIE
+			TRB->LSE 		:= TR1->LSE
+			TRB->PLAMO		:= TR1->PLAMO
+			TRB->DESPLA		:= TR1->DESPLA
+			TRB->NIVEL 	   := TR1->NIVEL
+			TRB->LABOR		:= TR1->LABOR
+			TRB->SEQLAB 	:= TR1->SEQLAB
+			TRB->MINMAX 	:= TR1->MINMAX
+			TRB->METODO 	:= TR1->METODO
+			TRB->HISTOR		:= TR1->HISTOR
+			TRB->ACESSORI  := TR1->ACESSORI
+			If lExisAlEsp
+				TRB->ALTESP	:= TR1->ALTESP
+			EndIf
+			
+			MsUnlock()
+			dbSelectArea("TR1")
+			dbSkip()
+		Enddo
+		dbSelectArea("TR1")
+		dbCloseArea()
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Texto 														 ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		cKey   := "QP6_PRODUT+QP6_REVI+QP8_CODREC+QP8_OPERAC+QP8_LABOR+QP8_SEQLAB"
+		cQuery := "SELECT "
+		cQuery += " QP6.QP6_PRODUT PRODUT,QP6.QP6_REVI REVI,QP8.QP8_CODREC CODREC, "
+		cQuery += " QP8.QP8_OPERAC OPERAC, QP8.QP8_LABOR LABOR, QP8.QP8_SEQLAB SEQLAB, "
+		cQuery += " QP6.QP6_FATCO1 FATCO1, QP6.QP6_TIPCO1 TIPCO1, QP6.QP6_FATCO2 FATCO2, "
+		cQuery += " QP6.QP6_TIPCO2 TIPCO2, QP6.QP6_DESCPO DESCPO, QP6.QP6_DTCAD DTCAD, "
+		cQuery += " QP6.QP6_DTDES DTDES, QP6.QP6_RVDES RVDES, QP6.QP6_DTINI DTINI, "
+		cQuery += " QP6.QP6_DOCOBR DOCOBR, QP6.QP6_UNMED1 UNMED1, QP6.QP6_UNMED2 UNMED2, "
+		cQuery += " QQK.QQK_CHAVE CHAVE, QQK.QQK_DESCRI DESCRI, QQK.QQK_OPERGR OPERGRP, "
+		cQuery += " QP8.QP8_ENSAIO ENSAIO, QP8.QP8_ENSOBR ENSOBR, QP8.QP8_TEXTO TEXTO, QP8.QP8_METODO METODO, "
+		If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+			cQuery += " QQ7.QQ7_CLIENT CLIENT,QQ7.QQ7_LOJA LOJA, SA1.A1_NOME DESCLI, "
+		EndIf
+		
+		cQuery += " QP6.QP6_HISTOR HISTOR, "
+		If lExisAlEsp
+			cQuery += " QP6.QP6_ALTESP ALTESP, "
+		EndIf
+		
+		cQuery += " QP8.QP8_PLAMO PLAMO, QP8.QP8_DESPLA DESPLA, QP8.QP8_NIVEL NIVEL "
+		
+		cQuery += " FROM "
+		If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+			cQuery += "	" + RetSQLName("QQ7") + " QQ7, "
+			cQuery += "	" + RetSQLName("SA1") + " SA1, "
+		EndIf
+		cQuery += "	" + RetSQLName("QPK") + " QPK, "
+		cQuery += "	" + RetSQLName("QP6") + " QP6, "
+		cQuery += "	" + RetSQLName("QQK") + " QQK, "
+		cQuery += "	" + RetSQLName("QP8") + " QP8 "
+		
+		cQuery += "WHERE "
+		
+		cQuery += " QPK.QPK_OP>='"			+TRBQPK->OP + "'"
+		cQuery += " AND QPK.QPK_LOTE>='"	+TRBQPK->LOTE + "'"
+		cQuery += " AND QPK.QPK_NUMSER>='"	+TRBQPK->NUMSER + "'"
+		
+		cQuery += " AND QPK.QPK_OP<='"		+TRBQPK->OP + "'"
+		cQuery += " AND QPK.QPK_LOTE<='"	+TRBQPK->LOTE + "'"
+		cQuery += " AND QPK.QPK_NUMSER<='"	+TRBQPK->NUMSER + "'"
+		
+		cQuery += " AND QP6.QP6_FILIAL = '" + xFilial("QP6") +"'"
+		cQuery += " AND QQK.QQK_FILIAL  = '" + xFilial("QQK") +"'"
+		cQuery += " AND QP8.QP8_FILIAL = '" + xFilial("QP8") +"'"
+		If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+			cQuery += " AND QQ7.QQ7_FILIAL = '" + xFilial("QQ7") +"'"
+		EndIf
+		cQuery += " AND QP6.QP6_PRODUT = '"	+ TRBQPK->PRODUT	+"'"
+		cQuery += " AND QP6.QP6_REVI = '" 	+ TRBQPK->REVI		+"'"
+		cQuery += " AND QQK.QQK_PRODUT ='" 	+ TRBQPK->PRODUT	+"'"
+		cQuery += " AND QQK.QQK_CODIGO ='"  + TRBQPK->ROTEIRO   +"'"
+		cQuery += " AND QQK.QQK_OPERAC Between '" + MV_PAR07	+ "' and '" + MV_PAR08 + "'"
+		cQuery += " AND QQK.QQK_REVIPR = QPK.QPK_REVI"
+		cQuery += " AND QP8.QP8_PRODUT = QP6.QP6_PRODUT "
+		cQuery += " AND QP8.QP8_REVI = QPK.QPK_REVI "
+		cQuery += " AND QP8.QP8_CODREC = QQK.QQK_CODIGO "
+		cQuery += " AND QP8.QP8_OPERAC = QQK.QQK_OPERAC "
+		
+		If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+			cQuery += " AND SA1.A1_COD = '"+ MV_PAR10 +"'"
+			cQuery += " AND SA1.A1_LOJA = '" + MV_PAR11 + "'"
+			cQuery += " AND QQ7.QQ7_PRODUT = QP8.QP8_PRODUT "
+			cQuery += " AND QQ7.QQ7_ENSAIO = QP8.QP8_ENSAIO "
+			cQuery += " AND QQ7.QQ7_LABOR = QP8.QP8_LABOR "
+			cQuery += " AND QQ7.QQ7_CODREC = QP8.QP8_CODREC "
+			cQuery += " AND QQ7.QQ7_OPERAC = QP8.QP8_OPERAC "
+			cQuery += " AND QQ7.QQ7_CLIENT = '"+ MV_PAR10 +"'"
+			cQuery += " AND QQ7.QQ7_LOJA = '" + MV_PAR11 + "'"
+		EndIf
+		
+		cQuery += " AND QPK.D_E_L_E_T_ <> '*'"
+		cQuery += " AND QP6.D_E_L_E_T_ <> '*'"
+		cQuery += " AND QQK.D_E_L_E_T_ <> '*'"
+		cQuery += " AND QP8.D_E_L_E_T_ <> '*'"
+		
+		If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+			cQuery += " AND QQ7.D_E_L_E_T_ <> '*'"
+		EndIf
+		cQuery += " ORDER BY " + SqlOrder(cKey)
+		//		cQuery := ChangeQuery(cQuery)
+		
+		MemoWrite("\QUERYSYS\TRBTR2.SQL",cQuery)
+		dbUseArea(.T., "TOPCONN", TcGenQry(,,cQuery), 'TR2')
+		
+		
+		TcSetField( "TR2", "DTCAD"	,"D")
+		TcSetField( "TR2", "DTDES"	,"D")
+		TcSetField( "TR2", "DTINI"	,"D")
+		
+		QQK->(DbSetOrder(1))
+		While !Eof()
+			If	MV_PAR09 == 1	 //Imprime somente a ultima operacao
+				If 	QQK->(dbSeek(xFilial("QQK")+TR2->PRODUT+TR2->REVI+If(Empty(TR2->CODREC),;
+					"01", TR2->CODREC)))
+					dbSelectArea("QQK")
+					nRecQQK := Recno()
+					While !Eof().And. xFilial("QQK")	==	QQK_FILIAL	.And.;
+						QQK_PRODUT+QQK_REVIPR+QQK_CODIGO==TR2->PRODUT+TR2->REVI+If(Empty(TR2->CODREC),;
+						"01", TR2->CODREC)
+						nRecQQK := Recno()
+						dbSkip()
+					EndDo
+					dbGoTo(nRecQQK)
+					dbSelectArea("TR2")
+					If TR2->OPERAC <> QQK->QQK_OPERAC
+						DbSkip()
+						Loop
+					Endif
+				Endif
+			EndIf
+			
+			RecLock("TRB",.T.)
+			TRB->OP		   := TRBQPK->OP
+			//			IF LEN(ALLTRIM(TRBQPK->LOTE)) == 0
+			//				DBSELECTAREA("SC2")
+			//				DBSETORDER(1)
+			//				IF DBSEEK(XFILIAL("SC1") + SUBSTR(TRBQPK->OP,1,6) + SUBSTR(TRBQPK->OP,7,2) + SUBSTR(TRBQPK->OP,9,3))
+			//				IF DBSEEK( XFILIAL("SC2") + TRBQPK->OP)
+			//					TRB->LOTE := SC2->C2_LOTECTL
+			//				ENDIF
+			//			ELSE
+			TRB->LOTE      := TRBQPK->LOTE
+			//			ENDIF
+			//			DBSELECTAREA("TRB")
+			//			TRB->LOTE      := TRBQPK->LOTE
+			TRB->NUMSER    := TRBQPK->NUMSER
+			TRB->QUANT		:= TRBQPK->QUANT
+			TRB->C2UNIMED	:= TRBQPK->C2UNIMED
+			TRB->C2EMISSAO	:= TRBQPK->C2EMISSAO
+			TRB->ROTEIRO	:= TR2->CODREC
+			TRB->OPERAC		:= TR2->OPERAC
+			TRB->CHAVE		:= TR2->CHAVE
+			TRB->DESCRI		:= TR2->DESCRI
+			TRB->OPERGRP	:= TR2->OPERGRP
+			TRB->PRODUT		:= TR2->PRODUT
+			TRB->REVI		:= TR2->REVI
+			TRB->FATCO1		:= TR2->FATCO1
+			TRB->TIPCO1		:= TR2->TIPCO1
+			TRB->FATCO2		:= TR2->FATCO2
+			TRB->TIPCO2		:= TR2->TIPCO2
+			TRB->DESCPO		:= TR2->DESCPO
+			TRB->DTCAD		:= TR2->DTCAD
+			TRB->DTDES		:= TR2->DTDES
+			TRB->RVDES		:= TR2->RVDES
+			TRB->DTINI		:= TR2->DTINI
+			TRB->DOCOBR		:= TR2->DOCOBR
+			TRB->UNMED1		:= TR2->UNMED1
+			TRB->UNMED2		:= TR2->UNMED2
+			TRB->ENSAIO 	:= TR2->ENSAIO
+			TRB->ENSOBR		:= TR2->ENSOBR
+			TRB->TEXTO		:= TR2->TEXTO
+			TRB->PLAMO		:= TR2->PLAMO
+			TRB->DESPLA		:= TR2->DESPLA
+			TRB->NIVEL   	:= TR2->NIVEL
+			TRB->LABOR		:= TR2->LABOR
+			TRB->SEQLAB 	:= TR2->SEQLAB
+			TRB->METODO 	:= TR2->METODO
+			TRB->HISTOR		:= TR2->HISTOR
+			If lExisAlEsp
+				TRB->ALTESP	:= TR2->ALTESP
+			EndIf
+			
+			MsUnlock()
+			dbSelectArea("TR2")
+			dbSkip()
+		Enddo
+		dbSelectArea("TR2")
+		dbCloseArea()
+		
+		dbSelectArea("TRBQPK")
+		dbSkip()
+	EndDo
+	dbSelectArea("TRBQPK")
+	dbCloseArea()
+	
+#ELSE
+	dbSeek(xFilial("QPK")+MV_PAR01,.T.)
+	cCond	:= '!Eof() .And. QPK_FILIAL == "'+xFilial("QPK")+'".And.'+;
+	'QPK_OP >= "'+MV_PAR01+'".And. '+;
+	'QPK_LOTE >= "'+MV_PAR02+'".And. '+;
+	'QPK_NUMSER >= "'+MV_PAR03+'".And. '+;
+	'QPK_OP <= "'+MV_PAR04+'".And. '+;
+	'QPK_LOTE <= "'+MV_PAR05+'".And. '+;
+	'QPK_NUMSER <= "'+MV_PAR06+'"'
+	
+	While &cCond
+		cRevi		:= Iif(Empty(QPK_REVI),QA_UltRevEsp(QPK_PRODUT,,,,"QIP"),QPK_REVI)
+		cRoteiro	:= Posicione("SC2",1,xFilial("SC2")+QPK->QPK_OP,"C2_ROTEIRO")
+		cChaveQPK	:= QPK_PRODUT+Inverte(cRevi)
+		dbSelectArea("QP6")
+		If !dbSeek(xFilial("QP6")+cChaveQPK)
+			MsgAlert("O produto :"+QPK->QPK_PRODUT+"  / Revisao :"+cRevi+" Nao esta cadastrado. Informe no cadastro de especificacoes.","Atencao")		//"O produto :"###"  / Revisao :"###" Nao esta cadastrado. Informe no cadastro de especificacoes."###"Atencao"
+			dbSelectArea("QPK")
+			dbSetOrder(1)
+			dbSkip()
+			Loop
+		EndIf
+		cProdRev := QP6->QP6_PRODUT+QP6->QP6_REVI
+		
+		dbSelectArea("QQK")
+		dbSetOrder(1)
+		If dbSeek(xFilial("QQK")+QPK->QPK_PRODUT+QP6->QP6_REVI+cRoteiro)
+			While !Eof().And. xFilial("QQK"	) == QQK_FILIAL		.And.;
+				QQK_PRODUT+QQK_REVIPR+QQK_CODIGO==QPK->QPK_PRODUT+cRevi+cRoteiro	.And.;
+				QQK_OPERAC >= MV_PAR07 .And. QQK_OPERAC <= MV_PAR08
+				If QQK_REVIPR <> cRevi
+					dbSkip()
+					Loop
+				EndIf
+				If	MV_PAR09 == 1	 //Imprime somente a ultima operacao
+					nRecQQK := Recno()
+					While !Eof().And. xFilial("QQK")	==	QQK_FILIAL	.And.;
+						QQK_PRODUTO+QQK_REVIPR+QQK_CODIGO==QPK->QPK_PRODUT+cRevi+cRoteiro
+						nRecQQK := Recno()
+						dbSkip()
+					EndDo
+					dbGoTo(nRecQQK)
+				EndIf
+				
+				//Checar se existe ensaios associados.
+				dbSelectArea("QP7")
+				dbSetOrder(1)
+				If dbSeek(xFilial("QP7")+cProdRev+QQK->QQK_CODIGO+QQK->QQK_OPERAC)
+					While !Eof() .And. xFilial("QP7")	 == QP7_FILIAL	;
+						.And. QP7_PRODUTO+QP7_REVI ==QPK->QPK_PRODUT+QP6->QP6_REVI;	//cProdRev ;
+						.And. QP7_CODREC+QP7_OPERAC==QQK->QQK_CODIGO+QQK->QQK_OPERAC
+						
+						//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+						//³ Verifica se existe a amarracao do Produto x Cliente - QQ7     ³
+						//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+						If !Empty(MV_PAR10)
+							QQ7->(dbSetOrder(1))
+							If 	!QQ7->(dbSeek(xFilial("QQ7")+ QPK->QPK_PRODUT + MV_PAR10 + MV_PAR11 + ;
+								QP7->QP7_LABOR + QP7->QP7_ENSAIO + QQK->QQK_CODIGO + QQK->QQK_OPERAC))
+								dbSelectArea("QP7")
+								dbSkip()
+								Loop
+							EndIf
+						EndIf
+						
+						RecLock("TRB",.T.)
+						TRB->ROTEIRO	:=	QQK->QQK_CODIGO
+						TRB->OPERAC		:=	QQK->QQK_OPERAC
+						TRB->CHAVE		:=	QQK->QQK_CHAVE
+						TRB->DESCRI		:=	QQK->QQK_DESCRI
+						TRB->OPERGRP	:=	QQK->QQK_OPERGRP
+						TRB->PRODUT 	:=	QPK->QPK_PRODUT
+						TRB->OP	   	:=	QPK->QPK_OP
+						//						IF LEN(ALLTRIM(QPK->QPK_LOTE)) == 0
+						//							DBSELECTAREA("SC2")
+						//							DBSETORDER(1)
+						//							IF DBSEEK( XFILIAL("SC2") + SUBSTR(QPK->QPK_OP,1,6) + SUBSTR(QPK->QPK_OP,7,2) + SUBSTR(QPK->QPK_OP,9,3)
+						//							IF DBSEEK(XFILIAL("SC2") + QPK->QPK_OP
+						//								TRB->LOTE	   :=	SC2->C2_LOTECTL
+						//							ENDIF
+						//					ELSE
+						TRB->LOTE	   :=	QPK->QPK_LOTE
+						//				ENDIF
+						//			DBSELECTAREA("TRB")
+						TRB->NUMSER	   :=	QPK->QPK_NUMSER
+						TRB->REVI		:=	cRevi
+						
+						TRB->FATCO1		:= QP6->QP6_FATCO1
+						TRB->TIPCO1		:= QP6->QP6_TIPCO1
+						TRB->FATCO2		:= QP6->QP6_FATCO2
+						TRB->TIPCO2		:= QP6->QP6_TIPCO2
+						TRB->DESCPO		:= QP6->QP6_DESCPO
+						TRB->DTCAD		:= QP6->QP6_DTCAD
+						TRB->DTDES		:= QP6->QP6_DTDES
+						TRB->RVDES		:= QP6->QP6_RVDES
+						TRB->DTINI		:= QP6->QP6_DTINI
+						TRB->DOCOBR		:= QP6->QP6_DOCOBR
+						TRB->UNMED1		:= QP6->QP6_UNMED1
+						TRB->UNMED2		:= QP6->QP6_UNMED2
+						
+						TRB->ENSAIO 	:= QP7->QP7_ENSAIO
+						TRB->ENSOBR		:= QP7->QP7_ENSOBR
+						TRB->UNIMED 	:= QP7->QP7_UNIMED
+						TRB->NOMINA 	:= QP7->QP7_NOMINA
+						TRB->LIE 		:= QP7->QP7_LIE
+						TRB->LSE 		:= QP7->QP7_LSE
+						TRB->PLAMO		:= QP7->QP7_PLAMO
+						TRB->DESPLA		:= QP7->QP7_DESPLA
+						TRB->NIVEL   	:= QP7->QP7_NIVEL
+						TRB->LABOR		:= QP7->QP7_LABOR
+						TRB->SEQLAB 	:= QP7->QP7_SEQLAB
+						TRB->MINMAX 	:= QP7->QP7_MINMAX
+						TRB->METODO 	:= QP7->QP7_METODO
+						TRB->ACESSORI  := QP7->QP7_ACESSO
+						TRB->QUANT		:= QPK->QPK_TAMLOT
+						TRB->C2UNIMED	:= QPK->QPK_UM
+						TRB->C2EMISSAO	:= QPK->QPK_EMISSA
+						TRB->HISTOR		:= QP6->QP6_HISTOR
+						If lExisAlEsp
+							TRB->ALTESP	:= QP6->QP6_ALTESP
+						EndIf
+						MsUnlock()
+						dbSelectArea("QP7")
+						dbSkip()
+					Enddo
+				EndIf
+				
+				//Checar os ensaios associados - TXT
+				dbSelectArea("QP8")
+				dbSetOrder(1)
+				If dbSeek(xFilial("QP8")+cProdRev+QQK->QQK_CODIGO+QQK->QQK_OPERAC)
+					While !Eof() .And. xFilial("QP8")		  == QP8_FILIAL ;
+						.And. QP8_PRODUTO+QP8_REVI  == QPK->QPK_PRODUT+QP6->QP6_REVI;	//cProdRev ;
+						.And. QP8_CODREC+QP8_OPERAC == QQK->QQK_CODIGO+QQK->QQK_OPERAC
+						
+						//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+						//³ Verifica se existe a amarracao do Produto x Cliente - QQ7     ³
+						//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+						If !Empty(MV_PAR10)
+							QQ7->(dbSetOrder(1))
+							If 	!QQ7->(dbSeek(xFilial("QQ7")+ QPK->QPK_PRODUT + MV_PAR10 + MV_PAR11 + ;
+								QP8->QP8_LABOR + QP8->QP8_ENSAIO + QQK->QQK_CODIGO + QQK->QQK_OPERAC))
+								dbSelectArea("QP8")
+								dbSkip()
+								Loop
+							EndIf
+						EndIf
+						
+						RecLock("TRB",.T.)
+						TRB->ROTEIRO	:= QQK->QQK_CODIGO
+						TRB->OPERAC		:= QQK->QQK_OPERAC
+						TRB->CHAVE		:= QQK->QQK_CHAVE
+						TRB->DESCRI		:= QQK->QQK_DESCRI
+						TRB->OPERGRP	:= QQK->QQK_OPERGR
+						TRB->PRODUT		:= QPK->QPK_PRODUT
+						TRB->OP	   	    := QPK->QPK_OP
+						//						IF LEN(ALLTRIM(QPK->QPK_LOTE)) == 0
+						//							DBSELECTAREA("SC2")
+						//							DBSETORDER(1)
+						//							IF DBSEEK( XFILIAL("SC2") + SUBSTR(QPK->QPK_OP,1,6) + SUBSTR(QPK->QPK_OP,7,2) + SUBSTR(QPK->QPK_OP,9,3)
+						//							IF DBSEEK( XFILIAL("SC2") + QPK->QPK_OP
+						//								TRB->LOTE	   :=	SC2->C2_LOTECTL
+						//							ENDIF
+						//						ELSE
+						TRB->LOTE	   :=	QPK->QPK_LOTE
+						//						ENDIF
+						//						DBSELECTAREA("TRB")
+						//						TRB->LOTE	    := QPK->QPK_LOTE
+						TRB->NUMSER	    := QPK->QPK_NUMSER
+						TRB->REVI		:= cRevi
+						
+						TRB->FATCO1		:= QP6->QP6_FATCO1
+						TRB->TIPCO1		:= QP6->QP6_TIPCO1
+						TRB->FATCO2		:= QP6->QP6_FATCO2
+						TRB->TIPCO2		:= QP6->QP6_TIPCO2
+						TRB->DESCPO		:= QP6->QP6_DESCPO
+						TRB->DTCAD		:= QP6->QP6_DTCAD
+						TRB->DTDES		:= QP6->QP6_DTDES
+						TRB->RVDES		:= QP6->QP6_RVDES
+						TRB->DTINI		:= QP6->QP6_DTINI
+						TRB->DOCOBR		:= QP6->QP6_DOCOBR
+						TRB->UNMED1		:= QP6->QP6_UNMED1
+						TRB->UNMED2		:= QP6->QP6_UNMED2
+						
+						TRB->ENSAIO 	:= QP8->QP8_ENSAIO
+						TRB->ENSOBR		:= QP8->QP8_ENSOBR
+						TRB->TEXTO		:= QP8->QP8_TEXTO
+						TRB->PLAMO		:= QP8->QP8_PLAMO
+						TRB->DESPLA		:= QP8->QP8_DESPLA
+						TRB->NIVEL   	:= QP8->QP8_NIVEL
+						TRB->LABOR		:= QP8->QP8_LABOR
+						TRB->SEQLAB 	:= QP8->QP8_SEQLAB
+						TRB->METODO 	:= QP8->QP8_METODO
+						TRB->QUANT		:= QPK->QPK_TAMLOT
+						TRB->C2UNIMED	:= QPK->QPK_UM
+						TRB->C2EMISSAO	:= QPK->QPK_EMISSA
+						TRB->HISTOR		:= QP6->QP6_HISTOR
+						If lExisAlEsp
+							TRB->ALTESP	:= QP6->QP6_ALTESP
+						EndIf
+						
+						MsUnlock()
+						dbSelectArea("QP8")
+						dbSkip()
+					Enddo
+				EndIf
+				dbSelectArea("QQK")
+				dbSkip()
+			EndDo
+		EndIf
+		dbSelectArea("QPK")
+		dbSkip()
+	EndDo
+#ENDIF
+
+Return .T.
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ C410IMP  ³ Autor ³ Rodrigo de A. Sartorio³ Data ³ 14.11.95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Chamada do Relatorio                                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATR410			                                          ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function BPCPR001B(cOrdProd,cLote,cNumSer)
+*************************
+Local cProdAnt  := Space(17)
+Local nCount    := 0
+Local nTotProd  := 0
+Local cQuery	:= "",cIndex:= CriaTrab("",.F.),nIndex:=0
+Local nQuantLote:= 0
+Local nSaldoProd:= 0
+Local cItemLido := ""
+Local cQuery2   := ""
+Local cOp       := ""
+Local wnrel     :="PLISTBRA"
+Local cString   := "SD4"
+Local Tamanho   := "P"
+Local titulo    := "Pick List"
+Local cDesc1    := "Este programa tem como objetivo,emitir um rela‡„o dos"
+Local cDesc2    := "produtos a serem retirados do almoxarifado."
+Local cDesc3    := ""
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Monta os Cabecalhos                                          ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cabec1 := "CODIGO PRODUTO DESCRICAO                 TP  UM    QUANTIDADE            LOCALIZA"			//STR0006		//"CODIGO PRODUTO DESCRICAO                 UM AL QUANTIDADE    O.P.       LOCALIZA"
+cabec2 := ""
+//         XXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXX XX XX XXXXXXXXXXXXX XXXXXXXXXXX XXXXXXXX
+//                   1         2         3         4         5         6         7         8
+//         012345678901234567890123456789012345678901234567890123456789012345678901234567890
+
+nTipo:=IIF(aReturn[4]==1,15,18)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas para Imporessao do Cabecalho e Rodape   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cbtxt    := SPACE(10)
+cbcont   := 00
+li       := 80
+m_pag    := 01
+
+MV_PAR01 := DDATABASE - (365 * 5)
+MV_PAR02 := CTOD("11/11/2099")
+MV_PAR03 := ""
+MV_PAR04 := "ZZ"
+MV_PAR05 := cOrdProd
+MV_PAR06 := cOrdProd
+
+
+dbSelectArea("SB1")
+dbSetOrder(1)
+
+dbSelectArea("SD4") //
+dbSetOrder(2) //D4_FILIAL+D4_OP+D4_COD+D4_LOCAL
+
+
+cQuery 	:= "D4_FILIAL=='"+xFilial("SD4")+"'.And.D4_LOCAL>='"+MV_PAR03+"'.And.D4_LOCAL<='"+MV_PAR04+"'.And."
+cQuery 	+= "DTOS(D4_DATA)>='"+DTOS(MV_PAR01)+"'.And.DTOS(D4_DATA)<='"+DTOS(MV_PAR02)+"'.And."
+cQuery 	+= "D4_OP>='"+MV_PAR05+"'.And.D4_OP<='"+MV_PAR06+"'"
+
+SD4->(dbSetFilter({|| &cQuery}, cQuery))
+SetRegua(RecCount())		// Total de Elementos da regua
+SD4->( dbGoTop() )
+
+cOp:= D4_OP
+Li := 99
+
+While !Eof()
+	IF lEnd
+		@ Prow()+1,001 PSay "CANCELADO PELO OPERADOR"	//
+		Exit
+	EndIF
+	
+	cOp    := D4_OP
+	_vcodop:= POSICIONE("SC2",1,XFILIAL("SC2")+cOP,"C2_PRODUTO")
+	_vdescp:= AllTrim(POSICIONE("SB1",1,XFILIAL("SB1")+_vcodop,"B1_DESC")) + "-" + POSICIONE("SB1",1,XFILIAL("SB1")+_vcodop,"B1_TIPO")
+	
+	DbSelectArea("SB1")
+	If dbSeek(cFilial + _vcodop)
+		If B1_X_Pick == "2"
+			DbSelectArea("SD4")
+			DbSkip()
+			Loop
+		EndIf
+	EndIf
+	
+	DbSelectArea("SD4")
+	
+	If Li > 56
+		Cabec(titulo,cabec1,cabec2,wnrel,Tamanho,nTipo)
+	Endif
+	
+	@ ++Li,000 PSay "OP NR: "+SD4->D4_OP+"->  "+alltrim(_vcodop)+" - "+_vdescp
+	Li+=2
+	
+	//Inicio de Uma OP
+	//	Li := cabec(titulo,cabec1,cabec2,wnrel,Tamanho,nTipo) + 1
+	
+	While !Eof() .and. D4_OP == cOp
+		dbSelectArea("SD4")
+		IncRegua()
+		IF lEnd
+			@ Prow()+1,001 PSay "CANCELADO PELO OPERADOR"	//
+			Exit
+		EndIF
+		If !Empty(aReturn[7])
+			If !&(aReturn[7])
+				dbSkip()
+				Loop
+			EndIf
+		EndIf
+		If SubStr(D4_COD,1,3) == "MOD"
+			dbSkip()
+			Loop
+		EndIf
+		
+		If SD4->D4_QUANT > 0
+			If Li > 56
+				cabec(titulo,cabec1,cabec2,wnrel,Tamanho,nTipo)
+			Endif
+			//@Li,000 PSay D4_COD
+			dbSelectArea("SB1")
+			If dbSeek(cFilial+SD4->D4_COD)
+				if SB1->B1_X_PICK = '2'
+					SD4->(DBSKIP())
+					LOOP
+				ENDIF
+				
+				@Li,000 PSay SD4->D4_COD
+				@Li,015 PSay Substr(B1_DESC,1,25)
+				// Cleiton
+				@Li,041 PSay B1_TIPO
+				// Cleiton
+				@Li,045 PSay B1_UM
+			Endif
+			dbSelectArea("SD4")
+			//@Li,048 PSay D4_LOCAL
+			@Li,051 PSay D4_QUANT	Picture PesqPictQt("D4_QUANT",13)
+			//			@Li,061 PSay D4_OP
+			If SB2->(dbSeek(xFilial("SB2")+SD4->D4_COD+SD4->D4_LOCAL))
+				@Li,077 PSay Substr(SB2->B2_LOCALIZ,1,7)
+			EndIf
+			nTotProd += D4_quant
+			nCount++
+			//  BUSCAR LT DO PRODUTO
+			//  Se o produto for igual ao anterior nao executa o seek do B8
+			
+			if SD4->D4_COD != cItemLido
+				SB8->( DBSEEK(  cFilial+SD4->D4_COD + SB1->B1_LOCPAD ))
+			endif
+			
+			aQuantLote := {}
+			nQuantLote := 0
+			nSaldoProd := 0
+			nNecessita := SD4->D4_QUANT
+			
+			WHILE SB8->B8_PRODUTO == SD4->D4_COD .AND. SB1->B1_LOCPAD == SB8->B8_LOCAL .AND. nNecessita > 0
+				IF (SB8->B8_SALDO - SB8->B8_PICKLST) >= nNecessita .AND. (SB8->B8_SALDO - SB8->B8_PICKLST) > 0
+					AADD(aQuantLote,{SB8->B8_LOTECTL,DTOC(SB8->B8_DTVALID),nNecessita,SB8->B8_LOCAL})
+					RECLOCK("SB8",.F.)
+					B8_PICKLST := nNecessita
+					MSUNLOCK()
+					nNecessita := 0
+				ELSEIF (SB8->B8_SALDO - SB8->B8_PICKLST) > 0
+					nNecessita := nNecessita - (SB8->B8_SALDO - SB8->B8_PICKLST)
+					AADD(aQuantLote,{SB8->B8_LOTECTL,DTOC(SB8->B8_DTVALID),SB8->B8_SALDO - SB8->B8_PICKLST,SB8->B8_LOCAL})
+					RECLOCK("SB8",.F.)
+					B8_PICKLST := SB8->B8_SALDO
+					MSUNLOCK()
+				ENDIF
+				SB8->( dbSkip() )
+			ENDDO
+			
+			Li++
+			
+			// IMPRIME LOTES
+			FOR i := 1 TO LEN(aQuantLote)
+				//Li++
+				@Li,001 PSay "Lote: " + aQuantLote[I][1] + " " + "Quantidade: " + ALLTRIM(Transform(aQuantLote[I][3],"@E 9,999,999.99")) //+ " " +  "Armazem: " + aQuantLote[I][4]
+				//@Li,001 PSay "Lote: " + aQuantLote[I][1] + " " + "Validade: " + aQuantLote[I][2] + " " + "Quantidade: " + ALLTRIM(Transform(aQuantLote[I][3],"@E 9,999,999.99")) + " " +  "Armazem: " + aQuantLote[I][4]
+				Li++
+			NEXT
+			
+			/*
+			IF nNecessita > 0
+			//                @++Li,001 PSay "Quantidade Insuficiente: " + ALLTRIM(Transform(nNecessita,"@E 9,999,999.99")) + " " + SB1->B1_UM
+			@  Li,001 PSay "Quantidade Insuficiente: " + ALLTRIM(Transform(nNecessita,"@E 9,999,999.99")) + " " + SB1->B1_UM
+			Li+= 2
+			ELSE
+			*/
+			Li++
+			//			ENDIF
+		Endif
+		// Guarda produto anterior
+		cItemLido := SD4->D4_COD
+		DBSELECTAREA("SD4")
+		dbSkip()
+	Enddo
+	nTotProd := 0
+	nCount := 0
+Enddo
+
+If Li != 80
+	roda(cbcont,cbtxt,Tamanho)
+EndIF
+
+dbSelectArea("SB1")
+dbSetOrder(1)
+
+dbSelectArea("SD4")
+Set Filter To
+dbSetOrder(1)
+
+If File(cIndex+OrdBagExt())
+	Ferase(cIndex+OrdBagExt())
+Endif
+
+cQuery2:= "UPDATE SB8020 SET B8_PICKLST = '0'"
+nRet   := TCSQLEXEC(cQuery2)
+
+DBSELECTAREA("SD4")
+SET FILTER TO
+
+DBSELECTAREA("SB1")
+SET FILTER TO
+
+DBSELECTAREA("SB8")
+SET FILTER TO
+
+RETURN
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o	 ³ QIPR040	³ Autor ³ Marcelo Pimentel      ³ Data ³ 21.06.99 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Relatorio de Produtos - Uso        			       		     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe e ³ QIPR040()												  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso		 ³ Siga Quality - Celerina                            		  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÂÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ PROGRAMADOR  ³ DATA   ³ BOPS ³  MOTIVO DA ALTERACAO                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Marcelo Piment³26/09/01³------³ Melhoria de Performance-Implementado   ³±±
+±±³              ³        ³      ³ TCQUERY.                               ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+User Function QIPR041A()
+// ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+// ³ Par„metros para a fun‡„o SetPrint () ³
+// ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+LOCAL wnrel 	:="QIPR041"
+LOCAL cString	:="QPK"
+LOCAL cDesc1	:=OemToAnsi(STR0001) //"Neste relat¢rio ser„o relacionados os ensaios a serem realizados em ca-"
+LOCAL cDesc2	:=OemToAnsi(STR0002) //"da laborat¢rio, para a valida‡„o da producao."
+LOCAL cDesc3	:=""
+Local cProg,cOrdProd,cLote,cNumSer
+Local aArray   := {}
+
+//MSGBOX(Alltrim(FunName()))
+If Alltrim(FunName()) == "MATA650" .OR. Alltrim(FunName()) == "BPCPR001"
+	aArray := ParamIXB
+Endif
+
+If Len(aArray) > 0
+	cProg    := aArray[1]
+	cOrdProd := aArray[2]
+	cOPAte   := aArray[3]
+	cLote    := ""
+	cNumSer  := ""
+Else
+	cProg    := ""
+	cOrdProd := ""
+	cOPAte   := ""
+	cOPAte 	 := ""
+Endif
+
+// ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+// ³ Par„metros para a fun‡„o Cabec()  ³
+// ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+PRIVATE cTitulo    := OemToAnsi("Roteiro de Inspeção")
+PRIVATE cRelatorio := "QIPR041"
+PRIVATE nTamanho   := "M"
+PRIVATE nPagina    := 1
+PRIVATE nRecnoQPK	 := QPK->(Recno())
+PRIVATE lExisAlEsp := Iif(QP6->(FieldPos("QP6_ALTESP")) > 0,.T.,.F.)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Vari veis utilizadas pela fun‡„o SetDefault () ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+PRIVATE aReturn	:= {STR0004, 1,STR0005,  1, 2, 1, "",1 }  //"Zebrado"###"Administracao"
+PRIVATE nLastKey := 0
+PRIVATE cPerg    := U_CriaPerg("QPR040")
+PRIVATE cArqTRB	:= ''
+
+cLote   := If(cLote==NIL .Or. Len(cLote)==0,CriaVar("QPK_LOTE"),cLote)
+cNumSer := If(cNumSer==NIL .Or.Len(cNumSer)==0,CriaVar("QPK_NUMSER"),cNumSer)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas para parametros					  	 ³
+//³ MV_PAR01			  // Da Ordem de Produ‡Æo     ?    		 ³
+//³ MV_PAR02			  // Do Lote   			   	  ?    		 ³
+//³ MV_PAR03			  // Do Numero de Serie	      ?    		 ³
+//³ MV_PAR04			  // Ate' Ordem de Produ‡Æo   ?       	 ³
+//³ MV_PAR05			  // Ate Lote  			      ?    		 ³
+//³ MV_PAR06			  // Ate Numero de Serie      ?    		 ³
+//³ MV_PAR07			  // Da Operacao      			?		 ³
+//³ MV_PAR08			  // Ate Operacao      			?		 ³
+//³ MV_PAR09			  // Apenas a Ult. Operacao 	? 		 ³
+//³ MV_PAR10			  // Cliente 	? 		                 ³
+//³ MV_PAR11			  // Loja 	? 		                     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+Pergunte(cPerg,.F.)
+If cProg == "MATA650" .OR. cProg == "BPCPR001"
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Obs.: Na funcao QPR040FIC ‚ atualizado o MV_PAR com o valor  ³
+	//³  dos registros correntes.                					 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cPerg := ""
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Envia controle para a funcao SETPRINT 						 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+wnrel := SetPrint(cString,wnrel,cPerg,@ctitulo,cDesc1,cDesc2,cDesc3,.F.,"",,nTamanho)
+
+If nLastKey <> 27
+	SetDefault(aReturn,cString)
+	
+	If nLastKey <> 27
+		If cProg == "MATA650"
+			dbGoTo(nRecnoQPK)
+		Endif
+		RptStatus({|lEnd| R040Imp(@lEnd,wnRel,cString,cProg,cOrdProd,cOPAte,cLote,cNumSer)},cTitulo)
+	EndIf
+EndIf
+
+Return .T.
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o	 ³ R040Imp	³ Autor ³ Marcelo Pimentel      ³ Data ³ 21.06.99 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Rela‡„o de Ensaios										  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe e ³ R040Imp(lEnd,wnRel,cString)								  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ lEnd		-	A‡Æo do CodeBlock 							  ³±±
+±±³			 ³ wnRel 	-	T¡tulo do relat¢rio							  ³±±
+±±³			 ³ cString	-	Mensagem 									  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso		 ³ Generico 												  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function R040Imp(lEnd,wnRel,cString,cProg,cOrdProd,cOPAte,cLote,cNumser)
+Local CbCont
+Local cOperac	:= ''
+Local cDescEns := Space(30)
+Local nContLi	:= 0
+Local nY       := 0
+Local aTexto	:= {}
+Local aEnsaios := {}
+Local lFirst	:= .T.
+Local cTipoEns	:=	''
+Local cOp		:=	''
+Local cProduto	:=	''
+Local cRoteiro	:=	''
+Local cUnimed	:= ''
+Local cTamAmo	:= ''
+Local cFatCon	:= ''
+Local cTipCon	:= ''
+Local cSkTes	:= ''
+Local cGrupo	:= ''
+Local lProximo	:= .F.
+Local aImpPl	:= {}
+Local nCount	:= 0
+Local aAreaQPK	:= GetArea()
+Local cMemo		:= ''
+Local nMCount	:= ''
+Local nLoop		:= 0
+Local cLinha	:= ""
+Local cALTESP	:= ""
+Local nC        := 0
+Local nCont     := 0
+Local cCarta    := ""
+Local cTexObs   := ""
+Local aTexObs   := ""
+
+Private Titulo	:= cTitulo
+Private Cabec1	:= ""
+Private Cabec2	:= ""
+Private nomeprog:= "QIPR041"
+Private cTamanho:= "M"
+Private nTipo	:= 0
+Private cLoteSc2 := ""
+
+If cProg == "MATA650"
+	cPerg := U_CriaPerg("QPR040")
+	Pergunte(cPerg,.F.)
+	MV_PAR01 := cOrdProd
+	MV_PAR02 := cLote
+	MV_PAR03 := cNumSer
+	MV_PAR04 := cOrdProd
+	MV_PAR05 := cLote
+	MV_PAR06 := cNumSer
+	MV_PAR07 := '  '
+	MV_PAR08 := 'ZZ'
+	MV_PAR09 := 2
+	MV_PAR10 := Space(6)
+	MV_PAR11 := Space(2)
+Endif
+If cProg == "BPCPR001"
+	cPerg := U_CriaPerg("QPR040")
+	//Pergunte(cPerg,.F.)
+	MV_PAR01 := cOrdProd
+	MV_PAR02 := cLote
+	MV_PAR03 := cNumSer
+	MV_PAR04 := cOPAte
+	MV_PAR05 := cLote
+	MV_PAR06 := cNumSer
+	MV_PAR07 := '  '
+	MV_PAR08 := 'ZZ'
+	MV_PAR09 := 1
+	MV_PAR10 := Space(6)
+	MV_PAR11 := Space(2)
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas para Impressao do Cabecalho e Rodape	 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+li 		:= 80
+m_pag 	:= 1
+cbTxt		:= Space(10)
+cbCont	:= 00
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se deve comprimir ou nao                            ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+nTipo := If(aReturn[4]==1,15,18)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Chamada da Funcao para gerar arquivo de Trabalho		     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+R040GTrab()
+dbSelectArea("TRB")
+If BOF() .and. EOF()
+	HELP(" ",1,"RECNO")
+	dbSelectArea("TRB")
+	dbCloseArea()
+	Ferase(cArqTRB+GetDBExtension())
+	dbSelectArea("QPK")
+	Ferase(cArqTRB+OrdBagExt())
+	dbSetOrder( 1 )
+	Return .T.
+Else
+	IndRegua("TRB",cArqTRB,"OP+PRODUT+REVI+ROTEIRO+OPERAC+LABOR+SEQLAB",,,STR0006)      //"Selecionando Registros..."
+Endif
+
+TRB->(dbGoTop())
+SetRegua(RecCount())
+While TRB->(!EOF())
+	IncRegua()
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica se ‚ nova pagina 							   	     ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If Li > 54
+		Cabec(cTitulo,Cabec1,Cabec2,nomeprog,cTamanho,nTipo)
+	Endif
+	
+	IF ( lEnd )
+		@Prow()+1,001 PSAY OemToAnsi(STR0007)	//"CANCELADO PELO OPERADOR"
+		Exit
+	EndIf
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Posiciona no grupo de produtos 								  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cGrupo := Posicione("QPA",2,xFilial("QPA")+TRB->PRODUT,"QPA_GRUPO")
+	
+	If TRB->OPERAC	!= cOperac
+		cOperac := TRB->OPERAC
+	EndIf
+	
+	If lFirst .Or. cOp != TRB->OP+TRB->LOTE+TRB->NUMSER
+		cOP := TRB->OP+TRB->LOTE+TRB->NUMSER
+		
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Define o Fator Conversao, se nao estiver definido             ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If TRB->UNMED1 == TRB->C2UNIMED
+			cFatCon := TRB->FATCO1
+			cTipCon := TRB->TIPCO1
+		ElseIf TRB->UNMED2 == TRB->C2UNIMED
+			cFatCon := TRB->FATCO2
+			cTipCon := TRB->TIPCO2
+		EndIf
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Calcula o Tamanho da Amostra                                  ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If Superval(cFatCon) <> 0
+			cFatCon := StrTran(cFatcon,",",".")
+			If cTipCon == "D"
+				cTamAmo := Str(TRB->QUANT / Superval(cFatCon))
+			Else
+				cTamAmo := Str(TRB->QUANT * Superval(cFatCon))
+			EndIf
+		Else
+			cTamAmo := Str(TRB->QUANT)
+		EndIf
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ DADOS DO PRODUTO 											 ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		@ Li, 001 PSAY AllTrim(TitSX3("QPK_OP")[1])+REPLICATE(".",41-Len(AllTrim(TitSX3("QPK_OP")[1])))+":"
+		@ Li, 044 PSAY TRB->OP
+		
+		If !Empty(TRB->LOTE)
+			cLoteSc2 := TRB->LOTE
+		ELSE
+			DBSELECTAREA("SC2")
+			DBSETORDER(1)
+			IF DBSEEK( XFILIAL("SC2") + SUBSTR(cOp,1,11))
+				cLoteSc2 := SC2->C2_LOTECTL
+			ENDIF
+		EndIf
+		
+		IF LEN(ALLTRIM(cLoteSc2)) == 0
+			cLoteSc2 := "IMPRIMIR A OP P/GERAR O LOTE"
+		ENDIF
+		
+		@ Li, 064 PSAY STR0045
+		@ Li, 070 PSAY cLoteSc2
+		
+		If !Empty(TRB->NUMSER)
+			@ Li, 094 PSAY STR0046
+			@ Li, 112 PSAY TRB->NUMSER
+		EndIF
+		
+		Li++
+		@ Li, 001 PSAY AllTrim(TitSX3("QPK_TAMLOT")[1])+REPLICATE(".",41-Len(AllTrim(TitSX3("QPK_TAMLOT")[1])))+":"
+		@ Li, 044 PSAY AllTrim(Str(TRB->QUANT))
+		Li++
+		@ Li, 001 PSAY STR0036+REPLICATE(".",41-Len(STR0036))+':'		//'Tam.Amostr'
+		@ Li, 044 PSAY AllTrim(Str(Int(Val(cTamAmo))))
+		Li++
+		@ Li, 001 PSAY AllTrim(TitSX3("QP6_PRODUT")[1])+" - "+AllTrim(TitSX3("QP6_REVI")[1])+Replicate(".",38-(len(Alltrim(TitSx3("QP6_PRODUT")[1]))+len(Alltrim(TitSx3("QP6_REVI")[1]))))+":"
+		@ Li, 044 PSAY TRB->PRODUT + " - " + TRB->REVI
+		Li++
+		
+		If !Empty(MV_PAR10)
+			@ li,168 PSAY MV_PAR10 + " / " + MV_PAR11 + " - " + Posicione( "SA1", 1, xFilial("SA1")+MV_PAR10+MV_PAR11, "A1_NOME" )
+		EndIf
+		
+		@ Li, 001 PSAY AllTrim(TitSX3("QP6_DESCPO")[1])+REPLICATE(".",41-Len(AllTrim(TitSX3("QP6_DESCPO")[1])))+":"
+		@ Li, 044 PSAY TRB->DESCPO
+		Li++
+		@ Li, 001 PSAY AllTrim(TitSX3("QP6_DTCAD")[1])+"/"+AllTrim(TitSX3("QP6_DTDES")[1])+"/"+AllTrim(TitSX3("QP6_RVDES")[1])+"...:"
+		@ Li, 044 PSAY TRB->DTCAD
+		@ Li, 057 PSAY TRB->DTDES
+		@ Li, 070 PSAY TRB->RVDES
+		Li++
+		@ Li, 001 PSAY AllTrim(TitSX3("QP6_DTINI")[1])+REPLICATE(".",41-Len(AllTrim(TitSX3("QP6_DTINI")[1])))+":"
+		@ Li, 044 PSAY TRB->DTINI
+		If !Empty(TRB->DOCOBR)
+			Li++
+			@ Li, 001 PSAY AllTrim(TitSX3("QP6_DOCOBR")[1])+REPLICATE(".",41-Len(AllTrim(TitSX3("QP6_DOCOBR")[1])))+":"
+			@ Li, 044 PSAY Iif(TRB->DOCOBR=="S",OemToAnsi(STR0009),;   // "Sim"
+			OemToAnsi(STR0010))	// "Nao"
+		EndIf
+		Li++
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Exibe Historico do Produto	 ( campo memo )       ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		cMemo	:= MSMM(TRB->HISTOR)
+		nMCount	:= MlCount( cMemo, 80 )
+		
+		If !Empty(nMCount)
+			@ Li, 001 PSAY AllTrim(TitSX3("QP6_HISTOR")[1])+REPLICATE(".",41-Len(AllTrim(TitSX3("QP6_HISTOR")[1])))+":"
+			For nLoop := 1 To nMCount
+				cLinha := MemoLine( cMemo, 80, nLoop )
+				@li,044 PSAY StrTran( cLinha, Chr(13)+Chr(10), "" )
+				li++
+			Next nLoop
+		EndIf
+		
+		@ Li, 001 PSAY STR0011+ TRB->ROTEIRO		//"ROTEIRO  ==> "
+		Li++
+		lFirst := .F.
+	EndIf
+	@ Li, 001 PSAY STR0012 + TRB->OPERAC + " - " + TRB->DESCRI	//"OPERACAO ==> "
+	Li++
+	@li,000 PSAY __PrtThinLine()
+	Li++
+	
+	/*
+	Ensaio                                             Metodo           Acessorios           Un. Med.  Nominal  L.I.E.   L.S.E.
+	------------------------------------------------------------------------------------------------------------------------------------
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxx xxxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx
+	1         2         3         4         5         6         7         8         9        10        11        12        13
+	0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
+	*/
+	
+	@ Li, 000 PSAY TitSX3("QP7_ENSAIO")[1]
+	@ Li, 051 PSAY TitSX3("QP7_METODO")[1]
+	@ Li, 068 PSAY TitSX3("QP7_ACESSO")[1]
+	@ Li, 089 PSAY STR0014	//"Un. Med."
+	@ Li, 099 PSAY STR0015	//"Nominal"
+	@ Li, 108 PSAY STR0016	//"L.I.E."
+	@ Li, 117 PSAY STR0017	//"L.S.E."
+	Li++
+	@li,000 PSAY __PrtThinLine()
+	
+	If lExisAlEsp
+		cALTESP	:= TRB->ALTESP
+	Endif
+	
+	cChave	:=TRB->CHAVE
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Dados dos ensaios 						   ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	aEnsaios := {}
+	dbSelectArea("TRB")
+	While !EOF() .And. cOperac == TRB->OPERAC .And. cOp == TRB->OP+TRB->LOTE+TRB->NUMSER
+		QP1->(dbSetOrder(1))
+		IF QP1->(dbSeek(xFilial("QP1")+TRB->ENSAIO))
+			cDescEns := QP1->QP1_DESCPO
+			cTipoEns := QP1->QP1_TPCART
+		Endif
+		
+		cProduto	:= TRB->PRODUT
+		cRoteiro	:= TRB->ROTEIRO
+		cOperac  := TRB->OPERAC
+		cUnimed  := TRB->C2UNIMED
+		
+		AADD(aEnsaios,{TRB->ENSAIO,cTipoEns,TRB->PLAMO,TRB->DESPLA,cProduto,TRB->REVI,cRoteiro,cOperac,cTamAmo})
+		Li++
+		@ Li, 000 PSAY Iif(TRB->ENSOBR=="S","* ","  ") + TRB->ENSAIO + " " + cDescEns
+		@ Li, 051 PSAY TRB->METODO
+		@ Li, 068 PSAY TRB->ACESSORI
+		
+		If cTipoEns == "X"		//Se o tipo da carta for igual a "TXT"
+			aTexto := {}
+			Aadd(aTexto,Substr(TRB->TEXTO,1,34))
+			Aadd(aTexto,Substr(TRB->TEXTO,35,35))
+			Aadd(aTexto,Substr(TRB->TEXTO,70,31))
+			@ Li, 089 PSAY aTexto[1]
+		Else
+			@ Li, 089 PSAY Posicione("SAH",1,xFilial("SAH")+TRB->UNIMED,"AH_UMRES")
+			@ Li, 099 PSAY AllTrim(TRB->NOMINA)
+			
+			If TRB->MINMAX == "1"
+				@ Li, 108 PSAY AllTrim(TRB->LIE)
+				@ Li, 117 PSAY AllTrim(TRB->LSE)
+			ElseIf TRB->MINMAX == "2"
+				@ Li, 108 PSAY AllTrim(TRB->LIE)
+				@ Li, 118 PSAY ">>>"
+			ElseIf TRB->MINMAX == "3"
+				@ Li, 109 PSAY "<<<"
+				@ Li, 117 PSAY AllTrim(TRB->LSE)
+			EndIf
+		EndIf
+		
+		QQ1->(dbSetOrder(1))
+		QQ1->(dbSeek(xFilial("QQ1")+TRB->PRODUT+TRB->REVI+TRB->OPERAC+TRB->ENSAIO))
+		While  QQ1->(!Eof()) .And. xFilial("QQ1")==QQ1->QQ1_FILIAL 	.And.;
+			QQ1->QQ1_PRODUT == TRB->PRODUT	.And.;
+			QQ1->QQ1_REVI	== TRB->REVI	.And.;
+			QQ1->QQ1_OPERAC == TRB->OPERAC	.And.;
+			QQ1->QQ1_ENSAIO == TRB->ENSAIO
+			If lProximo
+				Li++
+			EndIf
+			
+			If	cTipoEns == "X"	//Se o Tipo da Carta for igual a "TXT"
+				nContLi++
+				If !Empty(aTexto[2]) .And. nContLi==2
+					@ Li,059 PSAY aTexto[2]
+				ElseIf !Empty(aTexto[3]) .And. nContLi==3
+					@ Li,059 PSAY aTexto[3]
+				EndIf
+			EndIf
+			
+			lProximo := .T.
+			QQ1->(dbSkip())
+		EndDo
+		lProximo := .F.
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Imprime restante do aTexto 									 ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If cTipoEns == "X"
+			If nContLi < 2
+				If !Empty (aTexto[2])
+					Li++
+					@ Li, 089 PSAY aTexto[2]
+				EndIf
+			EndIf
+			
+			If nContLi < 3
+				If !Empty (aTexto[3])
+					Li++
+					@ Li, 089 PSAY aTexto[3]
+				Endif
+			EndIf
+			aTexto 	:= {}
+			nContLi	:= 0
+		EndIf
+		
+		Li++
+		@li,000 PSAY __PrtThinLine()
+		
+		If Li > 54
+			Cabec(cTitulo,Cabec1,Cabec2,nomeprog,cTamanho,nTipo)
+			@li,000 PSAY __PrtThinLine()
+			Li++
+			@ Li, 000 PSAY TitSX3("QP7_ENSAIO")[1]
+			@ Li, 051 PSAY TitSX3("QP7_METODO")[1]
+			@ Li, 068 PSAY TitSX3("QP7_ACESSO")[1]
+			@ Li, 089 PSAY STR0014	//"Un. Med."
+			@ Li, 099 PSAY STR0015	//"Nominal"
+			@ Li, 108 PSAY STR0016	//"L.I.E."
+			@ Li, 117 PSAY STR0017	//"L.S.E."
+			Li++
+			@li,000 PSAY __PrtThinLine()
+		Endif
+		
+		dbSelectArea("TRB")
+		dbSkip()
+	Enddo
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ CABECALHO DO PLANO DE AMOSTRAGEM³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If Len(aEnsaios) > 0
+		Li+=2
+		
+		@ Li, 000 PSAY AllTrim(TitSX3("QP7_ENSAIO")[1])
+		@ Li, 009 PSAY STR0037 //"Aceite"
+		@ Li, 018 PSAY STR0038 //"Rejeite"
+		@ Li, 027 PSAY STR0043 //"Tam. Amostra"
+		@ Li, 040 PSAY STR0032	//'Plano de Amostragem'
+		Li++
+		@li,000 PSAY __PrtThinLine()
+		Li++
+		If Li > 54
+			Cabec(cTitulo,Cabec1,Cabec2,nomeprog,cTamanho,nTipo)
+		Endif
+		
+		For nC := 1 To Len(aEnsaios)
+			
+			cCarta := QPCarta(aEnsaios[nC,1])
+			QQH->(dbSetOrder(1))
+			If QQH->(dbSeek(xFilial('QQH')+aEnsaios[nC,5]+aEnsaios[nC,6]+aEnsaios[nC,7]+aEnsaios[nC,8]+aEnsaios[nC,1]))
+				cAmost  := QQH->QQH_AMOST
+				aImpPl  := QEP_RetAmostra(aEnsaios[nC,3],QQH->QQH_AMOST,QQH->QQH_NIVAMO,QQH->QQH_NQA,+Str(Int(Val(aEnsaios[nC,9])),8),"QPK_TAMLOT",.F.)
+				
+				If aEnsaios[nC,3]=="I"
+					For nCount := 1 To Len(aImpPl)
+						@ Li,000 PSAY aEnsaios[nC,1]
+						@ Li,009 PSAY aImpPl[nCount,1]
+						@ Li,018 PSAY aImpPl[nCount,2]
+						@ Li,027 PSAY aImpPl[nCount,3]
+						@ Li,040 PSAY aEnsaios[nC,3]
+						@ Li,042 PSAY Alltrim(aEnsaios[nC,4])+STR0045+aImpPl[nCount,7] //"  Tipo : "
+						Li++
+					Next nCount
+				Else
+					@ Li,000 PSAY aEnsaios[nC,1]
+					@ Li,009 PSAY aImpPl[2]
+					@ Li,018 PSAY aImpPl[3]
+					@ Li,027 PSAY aImpPl[1]
+					@ Li,040 PSAY aEnsaios[nC,3]
+					@ Li,042 PSAY Substr(aEnsaios[nC,4],1,90)
+					Li++
+				EndIF
+			EndIF
+			
+			If Li > 54
+				Cabec(cTitulo,Cabec1,Cabec2,nomeprog,cTamanho,nTipo)
+			Endif
+		Next
+		@li,000 PSAY __PrtThinLine()
+		Li++
+	EndIf
+	
+	If Li > 54
+		Cabec(cTitulo,Cabec1,Cabec2,nomeprog,cTamanho,nTipo)
+	Endif
+	Li+=2
+	@ Li,001 PSAY STR0022	// "Data        ____ /____ /____"
+	@ Li,062 PSAY STR0023 //"Lote        ____________________________"
+	Li+=2
+	@ Li,001 PSAY STR0024	//"Equipamento _________________________"
+	Li+=2
+	
+	If Li > 50
+		Cabec(cTitulo,Cabec1,Cabec2,nomeprog,cTamanho,nTipo)
+	Endif
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ IMPRIME MENSAGEM DE NOVAS ESPECIFICACOES 	         ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If lExisAlEsp
+		If cALTESP == "S"
+			Li+=2
+			@ Li, 45 PSAY STR0044 //"*** ORDEM DE PRODUCAO COM NOVAS ESPECIFICACOES ***"
+			Li+=2
+		EndIf
+	EndIf
+	
+	@ Li, 01 PSAY "|---------------------------------------------------------------------------------------------------------------------------------|"
+	Li++
+	@ Li, 01 PSAY "|                | "+Left(TitSX3("QPT_INSTR")[1],9)+"  |"+STR0025+"|"+STR0026+"|"                                                         //"     Ensaiador     "###"                                     M E D I C O E S                           "
+	Li++
+	@ Li, 01 PSAY "|----------------+------------+-------------------+---------------+---------------+---------------+---------------+---------------|"
+	Li++
+	
+	If Li > 52
+		Cabec(cTitulo,Cabec1,Cabec2,nomeprog,cTamanho,nTipo)
+	Endif
+	/*
+	For nCont := 1 to Len(aEnsaios)
+	If aEnsaios[nCont,2] <> "X"
+	@ Li, 01 PSAY "| " + aEnsaios[nCont,1] + "       |            |                   |               |               |               |               |               |"
+	Li++
+	@ Li, 01 PSAY "|----------------+------------+-------------------+---------------+---------------+---------------+---------------+---------------|"
+	Li++
+	Else
+	@ Li, 01 PSAY "| " + aEnsaios[nCont,1] + "       |            |                   |                                                                               |"
+	Li++
+	@ Li, 01 PSAY "|---------------------------------------------------------------------------------------------------------------------------------|"
+	Li++
+	Endif
+	If Li > 54 .And. Len(aEnsaios) > nCont
+	Cabec(cTitulo,Cabec1,Cabec2,nomeprog,cTamanho,nTipo)
+	@ Li, 01 PSAY "|---------------------------------------------------------------------------------------------------------------------------------|"
+	Li++
+	@ Li, 01 PSAY "|                | "+Left(TitSX3("QPT_INSTR")[1],9)+"  |"+STR0025+"|"+STR0026+"|"                                                         //"     Ensaiador     "###"                                     M E D I C O E S                           "
+	Li++
+	@ Li, 01 PSAY "|----------------+------------+-------------------+---------------+---------------+---------------+---------------+---------------|"
+	Li++
+	Endif
+	Next
+	*/
+	aEnsaios:={}
+	Li++
+	@ Li, 01 PSAY STR0027+"_______________________"      //"Laudo : "
+	Li++
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Converte a chave passada como param. p/ chave do texto		  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cTexObs:= QA_Rectxt(cChave,"QIPA010 ")
+	aTexObs := JustificaTXT(cTexObs,130)
+	For nY:=1 to Len(aTexObs)
+		Li++
+		If Li > 52
+			Cabec(cTitulo,Cabec1,Cabec2,nomeprog,cTamanho,nTipo)
+		Endif
+		@ Li, 01 PSAY aTexObs[nY]
+	Next nY
+	
+	Li:=60
+EndDo
+
+If Li != 80
+	roda(CbCont,cbtxt,nTamanho)
+EnDif
+
+QPZ->(dbSetOrder(1))
+QPI->(dbSetOrder(1))
+dbSelectArea("TRB")
+dbCloseArea()
+
+Ferase(cArqTRB+GetDBExtension())
+dbSelectArea("QPK")
+Ferase(cArqTRB+OrdBagExt())
+dbSetOrder( 1 )
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Restaura o registro QPK         ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+RestArea(aAreaQPK)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Encerra a impressao desta ficha ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Set Device To Screen
+
+If aReturn[5] == 1
+	Set Printer To
+	Commit
+	Ourspool(wnrel)
+EndIf
+
+MS_FLUSH()
+Return
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o	 ³R040GTrab	³ Autor ³ Marcelo Pimentel 	  	³ Data ³ 11.03.98³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Gera arquivo de Trabalho 									  		  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso		 ³ R040GTrab()											            	  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+/*
+Static Function R040GTrab()
+
+#IFDEF TOP
+Local cQuery		:= ''
+#ELSE
+Local cProdRev		:= ''
+Local nRecQQK		:= 0
+Local cChaveQPK		:= ''
+Local cRoteiro		:= ''
+Local cCond			:= ''
+Local cRevi			:= ''
+#ENDIF
+
+Local aTam			:= {}
+Local aCampos	    := {}
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Cria Arquivo de Trabalho  									 		  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+aTam:=TamSX3("QQK_CODIGO")	;AADD(aCampos,{"ROTEIRO"  ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QQK_OPERAC")	;AADD(aCampos,{"OPERAC"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QQK_CHAVE" ) ;AADD(aCampos,{"CHAVE"    ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QQK_DESCRI")	;AADD(aCampos,{"DESCRI"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QQK_OPERGR")	;AADD(aCampos,{"OPERGRP"  ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QPK_PRODUT")	;AADD(aCampos,{"PRODUT"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QPK_REVI"  )	;AADD(aCampos,{"REVI"     ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QPK_OP"    )	;AADD(aCampos,{"OP"       ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QPK_LOTE"  )	;AADD(aCampos,{"LOTE"     ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QPK_NUMSER")	;AADD(aCampos,{"NUMSER"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_FATCO1")	;AADD(aCampos,{"FATCO1"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_TIPCO1")	;AADD(aCampos,{"TIPCO1"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_FATCO2")	;AADD(aCampos,{"FATCO2"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_FATCO2")	;AADD(aCampos,{"TIPCO2"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_DESCPO")	;AADD(aCampos,{"DESCPO"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_DTCAD" )	;AADD(aCampos,{"DTCAD"    ,"D",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_DTDES" )	;AADD(aCampos,{"DTDES"    ,"D",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_RVDES" )	;AADD(aCampos,{"RVDES"    ,"C",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_DTINI" )	;AADD(aCampos,{"DTINI"    ,"D",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_DOCOBR")	;AADD(aCampos,{"DOCOBR"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_UNMED1")	;AADD(aCampos,{"UNMED1"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_UNMED2")	;AADD(aCampos,{"UNMED2"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_ENSAIO")	;AADD(aCampos,{"ENSAIO"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_ENSOBR")	;AADD(aCampos,{"ENSOBR"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_UNIMED")	;AADD(aCampos,{"UNIMED"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_NOMINA")	;AADD(aCampos,{"NOMINA"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_LIE"   )	;AADD(aCampos,{"LIE"      ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_LSE"   )	;AADD(aCampos,{"LSE"      ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_ACESSO")	;AADD(aCampos,{"ACESSORI" ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_PLAMO" )	;AADD(aCampos,{"PLAMO"    ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_DESPLA")	;AADD(aCampos,{"DESPLA"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_NIVEL" )	;AADD(aCampos,{"NIVEL"    ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_LABOR" )	;AADD(aCampos,{"LABOR"    ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_SEQLAB")	;AADD(aCampos,{"SEQLAB"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_MINMAX")	;AADD(aCampos,{"MINMAX"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP7_METODO")	;AADD(aCampos,{"METODO"   ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QP8_TEXTO" )	;AADD(aCampos,{"TEXTO"    ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QPK_TAMLOT")	;AADD(aCampos,{"QUANT"    ,"N",aTam[1],aTam[2]})
+aTam:=TamSX3("QPK_UM"    )	;AADD(aCampos,{"C2UNIMED" ,"C",aTam[1],aTam[2]})
+aTam:=TamSX3("QPK_EMISSA")	;AADD(aCampos,{"C2EMISSAO","D",aTam[1],aTam[2]})
+aTam:=TamSx3("QP6_HISTOR")	;AADD(aCampos,{"HISTOR"   ,"C",aTam[1],aTam[2]})
+If lExisAlEsp
+aTam:=TamSx3("QP6_ALTESP")	;AADD(aCampos,{"ALTESP"   ,"C",aTam[1],aTam[2]})
+EndIf
+
+
+cArqTRB := CriaTrab(aCampos)
+//Elias 30.01.07
+If Select("TRB")>0
+TRB->(dbCloseArea())
+EndIf
+
+
+dbUseArea( .T.,, cArqTRB, "TRB", .F., .F. )
+
+dbSelectArea("QPK")
+dbSetOrder(1)
+#IFDEF TOP
+If TcSrvType() != "AS/400"
+cQuery := "SELECT "
+cQuery += " QPK.QPK_OP OP, QPK.QPK_LOTE LOTE, QPK.QPK_NUMSER NUMSER,"
+cQuery += " QPK.QPK_PRODUT PRODUT,QPK.QPK_REVI REVI,SC2.C2_ROTEIRO ROTEIRO,"
+cQuery += " QPK.QPK_TAMLOT QUANT,QPK.QPK_UM C2UNIMED,QPK.QPK_EMISSA C2EMISSAO"
+cQuery += " FROM "
+cQuery += "	" + RetSQLName("QPK") + " QPK ,"
+cQuery += "	" + RetSQLName("SC2") + " SC2 ,"
+cQuery += "	" + RetSQLName("QP6") + " QP6 "
+
+cQuery += "WHERE "
+cQuery += " QPK.QPK_FILIAL = '" + xFilial("QPK") + "'"
+cQuery += " AND QP6.QP6_FILIAL = '" + xFilial("QP6") + "'"
+
+cQuery += " AND QPK.QPK_PRODUT = QP6.QP6_PRODUT"
+cQuery += " AND QPK.QPK_REVI = QP6.QP6_REVI"
+cQuery += " AND Substring(QPK.QPK_OP,1,6)  = SC2.C2_NUM"
+cQuery += " AND Substring(QPK.QPK_OP,7,2)  = SC2.C2_ITEM"
+cQuery += " AND Substring(QPK.QPK_OP,9,3)  = SC2.C2_SEQUEN"
+cQuery += " AND Substring(QPK.QPK_OP,12,2) = SC2.C2_ITEMGRD"
+
+cQuery += " AND QPK.QPK_OP >='"	   +MV_PAR01 + "'"
+cQuery += " AND QPK.QPK_LOTE >='"	+MV_PAR02 + "'"
+cQuery += " AND QPK.QPK_NUMSER >='"	+MV_PAR03 + "'"
+
+cQuery += " AND QPK.QPK_OP <='"	    +MV_PAR04 + "'"
+cQuery += " AND QPK.QPK_LOTE <='"	+MV_PAR05 + "'"
+cQuery += " AND QPK.QPK_NUMSER <='"	+MV_PAR06 + "'"
+
+//FILTRA OS ITENS DELETADOS DA TABELA SC2020
+cQuery += " AND SC2.D_E_L_E_T_ = ' ' "
+
+
+cQuery += " AND QPK.D_E_L_E_T_ <> '*' "
+cQuery += " ORDER BY " + SqlOrder(QPK->(IndexKey()))
+cQuery := ChangeQuery(cQuery)
+
+MemoWrite("\QUERYSYS\TRBQPK.SQL",cQuery)
+
+dbUseArea(.T., "TOPCONN", TCGenQry(,,cQuery),"TRBQPK", .F., .T.)
+aTam := TamSx3("QPK_TAMLOT")
+TcSetField( "TRBQPK", "QUANT"	,"N",aTam[1],aTam[2])
+TcSetField( "TRBQPK", "C2EMISSAO"	,"D")
+EndIf
+
+While !Eof()
+cKey   := "QP6_PRODUT+QP6_REVI+QP7_CODREC+QP7_OPERAC+QP7_LABOR+QP7_SEQLAB"
+cQuery := "SELECT "
+cQuery += " QP6.QP6_PRODUT PRODUT,QP6.QP6_REVI REVI,QP7.QP7_CODREC CODREC, "
+cQuery += " QP7.QP7_OPERAC OPERAC, QP7.QP7_LABOR LABOR, QP7.QP7_SEQLAB SEQLAB, "
+cQuery += " QP6.QP6_FATCO1 FATCO1, QP6.QP6_TIPCO1 TIPCO1, QP6.QP6_FATCO2 FATCO2, "
+cQuery += " QP6.QP6_TIPCO2 TIPCO2, QP6.QP6_DESCPO DESCPO, QP6.QP6_DTCAD DTCAD, "
+cQuery += " QP6.QP6_DTDES DTDES, QP6.QP6_RVDES RVDES, QP6.QP6_DTINI DTINI, "
+cQuery += " QP6.QP6_DOCOBR DOCOBR, QP6.QP6_UNMED1 UNMED1, QP6.QP6_UNMED2 UNMED2, "
+cQuery += " QQK.QQK_CHAVE CHAVE, QQK.QQK_DESCRI DESCRI, QQK.QQK_OPERGR OPERGRP, "
+cQuery += " QP7.QP7_ENSAIO ENSAIO, QP7.QP7_ENSOBR ENSOBR, QP7.QP7_UNIMED UNIMED, "
+cQuery += " QP7.QP7_NOMINA NOMINA, QP7.QP7_LIE LIE, QP7.QP7_NIVEL NIVEL, QP7.QP7_METODO METODO, "
+cQuery += " QP7.QP7_ACESSO ACESSORI, "
+If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+cQuery += " QQ7.QQ7_CLIENT CLIENT,QQ7.QQ7_LOJA LOJA, SA1.A1_NOME DESCLI, "
+EndIf
+
+cQuery += " QP6.QP6_HISTOR HISTOR,"
+If lExisAlEsp
+cQuery += " QP6.QP6_ALTESP ALTESP,"
+EndIf
+
+cQuery += " QP7.QP7_LSE LSE, QP7.QP7_PLAMO PLAMO, QP7.QP7_DESPLA DESPLA, "
+cQuery += " QP7.QP7_MINMAX MINMAX "
+
+
+cQuery += "FROM "
+If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+cQuery += "	" + RetSQLName("QQ7") + " QQ7, "
+cQuery += "	" + RetSQLName("SA1") + " SA1, "
+EndIf
+cQuery += "	" + RetSQLName("QPK") + " QPK, "
+cQuery += "	" + RetSQLName("QP6") + " QP6, "
+cQuery += "	" + RetSQLName("QQK") + " QQK, "
+cQuery += "	" + RetSQLName("QP7") + " QP7 "
+
+cQuery += "WHERE "
+cQuery += " QPK.QPK_OP>='"			+TRBQPK->OP + "'"
+cQuery += " AND QPK.QPK_LOTE>='"	+TRBQPK->LOTE + "'"
+cQuery += " AND QPK.QPK_NUMSER>='"	+TRBQPK->NUMSER + "'"
+
+cQuery += " AND QPK.QPK_OP<='"		+TRBQPK->OP + "'"
+cQuery += " AND QPK.QPK_LOTE<='"	+TRBQPK->LOTE + "'"
+cQuery += " AND QPK.QPK_NUMSER<='"	+TRBQPK->NUMSER + "'"
+
+cQuery += " AND QP6.QP6_FILIAL = '" + xFilial("QP6") +"'"
+cQuery += " AND QQK.QQK_FILIAL  = '" + xFilial("QQK") +"'"
+cQuery += " AND QP7.QP7_FILIAL = '" + xFilial("QP7") +"'"
+If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+cQuery += " AND QQ7.QQ7_FILIAL = '" + xFilial("QQ7") +"'"
+EndIf
+
+cQuery += " AND QP6.QP6_PRODUT = '" + TRBQPK->PRODUT +"'"
+cQuery += " AND QP6.QP6_REVI = '" + TRBQPK->REVI +"'"
+cQuery += " AND QQK.QQK_PRODUT ='" + TRBQPK->PRODUT +"'"
+cQuery += " AND QQK.QQK_CODIGO ='" + TRBQPK->ROTEIRO +"'"
+cQuery += " AND QQK.QQK_OPERAC Between '" + MV_PAR07	+ "' and '" + MV_PAR08 + "'"
+cQuery += " AND QQK.QQK_REVIPR = QPK.QPK_REVI"
+cQuery += " AND QP7.QP7_PRODUT = QP6.QP6_PRODUT "
+cQuery += " AND QP7.QP7_REVI = QPK.QPK_REVI "
+cQuery += " AND QP7.QP7_CODREC = QQK.QQK_CODIGO "
+cQuery += " AND QP7.QP7_OPERAC = QQK.QQK_OPERAC "
+
+If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+cQuery += " AND SA1.A1_COD = '"+ MV_PAR10 +"'"
+cQuery += " AND SA1.A1_LOJA = '" + MV_PAR11 + "'"
+cQuery += " AND QQ7.QQ7_PRODUT = QP7.QP7_PRODUT "
+cQuery += " AND QQ7.QQ7_ENSAIO = QP7.QP7_ENSAIO "
+cQuery += " AND QQ7.QQ7_LABOR = QP7.QP7_LABOR "
+cQuery += " AND QQ7.QQ7_CODREC = QP7.QP7_CODREC "
+cQuery += " AND QQ7.QQ7_OPERAC = QP7.QP7_OPERAC "
+cQuery += " AND QQ7.QQ7_CLIENT = '"+ MV_PAR10 +"'"
+cQuery += " AND QQ7.QQ7_LOJA = '" + MV_PAR11 + "'"
+EndIf
+
+cQuery += " AND QPK.D_E_L_E_T_ <> '*'"
+cQuery += " AND QP6.D_E_L_E_T_ <> '*'"
+cQuery += " AND QQK.D_E_L_E_T_ <> '*'"
+cQuery += " AND QP7.D_E_L_E_T_ <> '*'"
+
+If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+cQuery += " AND QQ7.D_E_L_E_T_ <> '*'"
+EndIf
+
+cQuery += " ORDER BY " + SqlOrder(cKey)
+
+//		cQuery := ChangeQuery(cQuery)
+
+
+MemoWrite("\QUERYSYS\TRBQPKTR1.SQL",cQuery)
+dbUseArea(.T., "TOPCONN", TcGenQry(,,cQuery), 'TR1')
+
+TcSetField( "TR1", "DTCAD"	,"D")
+TcSetField( "TR1", "DTDES"	,"D")
+TcSetField( "TR1", "DTINI"	,"D")
+
+
+QQK->(DbSetOrder(1))
+
+While !Eof()
+If	MV_PAR09 == 1	 //Imprime somente a ultima operacao
+If 	QQK->(dbSeek(xFilial("QQK")+TR1->PRODUT+TR1->REVI+If(Empty(TR1->CODREC),;
+"01", TR1->CODREC)))
+dbSelectArea("QQK")
+nRecQQK := Recno()
+While !Eof().And. xFilial("QQK")	==	QQK_FILIAL	.And.;
+QQK_PRODUT+QQK_REVIPR+QQK_CODIGO==TR1->PRODUT+TR1->REVI+If(Empty(TR1->CODREC),;
+"01", TR1->CODREC)
+nRecQQK := Recno()
+dbSkip()
+EndDo
+dbGoTo(nRecQQK)
+dbSelectArea("TR1")
+If TR1->OPERAC <> QQK->QQK_OPERAC
+DbSkip()
+Loop
+Endif
+Endif
+EndIf
+RecLock("TRB",.T.)
+TRB->OP  		:= TRBQPK->OP
+
+//			IF LEN(ALLTRIM(TRBQPK->LOTE)) == 0
+//				DBSELECTAREA("SC2")
+//				DBSETORDER(1)
+//				IF DBSEEK(XFILIAL("SC1") + SUBSTR(TRBQPK->OP,1,6) + SUBSTR(TRBQPK->OP,7,2) + SUBSTR(TRBQPK->OP,9,3))
+//				IF DBSEEK(XFILIAL("SC1") + TRBQPK->OP )
+//					TRB->LOTE := SC2->C2_LOTECTL
+//				ENDIF
+//			ELSE
+TRB->LOTE      := TRBQPK->LOTE
+//			ENDIF
+//			DBSELECTAREA("TRB")
+TRB->NUMSER    := TRBQPK->NUMSER
+TRB->QUANT		:= TRBQPK->QUANT
+TRB->C2UNIMED	:= TRBQPK->C2UNIMED
+TRB->C2EMISSAO	:= TRBQPK->C2EMISSAO
+TRB->ROTEIRO	:= TR1->CODREC
+TRB->OPERAC		:= TR1->OPERAC
+TRB->CHAVE		:= TR1->CHAVE
+TRB->DESCRI		:= TR1->DESCRI
+TRB->OPERGRP	:= TR1->OPERGRP
+TRB->PRODUT		:= TR1->PRODUT
+TRB->REVI		:= TR1->REVI
+TRB->FATCO1		:= TR1->FATCO1
+TRB->TIPCO1		:= TR1->TIPCO1
+TRB->FATCO2		:= TR1->FATCO2
+TRB->TIPCO2		:= TR1->TIPCO2
+TRB->DESCPO		:= TR1->DESCPO
+TRB->DTCAD		:= TR1->DTCAD
+TRB->DTDES		:= TR1->DTDES
+TRB->RVDES		:= TR1->RVDES
+TRB->DTINI		:= TR1->DTINI
+TRB->DOCOBR		:= TR1->DOCOBR
+TRB->UNMED1		:= TR1->UNMED1
+TRB->UNMED2		:= TR1->UNMED2
+TRB->ENSAIO 	:= TR1->ENSAIO
+TRB->ENSOBR		:= TR1->ENSOBR
+TRB->UNIMED 	:= TR1->UNIMED
+TRB->NOMINA 	:= TR1->NOMINA
+TRB->LIE 		:= TR1->LIE
+TRB->LSE 		:= TR1->LSE
+TRB->PLAMO		:= TR1->PLAMO
+TRB->DESPLA		:= TR1->DESPLA
+TRB->NIVEL 	   := TR1->NIVEL
+TRB->LABOR		:= TR1->LABOR
+TRB->SEQLAB 	:= TR1->SEQLAB
+TRB->MINMAX 	:= TR1->MINMAX
+TRB->METODO 	:= TR1->METODO
+TRB->HISTOR		:= TR1->HISTOR
+TRB->ACESSORI  := TR1->ACESSORI
+If lExisAlEsp
+TRB->ALTESP	:= TR1->ALTESP
+EndIf
+
+MsUnlock()
+dbSelectArea("TR1")
+dbSkip()
+Enddo
+dbSelectArea("TR1")
+dbCloseArea()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Texto 														 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cKey   := "QP6_PRODUT+QP6_REVI+QP8_CODREC+QP8_OPERAC+QP8_LABOR+QP8_SEQLAB"
+cQuery := "SELECT "
+cQuery += " QP6.QP6_PRODUT PRODUT,QP6.QP6_REVI REVI,QP8.QP8_CODREC CODREC, "
+cQuery += " QP8.QP8_OPERAC OPERAC, QP8.QP8_LABOR LABOR, QP8.QP8_SEQLAB SEQLAB, "
+cQuery += " QP6.QP6_FATCO1 FATCO1, QP6.QP6_TIPCO1 TIPCO1, QP6.QP6_FATCO2 FATCO2, "
+cQuery += " QP6.QP6_TIPCO2 TIPCO2, QP6.QP6_DESCPO DESCPO, QP6.QP6_DTCAD DTCAD, "
+cQuery += " QP6.QP6_DTDES DTDES, QP6.QP6_RVDES RVDES, QP6.QP6_DTINI DTINI, "
+cQuery += " QP6.QP6_DOCOBR DOCOBR, QP6.QP6_UNMED1 UNMED1, QP6.QP6_UNMED2 UNMED2, "
+cQuery += " QQK.QQK_CHAVE CHAVE, QQK.QQK_DESCRI DESCRI, QQK.QQK_OPERGR OPERGRP, "
+cQuery += " QP8.QP8_ENSAIO ENSAIO, QP8.QP8_ENSOBR ENSOBR, QP8.QP8_TEXTO TEXTO, QP8.QP8_METODO METODO, "
+If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+cQuery += " QQ7.QQ7_CLIENT CLIENT,QQ7.QQ7_LOJA LOJA, SA1.A1_NOME DESCLI, "
+EndIf
+
+cQuery += " QP6.QP6_HISTOR HISTOR, "
+If lExisAlEsp
+cQuery += " QP6.QP6_ALTESP ALTESP, "
+EndIf
+
+cQuery += " QP8.QP8_PLAMO PLAMO, QP8.QP8_DESPLA DESPLA, QP8.QP8_NIVEL NIVEL "
+
+cQuery += " FROM "
+If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+cQuery += "	" + RetSQLName("QQ7") + " QQ7, "
+cQuery += "	" + RetSQLName("SA1") + " SA1, "
+EndIf
+cQuery += "	" + RetSQLName("QPK") + " QPK, "
+cQuery += "	" + RetSQLName("QP6") + " QP6, "
+cQuery += "	" + RetSQLName("QQK") + " QQK, "
+cQuery += "	" + RetSQLName("QP8") + " QP8 "
+
+cQuery += "WHERE "
+
+cQuery += " QPK.QPK_OP>='"			+TRBQPK->OP + "'"
+cQuery += " AND QPK.QPK_LOTE>='"	+TRBQPK->LOTE + "'"
+cQuery += " AND QPK.QPK_NUMSER>='"	+TRBQPK->NUMSER + "'"
+
+cQuery += " AND QPK.QPK_OP<='"		+TRBQPK->OP + "'"
+cQuery += " AND QPK.QPK_LOTE<='"	+TRBQPK->LOTE + "'"
+cQuery += " AND QPK.QPK_NUMSER<='"	+TRBQPK->NUMSER + "'"
+
+cQuery += " AND QP6.QP6_FILIAL = '" + xFilial("QP6") +"'"
+cQuery += " AND QQK.QQK_FILIAL  = '" + xFilial("QQK") +"'"
+cQuery += " AND QP8.QP8_FILIAL = '" + xFilial("QP8") +"'"
+If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+cQuery += " AND QQ7.QQ7_FILIAL = '" + xFilial("QQ7") +"'"
+EndIf
+cQuery += " AND QP6.QP6_PRODUT = '"	+ TRBQPK->PRODUT	+"'"
+cQuery += " AND QP6.QP6_REVI = '" 	+ TRBQPK->REVI		+"'"
+cQuery += " AND QQK.QQK_PRODUT ='" 	+ TRBQPK->PRODUT	+"'"
+cQuery += " AND QQK.QQK_CODIGO ='"  + TRBQPK->ROTEIRO   +"'"
+cQuery += " AND QQK.QQK_OPERAC Between '" + MV_PAR07	+ "' and '" + MV_PAR08 + "'"
+cQuery += " AND QQK.QQK_REVIPR = QPK.QPK_REVI"
+cQuery += " AND QP8.QP8_PRODUT = QP6.QP6_PRODUT "
+cQuery += " AND QP8.QP8_REVI = QPK.QPK_REVI "
+cQuery += " AND QP8.QP8_CODREC = QQK.QQK_CODIGO "
+cQuery += " AND QP8.QP8_OPERAC = QQK.QQK_OPERAC "
+
+If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+cQuery += " AND SA1.A1_COD = '"+ MV_PAR10 +"'"
+cQuery += " AND SA1.A1_LOJA = '" + MV_PAR11 + "'"
+cQuery += " AND QQ7.QQ7_PRODUT = QP8.QP8_PRODUT "
+cQuery += " AND QQ7.QQ7_ENSAIO = QP8.QP8_ENSAIO "
+cQuery += " AND QQ7.QQ7_LABOR = QP8.QP8_LABOR "
+cQuery += " AND QQ7.QQ7_CODREC = QP8.QP8_CODREC "
+cQuery += " AND QQ7.QQ7_OPERAC = QP8.QP8_OPERAC "
+cQuery += " AND QQ7.QQ7_CLIENT = '"+ MV_PAR10 +"'"
+cQuery += " AND QQ7.QQ7_LOJA = '" + MV_PAR11 + "'"
+EndIf
+
+cQuery += " AND QPK.D_E_L_E_T_ <> '*'"
+cQuery += " AND QP6.D_E_L_E_T_ <> '*'"
+cQuery += " AND QQK.D_E_L_E_T_ <> '*'"
+cQuery += " AND QP8.D_E_L_E_T_ <> '*'"
+
+If !Empty(MV_PAR10) .And. !Empty(MV_PAR11)
+cQuery += " AND QQ7.D_E_L_E_T_ <> '*'"
+EndIf
+cQuery += " ORDER BY " + SqlOrder(cKey)
+//		cQuery := ChangeQuery(cQuery)
+
+MemoWrite("\QUERYSYS\TRBTR2.SQL",cQuery)
+dbUseArea(.T., "TOPCONN", TcGenQry(,,cQuery), 'TR2')
+
+
+TcSetField( "TR2", "DTCAD"	,"D")
+TcSetField( "TR2", "DTDES"	,"D")
+TcSetField( "TR2", "DTINI"	,"D")
+
+QQK->(DbSetOrder(1))
+While !Eof()
+If	MV_PAR09 == 1	 //Imprime somente a ultima operacao
+If 	QQK->(dbSeek(xFilial("QQK")+TR2->PRODUT+TR2->REVI+If(Empty(TR2->CODREC),;
+"01", TR2->CODREC)))
+dbSelectArea("QQK")
+nRecQQK := Recno()
+While !Eof().And. xFilial("QQK")	==	QQK_FILIAL	.And.;
+QQK_PRODUT+QQK_REVIPR+QQK_CODIGO==TR2->PRODUT+TR2->REVI+If(Empty(TR2->CODREC),;
+"01", TR2->CODREC)
+nRecQQK := Recno()
+dbSkip()
+EndDo
+dbGoTo(nRecQQK)
+dbSelectArea("TR2")
+If TR2->OPERAC <> QQK->QQK_OPERAC
+DbSkip()
+Loop
+Endif
+Endif
+EndIf
+
+RecLock("TRB",.T.)
+TRB->OP		   := TRBQPK->OP
+//			IF LEN(ALLTRIM(TRBQPK->LOTE)) == 0
+//				DBSELECTAREA("SC2")
+//				DBSETORDER(1)
+//				IF DBSEEK(XFILIAL("SC1") + SUBSTR(TRBQPK->OP,1,6) + SUBSTR(TRBQPK->OP,7,2) + SUBSTR(TRBQPK->OP,9,3))
+//				IF DBSEEK( XFILIAL("SC2") + TRBQPK->OP)
+//					TRB->LOTE := SC2->C2_LOTECTL
+//				ENDIF
+//			ELSE
+TRB->LOTE      := TRBQPK->LOTE
+//			ENDIF
+//			DBSELECTAREA("TRB")
+//			TRB->LOTE      := TRBQPK->LOTE
+TRB->NUMSER    := TRBQPK->NUMSER
+TRB->QUANT		:= TRBQPK->QUANT
+TRB->C2UNIMED	:= TRBQPK->C2UNIMED
+TRB->C2EMISSAO	:= TRBQPK->C2EMISSAO
+TRB->ROTEIRO	:= TR2->CODREC
+TRB->OPERAC		:= TR2->OPERAC
+TRB->CHAVE		:= TR2->CHAVE
+TRB->DESCRI		:= TR2->DESCRI
+TRB->OPERGRP	:= TR2->OPERGRP
+TRB->PRODUT		:= TR2->PRODUT
+TRB->REVI		:= TR2->REVI
+TRB->FATCO1		:= TR2->FATCO1
+TRB->TIPCO1		:= TR2->TIPCO1
+TRB->FATCO2		:= TR2->FATCO2
+TRB->TIPCO2		:= TR2->TIPCO2
+TRB->DESCPO		:= TR2->DESCPO
+TRB->DTCAD		:= TR2->DTCAD
+TRB->DTDES		:= TR2->DTDES
+TRB->RVDES		:= TR2->RVDES
+TRB->DTINI		:= TR2->DTINI
+TRB->DOCOBR		:= TR2->DOCOBR
+TRB->UNMED1		:= TR2->UNMED1
+TRB->UNMED2		:= TR2->UNMED2
+TRB->ENSAIO 	:= TR2->ENSAIO
+TRB->ENSOBR		:= TR2->ENSOBR
+TRB->TEXTO		:= TR2->TEXTO
+TRB->PLAMO		:= TR2->PLAMO
+TRB->DESPLA		:= TR2->DESPLA
+TRB->NIVEL   	:= TR2->NIVEL
+TRB->LABOR		:= TR2->LABOR
+TRB->SEQLAB 	:= TR2->SEQLAB
+TRB->METODO 	:= TR2->METODO
+TRB->HISTOR		:= TR2->HISTOR
+If lExisAlEsp
+TRB->ALTESP	:= TR2->ALTESP
+EndIf
+
+MsUnlock()
+dbSelectArea("TR2")
+dbSkip()
+Enddo
+dbSelectArea("TR2")
+dbCloseArea()
+
+dbSelectArea("TRBQPK")
+dbSkip()
+EndDo
+dbSelectArea("TRBQPK")
+dbCloseArea()
+
+#ELSE
+dbSeek(xFilial("QPK")+MV_PAR01,.T.)
+cCond	:= '!Eof() .And. QPK_FILIAL == "'+xFilial("QPK")+'".And.'+;
+'QPK_OP >= "'+MV_PAR01+'".And. '+;
+'QPK_LOTE >= "'+MV_PAR02+'".And. '+;
+'QPK_NUMSER >= "'+MV_PAR03+'".And. '+;
+'QPK_OP <= "'+MV_PAR04+'".And. '+;
+'QPK_LOTE <= "'+MV_PAR05+'".And. '+;
+'QPK_NUMSER <= "'+MV_PAR06+'"'
+
+While &cCond
+cRevi		:= Iif(Empty(QPK_REVI),QA_UltRevEsp(QPK_PRODUT,,,,"QIP"),QPK_REVI)
+cRoteiro	:= Posicione("SC2",1,xFilial("SC2")+QPK->QPK_OP,"C2_ROTEIRO")
+cChaveQPK	:= QPK_PRODUT+Inverte(cRevi)
+dbSelectArea("QP6")
+If !dbSeek(xFilial("QP6")+cChaveQPK)
+MsgAlert(STR0028+QPK->QPK_PRODUT+STR0029+cRevi+STR0030,STR0031)		//"O produto :"###"  / Revisao :"###" Nao esta cadastrado. Informe no cadastro de especificacoes."###"Atencao"
+dbSelectArea("QPK")
+dbSetOrder(1)
+dbSkip()
+Loop
+EndIf
+cProdRev := QP6->QP6_PRODUT+QP6->QP6_REVI
+
+dbSelectArea("QQK")
+dbSetOrder(1)
+If dbSeek(xFilial("QQK")+QPK->QPK_PRODUT+QP6->QP6_REVI+cRoteiro)
+While !Eof().And. xFilial("QQK"	) == QQK_FILIAL		.And.;
+QQK_PRODUT+QQK_REVIPR+QQK_CODIGO==QPK->QPK_PRODUT+cRevi+cRoteiro	.And.;
+QQK_OPERAC >= MV_PAR07 .And. QQK_OPERAC <= MV_PAR08
+If QQK_REVIPR <> cRevi
+dbSkip()
+Loop
+EndIf
+If	MV_PAR09 == 1	 //Imprime somente a ultima operacao
+nRecQQK := Recno()
+While !Eof().And. xFilial("QQK")	==	QQK_FILIAL	.And.;
+QQK_PRODUTO+QQK_REVIPR+QQK_CODIGO==QPK->QPK_PRODUT+cRevi+cRoteiro
+nRecQQK := Recno()
+dbSkip()
+EndDo
+dbGoTo(nRecQQK)
+EndIf
+
+//Checar se existe ensaios associados.
+dbSelectArea("QP7")
+dbSetOrder(1)
+If dbSeek(xFilial("QP7")+cProdRev+QQK->QQK_CODIGO+QQK->QQK_OPERAC)
+While !Eof() .And. xFilial("QP7")	 == QP7_FILIAL	;
+.And. QP7_PRODUTO+QP7_REVI ==QPK->QPK_PRODUT+QP6->QP6_REVI;	//cProdRev ;
+.And. QP7_CODREC+QP7_OPERAC==QQK->QQK_CODIGO+QQK->QQK_OPERAC
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se existe a amarracao do Produto x Cliente - QQ7     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If !Empty(MV_PAR10)
+QQ7->(dbSetOrder(1))
+If 	!QQ7->(dbSeek(xFilial("QQ7")+ QPK->QPK_PRODUT + MV_PAR10 + MV_PAR11 + ;
+QP7->QP7_LABOR + QP7->QP7_ENSAIO + QQK->QQK_CODIGO + QQK->QQK_OPERAC))
+dbSelectArea("QP7")
+dbSkip()
+Loop
+EndIf
+EndIf
+
+RecLock("TRB",.T.)
+TRB->ROTEIRO	:=	QQK->QQK_CODIGO
+TRB->OPERAC		:=	QQK->QQK_OPERAC
+TRB->CHAVE		:=	QQK->QQK_CHAVE
+TRB->DESCRI		:=	QQK->QQK_DESCRI
+TRB->OPERGRP	:=	QQK->QQK_OPERGRP
+TRB->PRODUT 	:=	QPK->QPK_PRODUT
+TRB->OP	   	:=	QPK->QPK_OP
+//						IF LEN(ALLTRIM(QPK->QPK_LOTE)) == 0
+//							DBSELECTAREA("SC2")
+//							DBSETORDER(1)
+//							IF DBSEEK( XFILIAL("SC2") + SUBSTR(QPK->QPK_OP,1,6) + SUBSTR(QPK->QPK_OP,7,2) + SUBSTR(QPK->QPK_OP,9,3)
+//							IF DBSEEK(XFILIAL("SC2") + QPK->QPK_OP
+//								TRB->LOTE	   :=	SC2->C2_LOTECTL
+//							ENDIF
+//					ELSE
+TRB->LOTE	   :=	QPK->QPK_LOTE
+//				ENDIF
+//			DBSELECTAREA("TRB")
+TRB->NUMSER	   :=	QPK->QPK_NUMSER
+TRB->REVI		:=	cRevi
+
+TRB->FATCO1		:= QP6->QP6_FATCO1
+TRB->TIPCO1		:= QP6->QP6_TIPCO1
+TRB->FATCO2		:= QP6->QP6_FATCO2
+TRB->TIPCO2		:= QP6->QP6_TIPCO2
+TRB->DESCPO		:= QP6->QP6_DESCPO
+TRB->DTCAD		:= QP6->QP6_DTCAD
+TRB->DTDES		:= QP6->QP6_DTDES
+TRB->RVDES		:= QP6->QP6_RVDES
+TRB->DTINI		:= QP6->QP6_DTINI
+TRB->DOCOBR		:= QP6->QP6_DOCOBR
+TRB->UNMED1		:= QP6->QP6_UNMED1
+TRB->UNMED2		:= QP6->QP6_UNMED2
+
+TRB->ENSAIO 	:= QP7->QP7_ENSAIO
+TRB->ENSOBR		:= QP7->QP7_ENSOBR
+TRB->UNIMED 	:= QP7->QP7_UNIMED
+TRB->NOMINA 	:= QP7->QP7_NOMINA
+TRB->LIE 		:= QP7->QP7_LIE
+TRB->LSE 		:= QP7->QP7_LSE
+TRB->PLAMO		:= QP7->QP7_PLAMO
+TRB->DESPLA		:= QP7->QP7_DESPLA
+TRB->NIVEL   	:= QP7->QP7_NIVEL
+TRB->LABOR		:= QP7->QP7_LABOR
+TRB->SEQLAB 	:= QP7->QP7_SEQLAB
+TRB->MINMAX 	:= QP7->QP7_MINMAX
+TRB->METODO 	:= QP7->QP7_METODO
+TRB->ACESSORI  := QP7->QP7_ACESSO
+TRB->QUANT		:= QPK->QPK_TAMLOT
+TRB->C2UNIMED	:= QPK->QPK_UM
+TRB->C2EMISSAO	:= QPK->QPK_EMISSA
+TRB->HISTOR		:= QP6->QP6_HISTOR
+If lExisAlEsp
+TRB->ALTESP	:= QP6->QP6_ALTESP
+EndIf
+MsUnlock()
+dbSelectArea("QP7")
+dbSkip()
+Enddo
+EndIf
+
+//Checar os ensaios associados - TXT
+dbSelectArea("QP8")
+dbSetOrder(1)
+If dbSeek(xFilial("QP8")+cProdRev+QQK->QQK_CODIGO+QQK->QQK_OPERAC)
+While !Eof() .And. xFilial("QP8")		  == QP8_FILIAL ;
+.And. QP8_PRODUTO+QP8_REVI  == QPK->QPK_PRODUT+QP6->QP6_REVI;	//cProdRev ;
+.And. QP8_CODREC+QP8_OPERAC == QQK->QQK_CODIGO+QQK->QQK_OPERAC
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se existe a amarracao do Produto x Cliente - QQ7     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If !Empty(MV_PAR10)
+QQ7->(dbSetOrder(1))
+If 	!QQ7->(dbSeek(xFilial("QQ7")+ QPK->QPK_PRODUT + MV_PAR10 + MV_PAR11 + ;
+QP8->QP8_LABOR + QP8->QP8_ENSAIO + QQK->QQK_CODIGO + QQK->QQK_OPERAC))
+dbSelectArea("QP8")
+dbSkip()
+Loop
+EndIf
+EndIf
+
+RecLock("TRB",.T.)
+TRB->ROTEIRO	:= QQK->QQK_CODIGO
+TRB->OPERAC		:= QQK->QQK_OPERAC
+TRB->CHAVE		:= QQK->QQK_CHAVE
+TRB->DESCRI		:= QQK->QQK_DESCRI
+TRB->OPERGRP	:= QQK->QQK_OPERGR
+TRB->PRODUT		:= QPK->QPK_PRODUT
+TRB->OP	   	    := QPK->QPK_OP
+//						IF LEN(ALLTRIM(QPK->QPK_LOTE)) == 0
+//							DBSELECTAREA("SC2")
+//							DBSETORDER(1)
+//							IF DBSEEK( XFILIAL("SC2") + SUBSTR(QPK->QPK_OP,1,6) + SUBSTR(QPK->QPK_OP,7,2) + SUBSTR(QPK->QPK_OP,9,3)
+//							IF DBSEEK( XFILIAL("SC2") + QPK->QPK_OP
+//								TRB->LOTE	   :=	SC2->C2_LOTECTL
+//							ENDIF
+//						ELSE
+TRB->LOTE	   :=	QPK->QPK_LOTE
+//						ENDIF
+//						DBSELECTAREA("TRB")
+//						TRB->LOTE	    := QPK->QPK_LOTE
+TRB->NUMSER	    := QPK->QPK_NUMSER
+TRB->REVI		:= cRevi
+
+TRB->FATCO1		:= QP6->QP6_FATCO1
+TRB->TIPCO1		:= QP6->QP6_TIPCO1
+TRB->FATCO2		:= QP6->QP6_FATCO2
+TRB->TIPCO2		:= QP6->QP6_TIPCO2
+TRB->DESCPO		:= QP6->QP6_DESCPO
+TRB->DTCAD		:= QP6->QP6_DTCAD
+TRB->DTDES		:= QP6->QP6_DTDES
+TRB->RVDES		:= QP6->QP6_RVDES
+TRB->DTINI		:= QP6->QP6_DTINI
+TRB->DOCOBR		:= QP6->QP6_DOCOBR
+TRB->UNMED1		:= QP6->QP6_UNMED1
+TRB->UNMED2		:= QP6->QP6_UNMED2
+
+TRB->ENSAIO 	:= QP8->QP8_ENSAIO
+TRB->ENSOBR		:= QP8->QP8_ENSOBR
+TRB->TEXTO		:= QP8->QP8_TEXTO
+TRB->PLAMO		:= QP8->QP8_PLAMO
+TRB->DESPLA		:= QP8->QP8_DESPLA
+TRB->NIVEL   	:= QP8->QP8_NIVEL
+TRB->LABOR		:= QP8->QP8_LABOR
+TRB->SEQLAB 	:= QP8->QP8_SEQLAB
+TRB->METODO 	:= QP8->QP8_METODO
+TRB->QUANT		:= QPK->QPK_TAMLOT
+TRB->C2UNIMED	:= QPK->QPK_UM
+TRB->C2EMISSAO	:= QPK->QPK_EMISSA
+TRB->HISTOR		:= QP6->QP6_HISTOR
+If lExisAlEsp
+TRB->ALTESP	:= QP6->QP6_ALTESP
+EndIf
+
+MsUnlock()
+dbSelectArea("QP8")
+dbSkip()
+Enddo
+EndIf
+dbSelectArea("QQK")
+dbSkip()
+EndDo
+EndIf
+dbSelectArea("QPK")
+dbSkip()
+EndDo
+#ENDIF
+
+Return .T.
+
+*/

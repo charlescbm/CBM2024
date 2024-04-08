@@ -1,0 +1,62 @@
+# INCLUDE "RWMAKE.CH"
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Rdmake    ³ VALIDA    ³ Autor ³ Fernando S. maia      ³ Data ³ 16/11/11  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Funcao para validacao de quem pode acessar os cadastros     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Observacao³                                                             ³±±
+±±                                                                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Especifico Brascola                                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+User Function VALIDA()
+
+
+If rotina == cadforn
+	If  AllTrim(Upper(cUsername)) $ Upper(GetMv("BR_CADFOR1"))
+		//Comando....
+	Else
+		Aviso("Cadastro de Fornecedor",;
+	          "Usuário sem permissão para movimentar Cadastro de Fornecedores ",;
+		      {"&Ok"},,"Usuário : "+AllTrim(cUserName))
+		lOk	:= .f.
+	EndIf
+Else
+	If rotina == cadcli
+		If  AllTrim(Upper(cUsername)) $ Upper(GetMv("BR_CADCLI1"))
+		//Comando....
+	Else
+		Aviso("Cadastro de Cliente,;
+		      "Usuário sem permissão para movimentar Cadastro de Clientes ",;
+		      {"&Ok"},,"Usuário : "+AllTrim(cUserName))
+		lOk	:= .f.
+	EndIf
+	Else
+		If rotina == cadpro
+			If  AllTrim(Upper(cUsername)) $ Upper(GetMv("BR_CADPRO1"))
+	   			//Comando....
+			Else
+				Aviso("Cadastro de Produto",;
+				      "Usuário sem permissão para movimentar Cadastro de Produtos ",;
+		              {"&Ok"},,"Usuário : "+AllTrim(cUserName))
+		        lOk	:= .f.           
+	        EndIf
+		Else
+		
+		EndIf
+	Endif
+Endif
+
+
+
+
+Return(lRet)
+
+
+Return

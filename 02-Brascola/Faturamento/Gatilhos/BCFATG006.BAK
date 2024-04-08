@@ -1,0 +1,28 @@
+#INCLUDE "Protheus.ch"
+#INCLUDE "TopConn.ch"
+
+User Function BCFATG006()
+
+//Fernando
+Local cUsrTpOp   := GETMV("BR_000010")//usuários com acesso para utilizar tipos de operação especiais 
+Local cTpOp      := GETMV("BR_000011")//Tipo de Operações Restritas    
+Local cUsuario   := AllTrim(USRRETNAME(RETCODUSR())) //Captura usuário logado.
+
+/**************************VALIDAÇÃO USUÁRIO COM PERMISSAO DE USAR TIPO DE OPERAÇÃO RESTRITA ***************************/
+DbSelectArea("SC6")
+//dbGoTop()
+
+nPos1      := Ascan(aHeader,{|m| Alltrim(m[2]) == "C6_OPER"}) // Posicao do Campo C6_OPER
+cOper      := AllTrim(aCols[n,nPos1])  //Grava na variavel o conteúdo
+
+If (cOper $ cTpOp)
+	If (cUsuario $ cUsrTpOp)
+		lRet := .T.
+	Else   
+		Aviso("Tipo de Operação Restrita","Usuário sem permissão para usar este Tipo de Operação!",{"OK"})
+		lRet := .F.
+		Return(lRet)
+	EndIf
+EndIf
+
+Return lRet

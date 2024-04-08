@@ -1,0 +1,532 @@
+#INCLUDE "RWMAKE.CH"
+#INCLUDE "PROTHEUS.CH"
+#INCLUDE "TOPCONN.CH"
+#INCLUDE "JPEG.CH"
+
+/*/
+----------------------------------------------------------------------------
+PROGRAMA: BQNCA001         AUTOR: DÉBORA FRIEBE         DATA: 30/11/11
+----------------------------------------------------------------------------
+
+DESCRICAO: Rotina para poder calcular o valor da devolucao cuja informacao 
+foi solicitada pelo cliente. Esta simulacao de calculo gera um workflow que
+será enviado ao cliente via email automaticamente com copia para o operador 
+que a gerou. Rotina disponivel no submenu Especifico Brascola do módulo de
+Controle de Nao Conformidades.
+
+----------------------------------------------------------------------------
+CONTROLE DE ALTERACOES
+
+DATA:                     AUTOR:
+OBJETIVO:
+----------------------------------------------------------------------------
+/*/
+
+User Function ConNFDev()
+************************
+Public lSaiu       := .f.
+
+Private cCadastro  := "Consulta NF para envio de informações para Devolução "
+Private aHeader	   := {} 
+Private aCols      := {}
+Private cDelFunc   := ".T." 
+Private cString    := "SD2"
+Private nUsado     := 0
+Private cNumNF     := Space(9)
+Private cSerNF     := Space(3)
+Private cCliAux    := Space(6)
+Private cLojaAux   := Space(2)
+Private	cCFOP      := Space(4)
+Private cObserv    := Space(150)
+Private	nBaseICMS  := 0
+Private	nAliqICMS  := 0
+Private	nValorICMS := 0
+Private	nBaseIPI   := 0
+Private	nAliqIPI   := 0
+Private	nValorIPI  := 0
+Private	nBasICMSST := 0
+Private	nValICMSST := 0
+Private	nTotProd   := 0
+Private	nTotNF     := 0
+Private oGetDados 
+Private	oCFOP     
+Private	oBaseICMS  
+Private	oAliqICMS  
+Private	oValorICMS 
+Private	oBaseIPI
+Private	oAliqIPI  
+Private	oValorIPI 
+Private	oBasICMSST 
+Private	oValICMSST 
+Private	oTotProd   
+Private	oTotNF     
+Private _oDlg
+
+nUsado := 6
+aHeader:= {}                                                                     
+aAdd(aHeader,{"Item"       ,"TP_ITEM"    ,"@!"                 ,02,0,"U_VerItem(M->TP_ITEM)"     , "", "C",""   ,"" } )
+aAdd(aHeader,{"Produto"    ,"TP_CODIGO"  ,"@!"                 ,15,0,"U_VerDescri(M->TP_CODIGO)" , "", "C","SB1","" } )
+aAdd(aHeader,{"Descrição"  ,"TP_DESCRI"  ,"@!"                 ,30,0,""                          , "", "C",""   ,"" } )
+aAdd(aHeader,{"CFOP"       ,"TP_CFOP"    ,"@!"                 ,05,0,""                          , "", "C",""   ,"" } )
+aAdd(aHeader,{"Quantidade" ,"TP_QUANTI"  ,"@E 999,999,999.99"  ,14,2,"U_CalcTot(1,M->TP_QUANTI)" , "", "N",""   ,"" } )
+aAdd(aHeader,{"Prc Unit."  ,"TP_PRUNIT"  ,"@E 99,999,999.99999",14,5,"U_CalcTot(2,M->TP_PRUNIT)" , "", "N",""   ,"" } )
+aAdd(aHeader,{"Valor Total","TP_TOTAL"   ,"@E 999,999,999.99"  ,14,2,""                          , "", "N",""   ,"" } )
+aAdd(aHeader,{"Aliq.IPI"   ,"TP_ALIPI "  ,"@R 9,999.99%     "  ,14,2,                            , "", "N",""   ,"" } )
+
+lSaiu:= .f.
+
+While !lSaiu
+	cNumNF    := Space(9)
+	cSerNF    := Space(3)
+	cCFOP     := Space(4) 
+	cObserv   := Space(150)
+	nBaseICMS := 0
+	nAliqICMS := 0
+	nValorICMS:= 0
+	nBaseIPI  := 0
+	nAliqIPI  := 0
+	nValorIPI := 0
+	nBasICMSST:= 0
+	nValICMSST:= 0
+	nTotProd  := 0
+	nTotNF    := 0
+	aCols     := {}
+	aMatOk    := {"TP_ITEM","TP_CODIGO","TP_DESCRI","TP_CFOP","TP_QUANTI","TP_PRUNIT"}
+	
+	Define MsDialog _oDlg Title "Consulta a Notas Fiscais" From C(001),C(001) To C(350),C(600) Pixel
+	@ C(002),C(003) Jpeg File "\\\Protheus10\Ambientes\Producao\system\lgrl01.bmp"  Size C(060),C(008)             Pixel NOBORDER   Of _oDlg
+	@ C(014),C(003) To C(050),C(300) LABEL ""                                                        Pixel                                 Of _oDlg
+	@ C(021),C(005) Say "Serie:"                       Size C(035),C(007) COLOR CLR_BLACK            Pixel                                 Of _oDlg
+	@ C(020),C(018) MsGet cSerNF                       Size C(015),C(007) COLOR CLR_BLACK            Pixel  Picture "@!"                   Of _oDlg
+	@ C(021),C(045) Say "Nota Fiscal:"                 Size C(035),C(007) COLOR CLR_BLACK            Pixel                                 Of _oDlg
+	@ C(020),C(070) MsGet cNumNF             F3 "SF2"  Size C(035),C(007) COLOR CLR_BLACK            Pixel  Valid Ver_NF() Picture "@!"    Of _oDlg
+//	@ C(021),C(195) Say "CFOP:"                        Size C(035),C(007) COLOR CLR_BLACK            Pixel                                 Of _oDlg
+//	@ C(020),C(210) MsGet oCFOP       Var cCFOP        Size C(020),C(007) COLOR CLR_BLACK            Pixel  Picture "@!"                   Of _oDlg
+	oGetDados:= MsNewGetDados():New(C(035),C(003),C(100),C(300), 3, "AllwaysTrue","AllwaysTrue", "",  aMatOk , 0, 999, "AllwaysTrue","AllwaysTrue","AllwaysTrue", _oDlg ,aHeader, aCols)
+	@ C(111),C(005) Say "Base calculo ICMS:"           Size C(035),C(007) COLOR CLR_BLACK            Pixel                                 Of _oDlg
+	@ C(110),C(050) MsGet oBaseICMS   Var nBaseICMS    Size C(035),C(007) COLOR CLR_BLACK  When .f.  Pixel  Picture "@E 999,999,999.99"    Of _oDlg
+	@ C(111),C(095) Say "Aliquota ICMS:"               Size C(035),C(007) COLOR CLR_BLACK            Pixel                                 Of _oDlg
+	@ C(110),C(121) MsGet oAliqICMS   Var nAliqICMS    Size C(020),C(007) COLOR CLR_BLACK  When .f.  Pixel  Picture "@R 9,999.99%"         Of _oDlg
+	@ C(111),C(180) Say "Valor ICMS:"                  Size C(035),C(007) COLOR CLR_BLACK            Pixel                                 Of _oDlg
+	@ C(110),C(210) MsGet oValorICMS  Var nValorICMS   Size C(035),C(007) COLOR CLR_BLACK  When .f.  Pixel  Picture "@E 999,999,999.99"    Of _oDlg
+	@ C(121),C(005) Say "Base calculo IPI:"            Size C(035),C(007) COLOR CLR_BLACK            Pixel                                 Of _oDlg
+	@ C(120),C(050) MsGet oBaseIPI    Var nBaseIPI     Size C(035),C(007) COLOR CLR_BLACK  When .f.  Pixel  Picture "@E 999,999,999.99"    Of _oDlg
+	//@ C(121),C(095) Say "Aliquota IPI:"                Size C(035),C(007) COLOR CLR_BLACK            Pixel                                 Of _oDlg
+	//@ C(120),C(121) MsGet oAliqIPI    Var nAliqIPI     Size C(020),C(007) COLOR CLR_BLACK  When .f.  Pixel  Picture "@R 9,999.99%"         Of _oDlg
+	@ C(121),C(180) Say "Valor IPI:"                   Size C(035),C(007) COLOR CLR_BLACK            Pixel                                 Of _oDlg
+	@ C(120),C(210) MsGet oValorIPI   Var nValorIPI    Size C(035),C(007) COLOR CLR_BLACK  When .f.  Pixel  Picture "@E 999,999,999.99"    Of _oDlg
+	@ C(131),C(005) Say "Base calculo ICMS ST:"        Size C(055),C(007) COLOR CLR_BLACK            Pixel                                 Of _oDlg
+	@ C(130),C(050) MsGet oBasICMSST  Var nBasICMSST   Size C(035),C(007) COLOR CLR_BLACK  When .f.  Pixel  Picture "@E 999,999,999.99"    Of _oDlg
+	@ C(131),C(175) Say "Valor ICMS ST:"               Size C(035),C(007) COLOR CLR_BLACK            Pixel                                 Of _oDlg
+	@ C(130),C(210) MsGet oValICMSST  Var nValICMSST   Size C(035),C(007) COLOR CLR_BLACK  When .f.  Pixel  Picture "@E 999,999,999.99"    Of _oDlg
+	@ C(146),C(005) Say "Valor Total Produtos:"        Size C(065),C(007) COLOR CLR_BLACK            Pixel                                 Of _oDlg
+	@ C(145),C(050) MsGet oTotProd    Var nTotProd     Size C(035),C(007) COLOR CLR_BLACK  When .f.  Pixel  Picture "@E 999,999,999.99"    Of _oDlg
+	@ C(146),C(174) Say "Valor Total NF:"              Size C(035),C(007) COLOR CLR_BLACK            Pixel                                 Of _oDlg
+	@ C(145),C(210) MsGet oTotNF      Var nTotNF       Size C(035),C(007) COLOR CLR_BLACK  When .f.  Pixel  Picture "@E 999,999,999.99"    Of _oDlg
+	@ C(161),C(005) Say "Observações:"                 Size C(065),C(007) COLOR CLR_BLACK            Pixel                                 Of _oDlg
+	@ C(160),C(050) MsGet cObserv                      Size C(195),C(007) COLOR CLR_BLACK            Pixel                                 Of _oDlg
+	@ C(141),C(258) Button "&Gera Email"               Size C(033),C(012) Action(GeraEmail())        Pixel                                 Of _oDlg   
+	Define SButton From C(160),C(266) Type 1 Action (SaiTela() ,_oDlg:End()) Enable                  Pixel                                 Of _oDlg 
+	Activate MsDialog _oDlg Centered 
+
+EndDo
+	
+Return
+
+
+
+Static Function Ver_NF()
+************************
+If Empty(cNumNF)
+	MsgBox("Favor informar Numero da Nota Fiscal!")  
+	Return .f.
+EndIf
+
+cAliasAnt:= Alias()
+DBSELECTAREA("SF2")
+Dbsetorder(1)
+If MsSeek(xFilial("SF2")+cNumNF+cSerNF)
+  
+//DbSelectArea("SD2")
+//DbSetOrder(3)
+//If MsSeek(xFilial("SD2")+cNumNF+cSerNF)
+//nAliqICMS:= SD2->D2_PICM
+//	nAliqIPI := SD2->D2_IPI
+Else
+    MsgBox("Nota fiscal não encontrada!")
+	Return .f.
+EndIf
+
+cCliAux := SF2->F2_CLIENTE
+cLojaAux:= SF2->F2_LOJA
+
+DbSelectArea(cAliasAnt)
+
+//oCFOP:Refresh()
+//oAliqICMS:Refresh()
+//oAliqIPI:Refresh()
+
+_oDlg:Refresh()
+
+Return .t.
+
+
+
+User Function VerItem(cItemAux)
+*******************************
+Local _lRet  := .t.
+Local _cQuery:= ""
+Local _cCFOP := ""
+Local _cProdAux:= ""
+
+cAliasAnt:= Alias()
+
+_cQuery:= "SELECT SD2.D2_CF AS D2_CF, SD2.D2_COD AS D2_COD,SD2.D2_IPI AS D2_IPI ,SD2.D2_PICM AS D2_PICM  "
+_cQuery+= "FROM "+RetSQLName("SD2")+" SD2 "
+_cQuery+= "WHERE SD2.D2_FILIAL = '"+xFilial("SD2")+"' " 
+_cQuery+= "  AND SD2.D2_DOC = '"+cNumNF+"' "
+_cQuery+= "  AND SD2.D2_SERIE = '"+cSerNF+"' "
+_cQuery+= "  AND SD2.D2_CLIENTE = '"+cCliAux+"' "
+_cQuery+= "  AND SD2.D2_LOJA = '"+cLojaAux+"' "
+_cQuery+= "  AND SD2.D2_ITEM = '"+cItemAux+"' "
+_cQuery+= "  AND SD2.D_E_L_E_T_='' "
+TCQUERY _cQuery NEW ALIAS "TRBD2"
+DbSelectArea("TRBD2")
+DbGoTop()
+
+If !Eof()  
+	If AllTrim(TRBD2->D2_CF) $'6403/5403' .Or. AllTrim(TRBD2->D2_CF)$'6401/5401'
+		_cCFOP:= '6411'  
+	ElseIf AllTrim(TRBD2->D2_CF)$'6101/5101' .Or. AllTrim(TRBD2->D2_CF)$ '6102/5102'
+		_cCFOP:= '6202'  
+	Else
+		_cCFOP:= '6949'  
+	EndIf
+	
+	aCols[n,2]:= TRBD2->D2_COD
+	aCols[n,3]:= Posicione("SB1",1,xFilial("SB1")+TRBD2->D2_COD,"B1_DESC")
+	aCols[n,4]:= _cCFOP
+	
+	nAliqICMS:= TRBD2->D2_PICM
+	aCols[n,8]:= TRBD2->D2_IPI
+
+	//nAliqIPI := SD2->D2_IP
+	
+	oAliqICMS:Refresh()
+    //oAliqIPI:Refresh()
+	
+	
+	DbSelectArea("TRBD2")
+	DbCloseArea()
+
+Else
+    MsgBox("Item nao encontrado!")
+	
+	DbSelectArea("TRBD2")
+	DbCloseArea()
+
+	Return .f.
+EndIf
+
+oGetDados:Refresh()
+
+DbSelectArea(cAliasAnt)
+
+Return .t.
+
+
+
+User Function VerDescri(cCodProd)
+************************
+cAliasAnt:= Alias()
+
+DbSelectArea("SB1")
+DbSetOrder(1)
+If MsSeek(xFilial("SB1")+cCodProd)
+	cDescProd:= SB1->B1_DESC
+	aCols[n,3]:= cDescProd
+	oGetDados:Refresh()
+Else
+	MsgBox("Codigo de Produto não existe no cadastro!")  
+	cDescProd:= Space(30)
+	aCols[n,3]:= cDescProd
+	oGetDados:Refresh()
+    Return .f.
+EndIf
+
+DbSelectArea("SD2")
+DbSetOrder(3)
+nRegAtu:= Recno()
+If !MsSeek(xFilial("SD2")+cNumNF+cSerNF+cCliAux+cLojaAux+cCodProd)  
+	MsgBox("Codigo de Produto não existe na Nota Fiscal!")  
+	Return .f.
+Endif	
+DbGoTo(nRegAtu)
+
+DbSelectArea(cAliasAnt)
+
+Return .t.
+
+
+
+User Function CalcTot(nTpAx,nValAx)
+***********************************
+Local nTotAux   := 0
+Local nTotIPIAux:= 0
+Local nValIPIAux:= 0
+Local nTotSTrib := 0
+Local nTotBasST := 0
+
+If nTpAx==1
+	oGetDados:aCols[n][7]:= nValAx * oGetDados:aCols[n][6]
+Else
+	oGetDados:aCols[n][7]:= oGetDados:aCols[n][5] * nValAx 
+EndIf
+ 
+If oGetDados:aCols[n][7]==0
+	Return .t.
+EndIf	
+
+For nI:= 1 to Len(oGetDados:aCols)
+	nTotAux+= oGetDados:aCols[nI][7]
+	If Posicione("SB1",1,xFilial("SB1")+oGetDados:aCols[nI][2],"B1_IPI")<>0
+		nTotIPIAux += oGetDados:aCols[nI][7]
+		nValIPIAux+= (oGetDados:aCols[nI][7] * SB1->B1_IPI) /100
+	EndIf	
+Next
+
+nBaseICMS := nTotAux 
+nValorICMS:= (nTotAux * nAliqICMS) / 100
+
+nBaseIPI  := nTotIPIAux
+nValorIPI := nValIPIAux 
+_codpro:=oGetDados:aCols[n][2]
+_item  :=oGetDados:aCols[n][1]
+DbSelectArea("SD2")
+DbSetOrder(3)
+//nRegAtu:= Recno()
+dbseek(xFilial("SD2")+cNumNF+cSerNF+cCliAux+cLojaAux+substr(_codpro,1,15)+alltrim(_item))  
+//DbGoTo(nRegAtu)
+
+MaFisEnd()//Inicializo a funcao fiscal
+			
+MaFisIni(SD2->D2_CLIENTE, SD2->D2_LOJA, IIf(SD2->D2_TIPO$'DB',"F","C"), SD2->D2_TIPO, /*SC5->C5_TIPOCLI*/'R', Nil, Nil, Nil, Nil, "MATA461")
+
+For nI:= 1 to Len(oGetDados:aCols)
+	MaFisAdd(oGetDados:aCols[nI][2], SD2->D2_TES, oGetDados:aCols[nI][5], oGetDados:aCols[nI][6], 0 , "", "", 0, 0, 0, 0, 0, oGetDados:aCols[nI][7], 0)
+Next
+
+	
+
+For nI:= 1 to Len(oGetDados:aCols)
+	If Posicione("SF4",1,xFilial("SF4")+SD2->D2_TES,"F4_INCSOL")=="S" .And. Alltrim(oGetDados:aCols[nI][4])<>"6949"
+		nTotSTrib  += MaFisRet(nI,"IT_VALSOL") 
+	    nTotBasST  += MaFisRet(nI,"IT_BASESOL")
+	EndIf
+Next	
+
+nBasICMSST:= nTotBasST 
+nValICMSST:= nTotSTrib
+
+nTotProd  := nTotAux  
+nTotNF    := nTotAux + nValICMSST + nValorIPI
+
+oGetDados:Refresh()
+oBaseICMS:Refresh()
+oValorICMS:Refresh()
+oBaseIPI:Refresh()
+oValorIPI:Refresh()
+oBasICMSST:Refresh()
+oValICMSST:Refresh()
+oTotProd:Refresh()
+oTotNF:Refresh()
+
+Return .t.
+
+
+
+Static Function SaiTela()
+*************************
+lSaiu:=.t.
+
+Return.t.
+
+
+
+Static Function GeraEmail()
+***************************
+Local cPerg:= "CONNFDEV"
+
+If !Pergunte(cPerg,.t.)
+	Return
+EndIf	
+ 
+_cBody := " "
+_cBody := "<html>"
+_cBody += "<head>"
+_cBody += '<meta http-equiv="Content-Language" content="pt-br">'
+_cBody += '<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">'
+_cBody += "<title>Nova pagina 1</title>"
+_cBody += "</head>"
+_cBody += "<body>"
+_cBody += '<p><img src="http://www.brascola.com.br/images/logo/brascola_novo_logo.jpg" width="150" height="60" style="float: left"/> </p> '
+_cBody += '<p align="center"><font face="Tahoma" size="3"><b>Solicitação de Nota Fiscal Devolução</b></font></p>'
+_cBody += '<p>&nbsp;</p>'
+//_cBody += '<p align="left"><font face="Tahoma" size="2"><b>NF Origem</b>: '+cNumNF+'/'+cSerNF+'  -  <b>CFOP</b>: '+cCFOP+'</font></p> '
+_cBody += '<p align="left"><font face="Tahoma" size="2"><b>NF Origem</b>: '+cNumNF+'/'+cSerNF+' </font></p> '
+_cBody += '<p>&nbsp;</p>'
+
+_cBody += '<table border="1" width="100%">  '
+_cBody += '	<tr> '
+_cBody += '		<td bgcolor="#99CCFF"><p align="left"> <font face="Tahoma" size="1" color="#000000"><b>Item</b></font></td> '
+_cBody += '		<td bgcolor="#99CCFF"><p align="left"> <font face="Tahoma" size="1" color="#000000"><b>Produto</b></font></td> '
+_cBody += '		<td bgcolor="#99CCFF"><p align="left"> <font face="Tahoma" size="1" color="#000000"><b>Descrição</b></font></td> '
+_cBody += '		<td bgcolor="#99CCFF"><p align="left"> <font face="Tahoma" size="1" color="#000000"><b>CFOP</b></font></td> '
+_cBody += '		<td bgcolor="#99CCFF"><p align="right"><font face="Tahoma" size="1" color="#000000"><b>Quantidade</b></font></td> '
+_cBody += '		<td bgcolor="#99CCFF"><p align="right"><font face="Tahoma" size="1" color="#000000"><b>Prc.Unit.</b></font></td> '
+_cBody += '		<td bgcolor="#99CCFF"><p align="right"><font face="Tahoma" size="1" color="#000000"><b>Valor Total</b></font></td> '
+_cBody += '		<td bgcolor="#99CCFF"><p align="right"><font face="Tahoma" size="1" color="#000000"><b>Alq. IPI</b></font></td> '
+
+_cBody += '	</tr> '
+
+cBgColAx:= "#FFFFFF" //BRANCO
+nContrAx:= 0
+
+For nI:= 1 to Len(oGetDados:aCols)
+	_cBody += '	<tr>'
+	_cBody += '		<td align="left"  bgcolor="'+cBgColAx+'"><font face="Tahoma" size="1">'+oGetDados:aCols[nI][1]+'</font></td>'                                                     
+	_cBody += '		<td align="left"  bgcolor="'+cBgColAx+'"><font face="Tahoma" size="1">'+oGetDados:aCols[nI][2]+'</font></td>'                                                     
+	_cBody += '		<td align="left"  bgcolor="'+cBgColAx+'"><font face="Tahoma" size="1">'+oGetDados:aCols[nI][3]+'</font></td>'                                                     
+	_cBody += '		<td align="left"  bgcolor="'+cBgColAx+'"><font face="Tahoma" size="1">'+oGetDados:aCols[nI][4]+'</font></td>'                                                     
+	_cBody += '		<td align="right" bgcolor="'+cBgColAx+'"><font face="Tahoma" size="1">'+Alltrim(Transform(oGetDados:aCols[nI][5],"@E 999,999,999.99"))+'</font></td>' 
+	_cBody += '		<td align="right" bgcolor="'+cBgColAx+'"><font face="Tahoma" size="1">'+Alltrim(Transform(oGetDados:aCols[nI][6],"@E 9,999,999.99999"))+'</font></td>' 
+	_cBody += '		<td align="right" bgcolor="'+cBgColAx+'"><font face="Tahoma" size="1">'+Alltrim(Transform(oGetDados:aCols[nI][7],"@E 999,999,999.99"))+'</font></td>' 
+   	_cBody += '		<td align="right" bgcolor="'+cBgColAx+'"><font face="Tahoma" size="1">'+Alltrim(Transform(oGetDados:aCols[nI][8],"@R 9,999.99%     "))+'</font></td>' 
+	_cBody += '	</tr> '
+	
+	nContrAx++	
+	If nContrAx==1
+		cBgColAx:= "#EFEFEF" //CINZACLARO
+	Else
+		cBgColAx:= "#FFFFFF" //BRANCO
+		nContrAx:= 0
+	EndIf		
+Next
+
+_cBody += '</table>'
+
+_cBody += '<p size="1">&nbsp;</p>'
+
+_cBody += '<table border="1" width="100%">  '
+_cBody += '	<tr> '
+_cBody += '		<td width="20%" bgcolor="#CCCCFF"><p align="right"><font face="Tahoma" size="1" color="#000000"><b>Base Calculo ICMS</b></font></td> '
+_cBody += '		<td width="7%"                   ><p align="right"><font face="Tahoma" size="1" color="#000000">'+Alltrim(Transform(nBaseICMS,"@E 999,999,999.99"))+'</font></td> '
+_cBody += '		<td width="20%" bgcolor="#CCCCFF"><p align="right"><font face="Tahoma" size="1" color="#000000"><b>Base Calculo IPI</b></font></td> '
+_cBody += '		<td width="7%"                   ><p align="right"><font face="Tahoma" size="1" color="#000000">'+Alltrim(Transform(nBaseIPI,"@E 999,999,999.99"))+'</font></td> '
+_cBody += '		<td width="38%" bgcolor="#FFCCCC"><p align="right"><font face="Tahoma" size="1" color="#000000"><b>Base Calculo ICMS ST</b></font></td> '
+_cBody += '		<td width="8%"                   ><p align="right"><font face="Tahoma" size="1" color="#000000">'+Alltrim(Transform(nBasICMSST,"@E 999,999,999.99"))+'</font></td> '
+_cBody += '	</tr> '
+_cBody += '	<tr> '
+_cBody += '		<td width="20%" bgcolor="#CCCCFF"><p align="right"><font face="Tahoma" size="1" color="#000000"><b>Aliq. ICMS</b></font></td> '
+_cBody += '		<td width="7%"                   ><p align="right"><font face="Tahoma" size="1" color="#000000">'+Alltrim(Transform(nAliqICMS,"@R 999%"))+'</font></td> '
+_cBody += '		<td width="20%" bgcolor="#CCCCFF"><p align="right"><font face="Tahoma" size="1" color="#000000"><b></b></font></td> '
+_cBody += '		<td width="7%"                   ><p align="right"><font face="Tahoma" size="1" color="#000000"></font></td> '
+_cBody += '		<td width="38%" bgcolor="#FFCCCC"><p align="right"><font face="Tahoma" size="1" color="#000000"><b>Valor ICMS ST</b></font></td> '
+_cBody += '		<td width="8%"                   ><p align="right"><font face="Tahoma" size="1" color="#000000">'+Alltrim(Transform(nValICMSST,"@E 999,999,999.99"))+'</font></td> '
+_cBody += '	</tr> '
+_cBody += '	<tr> '
+_cBody += '		<td width="20%" bgcolor="#CCCCFF"><p align="right"><font face="Tahoma" size="1" color="#000000"><b>Valor ICMS</b></font></td> '
+_cBody += '		<td width="7%"                   ><p align="right"><font face="Tahoma" size="1" color="#000000">'+Alltrim(Transform(nValorICMS,"@E 999,999,999.99"))+'</font></td> '
+_cBody += '		<td width="20%" bgcolor="#CCCCFF"><p align="right"><font face="Tahoma" size="1" color="#000000"><b>Valor IPI</b></font></td> '
+_cBody += '		<td width="7%"                   ><p align="right"><font face="Tahoma" size="1" color="#000000">'+Alltrim(Transform(nValorIPI,"@E 999,999,999.99"))+'</font></td> '
+_cBody += '		<td width="38%" bgcolor="#FF9966"><p align="right"><font face="Tahoma" size="1" color="#000000"><b>Valor Total Produtos</b></font></td> '
+_cBody += '		<td width="8%"                   ><p align="right"><font face="Tahoma" size="1" color="#000000"><b>'+Alltrim(Transform(nTotProd,"@E 999,999,999.99"))+'</b></font></td> '
+_cBody += '	</tr> '
+_cBody += '	<tr> '
+_cBody += '		<td width="54%" colspan="4"      ></td> '
+_cBody += '		<td width="38%" bgcolor="#FF9966"><p align="right"><font face="Tahoma" size="1" color="#000000"><b>Valor Total NF</b></font></td> '
+_cBody += '		<td width="8%"                   ><p align="right"><font face="Tahoma" size="1" color="#000000"><b>'+Alltrim(Transform(nTotNF,"@E 999,999,999.99"))+'</b></font></td> '
+_cBody += '	</tr> '
+_cBody += '</table>'
+
+If !Empty(cObserv)
+	_cBody += '<p>&nbsp;</p>'
+	_cBody += '<p><font face="Tahoma" size="2"><b>Observações</b>: '+AllTrim(cObserv)+'</font></p>'
+EndIf	
+
+_cBody += '<p>&nbsp;</p>'
+
+_cBody += "<body>"                                                                                                                                                              
+_cBody += "   <tr><font face='Tahoma' size='2'><b>Dados da Brascola Ltda</b>:</font></tr>" 
+_cBody += "</body>"
+_cBody += "<body>"                                                                                                                                                              
+_cBody += "   <tr><font face='Tahoma' size='2'>Rua Dona Francisca, nº 8.300 </font></tr>" 
+_cBody += "</body>"
+_cBody += "<body>"                                                                                                                                                              
+_cBody += "   <tr><font face='Tahoma' size='2'>Distrito Industrial - Joinville - SC - CEP: 89219-600</font></tr>" 
+_cBody += "</body>"
+_cBody += "<body>"                                                                                                                                                              
+_cBody += "   <tr><font face='Tahoma' size='2'>CNPJ: 61.105.060/0008-30  -  IE: 255.323.492</font></tr>" 
+_cBody += "</body>"
+
+_cBody += '<p>&nbsp;</p>'
+_cBody += '<p><font face="Tahoma" size="2">Dúvidas, estamos à disposição.</font></p>'
+_cBody += "<body>"                                                                                                                                                              
+_cBody += "   <tr><font face='Tahoma' size='2'>Lembrando que você terá o prazo de <b>15 dias corridos</b>, a contar da data deste e-mail para nos passar o fax ou e-mail conforme a solicitação acima.</font></tr>" 
+_cBody += "</body>"
+_cBody += "<body>"                                                                                                                                                              
+_cBody += "   <tr><font face='Tahoma' size='2'>Caso não recebermos nesse prazo, o chamado será finalizado por falta de retorno do cliente.</font></tr>" 
+_cBody += "</body>"
+
+_cBody += '<p>&nbsp;</p>'
+_cBody += '<p><font face="Tahoma" size="1"><i>Gerado pelo sistema Microsiga Protheus em '+DtoC(Date())+' às '+SubStr(Time(),1,5)+' hs.</i></font></p>'
+_cBody += '</body>'
+_cBody += '</html>'
+ 
+cAssunto:= "Solicitação de Nota Fiscal Devolução - "+DtoC(dDataBase)
+cEmail  := MV_PAR01 
+
+If !Empty(cEmail)
+	//Envio do email
+	U_SendMail(cEmail,cAssunto,_cBody,"",.f.)
+EndIf	
+
+_oDlg:End()
+
+Return .t.
+
+
+
+/*ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa   ³   C()   ³ Autores ³ Norbert/Ernani/Mansano ³ Data ³10/05/2005³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descricao  ³ Funcao responsavel por manter o Layout independente da       ³±±
+±±³           ³ resolucao horizontal do Monitor do Usuario.                  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+
+Static Function C(nTam)                                                         
+***********************
+Local nHRes	:=	oMainWnd:nClientWidth	// Resolucao horizontal do monitor     
+
+If nHRes == 640	// Resolucao 640x480 (soh o Ocean e o Classic aceitam 640)  
+	nTam *= 0.8                                                                
+ElseIf (nHRes == 798).Or.(nHRes == 800)	// Resolucao 800x600                
+	nTam *= 1                                                                  
+Else	// Resolucao 1024x768 e acima                                           
+	nTam *= 1.28                                                               
+EndIf                                                                         
+                                                                                
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿                                               
+//³Tratamento para tema "Flat"³                                               
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ                                               
+If "MP8" $ oApp:cVersion                                                      
+	If (Alltrim(GetTheme()) == "FLAT") .Or. SetMdiChild()                      
+		nTam *= 0.90                                                            
+	EndIf                                                                      
+EndIf                                                                         
+
+Return Int(nTam)

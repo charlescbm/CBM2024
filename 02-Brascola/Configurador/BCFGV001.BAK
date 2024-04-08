@@ -1,0 +1,40 @@
+# INCLUDE "RWMAKE.CH"  
+
+/*/
+----------------------------------------------------------------------------
+PROGRAMA: BCFGV001        AUTOR: FERNANDO S. MAIA           DATA: 14/12/11
+----------------------------------------------------------------------------
+
+DESCRICAO: Controla acesso aos cadastros
+
+----------------------------------------------------------------------------
+CONTROLE DE ALTERACOES
+
+DATA:                     AUTOR:
+OBJETIVO:
+----------------------------------------------------------------------------
+/*/
+ 
+
+/*
+B   =BRASCOLA
+CFG = MÓDULO CONFIGURADOR
+V   = VALIDAÇÃO
+001 = SEQUENCIAS
+*/
+
+User Function BCFGV001()  
+
+cTitulo:= "Cadastro de Fornecedores" 
+cMensagem:= "Usuário sem permissão para movimentar "
+cParam:= "BR_CADFOR1"   
+cRotina:= "MATA020"    
+
+If  AllTrim(Upper(cUsername)) $ Upper(GetMv(cParam))
+	MSExecAuto({|x,y,z| cRotina(x,y,z)},,,3)
+Else
+	Aviso(cTitulo,cMensagem+cTitulo,{"&Ok"},,"Usuário : "+AllTrim(cUserName))
+	lOk	:= .f.
+EndIf
+
+Return   

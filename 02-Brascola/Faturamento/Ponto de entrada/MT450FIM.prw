@@ -1,0 +1,121 @@
+#INCLUDE "Protheus.ch"
+#INCLUDE "TopConn.ch"
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³M450CMAN   ºAutor  ³Charles Medeiros º Data ³  10/07/12   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³Abre tela para inclusão de Motivo Rejeição.                 º±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/                  
+
+
+User Function MT450FIM()
+
+Local cCodRej	:= CriaVar("C9_CODREJ",.F.,.F.)
+Local cDesRej := ''
+
+//If Paramixb[1] == 3
+	
+	// Monta display
+//	While .T.
+		DEFINE FONT oFont NAME "Arial" SIZE 0,-12 BOLD
+		DEFINE MSDIALOG oDlg1 TITLE "Motivo do Bloqueio" From 00,00 To 100,460 OF oMainWnd PIXEL
+		@ 005,005 SAY "Informe o motivo do bloqueio para o pedido "+SC9->C9_PEDIDO OF oDlg1 PIXEL COLOR CLR_HBLUE FONT oFont
+		@ 015,005 MSGET cCodRej F3 "ZZ"			SIZE 015,10	OF oDlg1 PIXEL WHEN .T. VALID(CallRej(cCodRej,@oDesRej,@cDesRej))
+		@ 015,035 MSGET oDesRej VAR cDesRej		SIZE 155,10	OF oDlg1 PIXEL WHEN .F.
+		
+		@ 033,050 BUTTON "Item Posicionado"		SIZE 45,11 ACTION(nOpcEsc:=1, oDlg1:End()) OF oDlg1 PIXEL
+		@ 033,100 BUTTON "Todos os Itens"		SIZE 45,11 ACTION(nOpcEsc:=2, oDlg1:End()) OF oDlg1 PIXEL
+		@ 033,150 BUTTON "Cancela"					SIZE 45,11 ACTION(nOpcEsc:=0, oDlg1:End()) OF oDlg1 PIXEL
+		ACTIVATE MSDIALOG oDlg1 CENTERED
+/*		If nOpcEsc <> 0
+			If !Empty(cCodRej) .And. ExistCpo("SX5","ZZ"+cCodRej)
+				Exit
+			EndIf
+		Else
+			Exit
+ 		EndIf
+ */
+ //	EndDo	
+//Endif	
+
+	// Faz tratamento de gravação
+	If nOpcEsc == 1
+		dbSelectArea("SC9")
+		RecLock("SC9",.F.)
+		SC9->C9_CODREJ	:= cCodRej
+		MsUnLock()
+	ElseIf nOpcEsc == 2
+		cPedido	:= SC9->C9_PEDIDO
+		cSeqLib	:= SC9->C9_SEQUEN
+		dbSelectArea("SC9")
+		dbSetOrder(1)				// PEDIDO+ITEM+SEQUEN+PRODUTO
+		MsSeek(xFilial("SC9")+cPedido)
+		While !Eof() .And. SC9->C9_FILIAL == xFilial("SC9") .And. SC9->C9_PEDIDO == cPedido
+			If SC9->C9_SEQUEN == cSeqLib .And. SC9->C9_BLCRED $ "01/09/04"
+				RecLock("SC9",.F.)
+				SC9->C9_CODREJ	:= cCodRej
+				MsUnLock()
+			EndIf
+			dbSkip()
+		EndDo
+	EndIf
+	
+	//RestArea(aAreaSC9)
+	//RestArea(aAreaAtu)
+	
+	Return(.T.)
+	
+	
+	**********************************************************************************
+	User Function RFATA031V()
+	**********************************************************************************
+	Local cAlias  := GetArea()
+	Local nRecSC9 := SC9->(RECNO())
+	   
+	dbSelectArea("SC9")
+	dbSetOrder(1)
+	dbSeek(xFilial("SC9")+SC9->C9_PEDIDO)
+	
+	_NumPed    := SC9->C9_PEDIDO
+	_nTotPedLib:= 0
+	
+	While !SC9->(EOF()) .And. SC9->C9_FILIAL==xFilial("SC9") .And. SC9->C9_PEDIDO==_NumPed
+	           
+	/*	If !Empty(SC9->C9_NFISCAL) .Or. Empty(SC9->C9_LOTECTL) .Or. !Empty(SC9->C9_BLEST)
+			SC9->(dbSkip())
+			Loop
+		EndIf */
+	            
+		_nTotPedLib+= SC9->C9_QTDLIB*SC9->C9_PRCVEN
+		
+		dbSkip()
+	EndDo
+	
+	Aviso(_NumPed, "Valor total do pedido: $ "+AllTrim(Transform(_nTotPedLib,"@E 999,999,999.99" )), {"&Continua"},,"")
+	
+	dbGoto(nRecSC9)	          
+	RestArea(cAlias)
+	
+	Return
+	
+	
+	
+	******************************************************************************************************
+	Static Function CallRej(cCodRej, oDesRej, cDesRej)
+	******************************************************************************************************
+	
+	Local lRet	:= .T.
+	
+	cDesRej	:= Tabela("ZZ", cCodRej, .F.)
+	oDesRej:Refresh()
+	
+	Return(lRet)		
+
+Return(lRet)

@@ -1,0 +1,30 @@
+
+User Function VlEic2()
+
+Local aArea	    := GetArea()
+Local nValor2   := 0
+Local _nVLDEIC2 :=0
+local _VLRDEIC  := 0
+//msgalert()        
+
+                                                 
+DBSELECTAREA("SW6")
+DBSETORDER(1)
+IF DBSEEK(XFILIAL("SW6")+ALLTRIM(SD1->D1_CONHEC))
+
+  IF SD1->D1_ITEM == '0001'
+
+    DBSELECTAREA("EIJ")
+    DBSETORDER(1)
+    DBSEEK(XFILIAL("EIJ")+ALLTRIM(SW6->W6_HAWB)) 
+    _nVLDEIC2:=EIJ->EIJ_VLMMN
+    _VLRDEIC := SF1->F1_VALBRUT - _nVLDEIC2
+  
+  ENDIF
+ENDIF
+  
+RestArea(aArea)
+
+RETURN(_VLRDEIC)
+
+

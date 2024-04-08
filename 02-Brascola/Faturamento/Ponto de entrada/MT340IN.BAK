@@ -1,0 +1,163 @@
+#include "protheus.ch"
+#include "topconn.ch"
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณMT340IN   บAutor  ณOctavio Moreira     บ Data ณ  01/12/05   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ Ponto de entrada para validar o inicio do processamento do บฑฑ
+ฑฑบ          ณ acerto de inventario                                       บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ MP8                                                        บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+User Function MT340IN
+
+//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
+//ณDefine variaveis locaisณ
+//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
+Local cQuery := ""
+Local aArea := GetArea()      
+Local cEol := Chr(13)+Chr(10)
+Local cData 
+Local lRet := .t.
+Public mv_par00 := "", B7_CONTAGE := '000'
+
+//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
+//ณCarrega parametros da rotina principalณ
+//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
+Pergunte("MTA340",.f.)            
+cData := Dtos(mv_par01)
+
+//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
+//ณMonta a query de analiseณ
+//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
+cQuery := "SELECT SUM(CONTINS) CONTINS,SUM(CONTDIV) CONTDIV FROM ( "+cEOL
+cQuery += "SELECT PRODUTO,LOCAL,LOTE,CASE WHEN NCT1N+NCT2N+NCT3N > 1 THEN 1 ELSE 0 END CONTINS,CASE WHEN NCT1S = 1 AND NCT2S = 1 AND NCT3S = 0 AND QCT1S <> QCT2S THEN 1 ELSE 0 END CONTDIV FROM ("+cEOL
+cQuery += "SELECT PRODUTO,LOCAL,LOTE,SUM(NCT1N) NCT1N,SUM(QCT1N) QCT1N,SUM(NCT2N) NCT2N,SUM(QCT2N) QCT2N,SUM(NCT3N) NCT3N,SUM(QCT3N) QCT3N,SUM(NCT1S) NCT1S,SUM(QCT1S) QCT1S,SUM(NCT2S) NCT2S,SUM(QCT2S) QCT2S,SUM(NCT3S) NCT3S,SUM(QCT3S) QCT3S FROM("+cEOL
+cQuery += "SELECT B7_COD PRODUTO,B7_LOCAL LOCAL,B7_LOTECTL LOTE,COUNT(*) NCT1N,SUM(B7_QUANT) QCT1N,0 NCT2N,0 QCT2N,0 NCT3N,0 QCT3N,0 NCT1S,0 QCT1S,0 NCT2S,0 QCT2S,0 NCT3S,0 QCT3S"+cEOL
+cQuery += "FROM "+RetSqlName("SB7")+cEOL
+cQuery += "WHERE B7_FILIAL = '"+xFilial("SB7")+"'"+cEOL
+cQuery += "		AND B7_DATA = '"+cData+"'"+cEOL
+cQuery += "		AND B7_COD <> ' '"+cEOL
+cQuery += "		AND B7_CONTAGE = '001'"+cEOL
+cQuery += "		AND B7_DTDIGIT = ' '"+cEOL
+cQuery += "		AND D_E_L_E_T_ <> '*'"+cEOL
+cQuery += "GROUP BY B7_COD,B7_LOCAL,B7_LOTECTL"+cEOL
+cQuery += "UNION ALL"+cEOL
+cQuery += "SELECT B7_COD PRODUTO,B7_LOCAL LOCAL,B7_LOTECTL LOTE,0 NCT1N,0 QCT1N,COUNT(*) NCT2N,SUM(B7_QUANT) QCT2N,0 NCT3N,0 QCT3N,0 NCT1S,0 QCT1S,0 NCT2S,0 QCT2S,0 NCT3S,0 QCT3S"+cEOL
+cQuery += "FROM "+RetSqlName("SB7")+cEOL
+cQuery += "WHERE B7_FILIAL = '"+xFilial("SB7")+"'"+cEOL
+cQuery += "		AND B7_DATA = '"+cData+"'"+cEOL
+cQuery += "		AND B7_COD <> ' '"+cEOL
+cQuery += "		AND B7_CONTAGE = '002'"+cEOL
+cQuery += "		AND B7_DTDIGIT = ' '"+cEOL
+cQuery += "		AND D_E_L_E_T_ <> '*'"+cEOL
+cQuery += "GROUP BY B7_COD,B7_LOCAL,B7_LOTECTL"+cEOL
+cQuery += "UNION ALL"+cEOL
+cQuery += "SELECT B7_COD PRODUTO,B7_LOCAL LOCAL,B7_LOTECTL LOTE,0 NCT1N,0 QCT1N,0 NCT2N,0 QCT2N,COUNT(*) NCT3N,SUM(B7_QUANT) QCT3N,0 NCT1S,0 QCT1S,0 NCT2S,0 QCT2S,0 NCT3S,0 QCT3S"+cEOL
+cQuery += "FROM "+RetSqlName("SB7")+cEOL
+cQuery += "WHERE B7_FILIAL = '"+xFilial("SB7")+"'"+cEOL
+cQuery += "		AND B7_DATA = '"+cData+"'"+cEOL
+cQuery += "		AND B7_COD <> ' '"+cEOL
+cQuery += "		AND B7_CONTAGE = '003'"+cEOL
+cQuery += "		AND B7_DTDIGIT = ' '"+cEOL
+cQuery += "		AND D_E_L_E_T_ <> '*'"+cEOL
+cQuery += "GROUP BY B7_COD,B7_LOCAL,B7_LOTECTL"+cEOL
+cQuery += "UNION ALL"+cEOL
+cQuery += "SELECT B7_COD PRODUTO,B7_LOCAL LOCAL,B7_LOTECTL LOTE,0 NCT1N,0 QCT1N,0 NCT2N,0 QCT2N,0 NCT3N,0 QCT3N,COUNT(*) NCT1S,SUM(B7_QUANT) QCT1S,0 NCT2S,0 QCT2S,0 NCT3S,0 QCT3S"+cEOL
+cQuery += "FROM "+RetSqlName("SB7")+cEOL
+cQuery += "WHERE B7_FILIAL = '"+xFilial("SB7")+"'"+cEOL
+cQuery += "		AND B7_DATA = '"+cData+"'"+cEOL
+cQuery += "		AND B7_COD <> ' '"+cEOL
+cQuery += "		AND B7_CONTAGE = '001'"+cEOL
+cQuery += "		AND B7_DTDIGIT <> ' '"+cEOL
+cQuery += "		AND D_E_L_E_T_ <> '*'"+cEOL
+cQuery += "GROUP BY B7_COD,B7_LOCAL,B7_LOTECTL"+cEOL
+cQuery += "UNION ALL"+cEOL
+cQuery += "SELECT B7_COD PRODUTO,B7_LOCAL LOCAL,B7_LOTECTL LOTE,0 NCT1N,0 QCT1N,0 NCT2N,0 QCT2N,0 NCT3N,0 QCT3N,0 NCT1S,0 QCT1S,COUNT(*) NCT2S,SUM(B7_QUANT) QCT2S,0 NCT3S,0 QCT3S"+cEOL
+cQuery += "FROM "+RetSqlName("SB7")+cEOL
+cQuery += "WHERE B7_FILIAL = '"+xFilial("SB7")+"'"+cEOL
+cQuery += "		AND B7_DATA = '"+cData+"'"+cEOL
+cQuery += "		AND B7_COD <> ' '"+cEOL
+cQuery += "		AND B7_CONTAGE = '002'"+cEOL
+cQuery += "		AND B7_DTDIGIT <> ' '"+cEOL
+cQuery += "		AND D_E_L_E_T_ <> '*'"+cEOL
+cQuery += "GROUP BY B7_COD,B7_LOCAL,B7_LOTECTL"+cEOL
+cQuery += "UNION ALL"+cEOL
+cQuery += "SELECT B7_COD PRODUTO,B7_LOCAL LOCAL,B7_LOTECTL LOTE,0 NCT1N,0 QCT1N,0 NCT2N,0 QCT2N,0 NCT3N,0 QCT3N,0 NCT1S,0 QCT1S,0 NCT2S,0 QCT2S,COUNT(*) NCT3S,SUM(B7_QUANT) QCT3S"+cEOL
+cQuery += "FROM "+RetSqlName("SB7")+cEOL
+cQuery += "WHERE B7_FILIAL = '"+xFilial("SB7")+"'"+cEOL
+cQuery += "		AND B7_DATA = '"+cData+"'"+cEOL
+cQuery += "		AND B7_COD <> ' '"+cEOL
+cQuery += "		AND B7_CONTAGE = '003'"+cEOL
+cQuery += "		AND B7_DTDIGIT <> ' '"+cEOL
+cQuery += "		AND D_E_L_E_T_ <> '*'"+cEOL
+cQuery += "GROUP BY B7_COD,B7_LOCAL,B7_LOTECTL) SB7"+cEOL
+cQuery += "GROUP BY PRODUTO,LOCAL,LOTE) SB7DIV) SB7SUM"+cEOL
+
+//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
+//ณAbre resultado de queryณ
+//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
+If Select("SB7TRB") > 0
+	DbSelectArea("SB7TRB")
+	DbCloseArea()
+Endif               
+
+MemoWrite("\QUERYSYS\MT340IN.SQL",cQuery)
+dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),'SB7TRB',.F.,.T.)
+DbSelectArea("SB7TRB")
+DbGoTop()
+
+//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
+//ณVerifica se ha itens sem apontamentoณ
+//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
+//If CONTINS <> 0 .Or. CONTDIV <> 0
+//	lRet := .f.	
+//	Alert("Ha divergencias nos apontamentos. Emita o relatorio de divergencias !")
+//EndIf
+
+//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
+//ณFecha arquivo da queryณ
+//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
+If Select("SB7TRB") > 0
+	DbSelectArea("SB7TRB")
+	DbCloseArea()
+Endif
+   
+//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
+//ณAtualiza flag de registro escolhido caso nao haja inconsistenciaณ
+//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
+If lRet
+	cQuery := "UPDATE "+RetSQLName("SB7")+cEOL
+	cQuery += "SET B7_ESCOLHA = CASE WHEN B7_CONTAGE = '001' THEN ' '"+cEOL
+	cQuery += "						 WHEN B7_CONTAGE = '002' AND ISNULL((SELECT COUNT(*) "+cEOL
+	cQuery += "										 						   FROM "+RetSQLName("SB7")+" PARALELO"+cEOL
+	cQuery += "													  				WHERE B7_FILIAL = '"+xFilial("SB7")+"'"+cEOL
+	cQuery += "															  				AND SB7020.B7_DOC = PARALELO.B7_DOC"+cEOL
+	cQuery += "															  				AND PARALELO.B7_CONTAGE = '003'"+cEOL
+	cQuery += "															  				AND PARALELO.B7_DATA = '"+cData+"'"+cEOL
+	cQuery += "															  				AND PARALELO.B7_DTDIGIT <> '  '"+cEOL
+	cQuery += "															  				AND PARALELO.D_E_L_E_T_ <> '*'),0) = 0 THEN 'S'"+cEOL
+	cQuery += "						 WHEN B7_CONTAGE = '003' THEN 'S' "+cEOL
+	cQuery += "						 ELSE ' ' END"+cEOL
+	cQuery += "WHERE B7_FILIAL = '"+xFilial("SB7")+"'"+cEOL
+	cQuery += "		AND B7_DATA = '"+cData+"'"+cEOL
+	cQuery += "		AND B7_DTDIGIT <> ' '"+cEOL
+	cQuery += "		AND D_E_L_E_T_ <> '*'"+cEOL
+	
+	TcSQLExec(cQuery)
+EndIf
+
+//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
+//ณRestaura ambiente originalณ
+//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
+RestArea(aArea)
+
+//ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฟ
+//ณRetorna resultadoณ
+//ภฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤู
+Return(lRet)

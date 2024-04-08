@@ -1,0 +1,238 @@
+#include "rwmake.ch"
+#include "topconn.ch"
+#include "protheus.ch"
+#include "colors.ch"
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³ M410STSS ºAutor  ³ Marcelo da Cunha   º Data ³  17/06/13   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Ponto de Entrada para enviar confirmacao do pedido de vendaº±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+User Function M410STTS()
+**********************
+LOCAL lNovaAlc := SuperGetMv("BR_ALNOVA",.F.,.F.) //Parametro para ativar Alcada
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿	
+//³ Enviar confirmacao do Pedido de Venda                    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If (INCLUI.or.ALTERA).and.(SC5->C5_tipo == "N")
+	MPedEnvCon()
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿	
+//³ Excluir registros de Alcada de vendas                    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If (!INCLUI).and.(!ALTERA).and.(lNovaAlc)
+	MPedExcAlc()
+Endif
+
+Return
+
+Static Function MPedEnvCon()
+*************************
+LOCAL aListaWF := {}, nn, dDataPrev:= ctod("//")
+LOCAL nItem := 0, nValFre := 0, lFreNor := .T., lBloqDsc := .F.
+LOCAL nTotMerc := 0, nTotDzf := 0, nTotIpi := 0, nTotSit := 0, nTotFre := 0
+LOCAL cCodProc := "CONPED", cDescProc := "Confimacao de Pedido de Venda"
+LOCAL cHTMLModelo	:= "\workflow\wfavisopedido.htm", cSubject := ""
+LOCAL cFromName	:= "Workflow -  BRASCOLA"
+Local cEstNor  := Alltrim(GetMV("BR_000012")) //Estados Nordeste
+Local nValMinF := GetMV("BR_000013") //Valor Minimo para Frete
+Local nValMinP := GetMV("BR_000022") //Valor Minimo para Pedido 
+    
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿	
+//³ Inicializo a Funcao Fiscal                               ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+MaFisEnd() 
+MaFisIni(SC5->C5_cliente,SC5->C5_lojaent,IIf(SC5->C5_tipo$'DB',"F","C"),SC5->C5_tipo,SC5->C5_tipocli,Nil,Nil,Nil,Nil,"MATA461")
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿	
+//³ Alimento itens do e-mail para o supervisor               ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+nItem := 0 
+SA1->(dbSetOrder(1)) ; SA4->(dbSetOrder(1)) ; SE4->(dbSetOrder(1))
+SC6->(dbSetOrder(1)) ; SA3->(dbSetOrder(1)) ; SB1->(dbSetOrder(1)) ; SF4->(dbSetOrder(1))
+SC6->(dbSeek(xFilial("SC6")+SC5->C5_num,.T.))
+While !SC6->(Eof()).and.(xFilial("SC6") == SC6->C6_filial).and.(SC6->C6_num == SC5->C5_num)
+	SB1->(dbSeek(xFilial("SB1")+SC6->C6_produto,.T.))
+	SF4->(dbSeek(xFilial("SF4")+SC6->C6_tes,.T.))
+	If (lFreNor).and.(SA1->A1_percfre != 0).and.(SA1->A1_tpfret != "F")
+		nValFre := ((SC6->C6_valor*SA1->A1_percfre)/100)
+	Else
+		nValFre := 0
+	Endif
+		   
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿	
+	//³ Funcao para Calculo Fiscal                               ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	nItem++
+	MaFisAdd(SC6->C6_PRODUTO,;	// 1-Codigo do Produto ( Obrigatorio )
+			 SC6->C6_TES,;	   	// 2-Codigo do TES ( Opcional )
+			 SC6->C6_QTDVEN,;  	// 3-Quantidade ( Obrigatorio )
+			 SC6->C6_PRUNIT,;		// 4-Preco Unitario ( Obrigatorio )
+			 SC6->C6_VALDESC,;  	// 5-Valor do Desconto ( Opcional )
+			 "",;	   				// 6-Numero da NF Original ( Devolucao/Benef )
+			 "",;						// 7-Serie da NF Original ( Devolucao/Benef )
+			 0,;						// 8-RecNo da NF Original no arq SD1/SD2
+			 0,;				// 9-Valor do Frete do Item ( Opcional )  FERNANDO: 23/10/2013 RETIRADO nValFre,;	
+			 0,;						// 10-Valor da Despesa do item ( Opcional )
+			 0,;						// 11-Valor do Seguro do item ( Opcional )
+			 0,;						// 12-Valor do Frete Autonomo ( Opcional )
+             SC6->C6_VALOR+SC6->C6_VALDESC ,; // 13-Valor da Mercadoria ( Obrigatorio )   Fernando: 23/10/2013
+ 			 0)					   // 14-Valor da Embalagem ( Opiconal )	
+ 			 
+			
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿	
+	//³ Totalizadores do Pedido                                  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	nTotDzf  += MaFisRet(nItem,"IT_DESCZF")
+	nTotIpi  += MaFisRet(nItem,"IT_VALIPI")
+	nTotSit  += MaFisRet(nItem,"IT_VALSOL") 
+	nTotMerc += SC6->C6_valor
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿	
+	//³ Alimento Array para Envio WF                             ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	aadd(aListaWF,{SC6->C6_entreg,SC6->C6_item,SC6->C6_produto,SB1->B1_desc,SC6->C6_pedcli,SC6->C6_qtdven,SC6->C6_prcven,SC6->C6_valor})
+	If (SC6->C6_x_bldsc == "B")
+		lBloqDsc := .T.
+		Exit
+	Endif 
+
+	SC6->(dbSkip())
+Enddo
+If (Len(aListaWF) <= 0).or.(lBloqDsc)
+	Return
+Endif
+If !SA1->(dbSeek(xFilial("SA1")+SC5->C5_cliente+SC5->C5_lojacli))
+	Return
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿	
+//³ Calculo frete no pedido                                  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If (SA1->A1_est $ cEstNor).and.(nTotMerc > 0).and.(nTotMerc >= nValMinP).and.(nTotMerc <= nValMinF).and.(SA1->A1_percfre > 0)
+	Reclock("SC5",.F.)
+	SC5->C5_frete := (nTotMerc*(SA1->A1_percfre/100))
+	MsUnlock("SC5")
+	lFreNor := .T.
+Endif
+nTotFre := SC5->C5_frete
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿	
+//³ Data prevista de entrega                                 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dDataPrev := ctod("//")
+If !Empty(SA1->A1_cod_mun)
+	CC2->(dbSetOrder(1))
+	If CC2->(dbSeek(xFilial("CC2")+SA1->A1_est+SA1->A1_cod_mun))
+		dDataPrev := Posicione("SC6",1,xFilial("SC6")+SC5->C5_num,"C6_ENTREG")
+		dDataPrev := dDataPrev+3
+	Endif
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿	
+//³ Montagem do Workflow de Aviso para gestor                ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cSubject	:= "[EMPFIL"+cEmpAnt+cFilAnt+"PEDVEN"+SC5->C5_num+"] Confirmação do Pedido de Venda "+SC5->C5_num+" | "+dtoc(MsDate())+" as "+Substr(Time(),1,5)
+oProcess	:= TWFProcess():New(cCodProc,cDescProc)
+oProcess:NewTask(cDescProc,cHTMLModelo)
+oProcess:oHtml:ValByName("Data"    , dtoc(MsDate()) )
+oProcess:oHtml:ValByName("Hora"    , Time() )
+If Empty(SC5->C5_wfenv)
+	oProcess:oHtml:ValByName("Operac"  , "INCLUSÃO" )
+	oProcess:oHtml:ValByName("Mensag"  , "***** Acusamos em nosso sistema o recebimento do seu Pedido de Compra. Obrigado por confiar na qualidade dos Produtos e Serviços." )
+Else
+	oProcess:oHtml:ValByName("Operac"  , "ALTERAÇÃO" )
+	oProcess:oHtml:ValByName("Mensag"  , "***** Aviso "+SC5->C5_wfenv+" de alteração do Pedido de Compra. Obrigado por confiar na qualidade dos Produtos e Serviços." )
+Endif
+oProcess:oHtml:ValByName("Pedido"  , SC5->C5_num )
+oProcess:oHtml:ValByName("Emissao" , dtoc(SC5->C5_emissao) )
+oProcess:oHtml:ValByName("Cliente" , Alltrim(SC5->C5_cliente)+"/"+Alltrim(SC5->C5_lojacli)+"-"+Alltrim(SA1->A1_nome) )
+If SA3->(dbSeek(xFilial("SA3")+SC5->C5_vend1))
+	oProcess:oHtml:ValByName("Repres"  , Alltrim(SC5->C5_vend1)+"-"+Alltrim(SA3->A3_nome) )
+Else
+	oProcess:oHtml:ValByName("Repres"  , "&nbsp;" )
+Endif	
+If SA4->(dbSeek(xFilial("SA4")+SC5->C5_transp))
+	oProcess:oHtml:ValByName("Transp"  , Alltrim(SC5->C5_transp)+"-"+Alltrim(SA4->A4_nome) )
+Else
+	oProcess:oHtml:ValByName("Transp"  , "&nbsp;" )
+Endif	
+If SE4->(dbSeek(xFilial("SE4")+SC5->C5_condpag))
+	oProcess:oHtml:ValByName("CondPagto"  , Alltrim(SC5->C5_condpag)+"-"+Alltrim(SE4->E4_descri) )
+Else
+	oProcess:oHtml:ValByName("CondPagto"  , "&nbsp;" )
+Endif	
+oProcess:oHtml:ValByName("DatPrvEnt"  , dtoc(dDataPrev) )
+For nn := 1 to Len(aListaWF)                        
+    AAdd( oProcess:oHtml:ValByName("Item.entreg")  , dtoc(aListaWF[nn,1]) )
+  	AAdd( oProcess:oHtml:ValByName("Item.item")    , aListaWF[nn,2] )
+    AAdd( oProcess:oHtml:ValByName("Item.produto") , aListaWF[nn,3] )
+  	AAdd( oProcess:oHtml:ValByName("Item.descri")  , aListaWF[nn,4] )
+  	AAdd( oProcess:oHtml:ValByName("Item.pedcli")  , aListaWF[nn,5] )
+  	AAdd( oProcess:oHtml:ValByName("Item.qtdven")  , Transform(aListaWF[nn,6],PesqPict("SC6","C6_QTDVEN")) )
+  	AAdd( oProcess:oHtml:ValByName("Item.prcven")  , Transform(aListaWF[nn,7],PesqPict("SC6","C6_PRCVEN")) )
+  	AAdd( oProcess:oHtml:ValByName("Item.valor")   , Transform(aListaWF[nn,8],PesqPict("SC6","C6_VALOR")) )
+Next nn       
+oProcess:oHtml:ValByName("totpro" , Transform(nTotMerc,PesqPict("SC6","C6_VALOR")) )
+oProcess:oHtml:ValByName("subtri" , Transform(nTotSit,PesqPict("SC6","C6_VALOR"))  )
+oProcess:oHtml:ValByName("totfre" , Transform(nTotFre,PesqPict("SC6","C6_VALOR"))  )
+oProcess:oHtml:ValByName("totipi" , Transform(nTotIpi,PesqPict("SC6","C6_VALOR"))  )
+If (nTotDzf > 0)
+	oProcess:oHtml:ValByName("desdzf"  , "Desconto ZFM" )
+	oProcess:oHtml:ValByName("totdzf"  , Transform(nTotDzf,PesqPict("SC6","C6_VALOR")) )
+Else
+	oProcess:oHtml:ValByName("desdzf"  , "&nbsp;" )
+	oProcess:oHtml:ValByName("totdzf"  , "&nbsp;" )
+Endif
+oProcess:oHtml:ValByName("totped"  , "<b>"+Transform(nTotMerc+nTotSit+nTotFre+nTotIpi-nTotDzf,PesqPict("SC6","C6_VALOR"))+"</b>" )
+If !Empty(SA1->A1_email)
+	oProcess:cTo := Alltrim(SA1->A1_email)
+Endif
+If !Empty(SA3->A3_email)
+	oProcess:cCC := Alltrim(SA3->A3_email)
+Else
+	oProcess:cCC := "charlesm@brascola.com.br"
+Endif
+//oProcess:cTo := "charlesm@brascola.com.br;marcelo@goldenview.com.br"
+oProcess:cSubject := cSubject
+oProcess:cFromName:= cFromName
+oProcess:Start()
+oProcess:Finish()                                                               
+
+//Marco numero de enviaos do WF
+///////////////////////////////
+dbSelectArea("SC5")
+If Reclock("SC5",.F.)
+	SC5->C5_wfenv := Soma1(SC5->C5_wfenv)
+	MsUnlock("SC5")
+Endif
+
+Return
+
+Static Function MPedExcAlc()
+*************************
+
+//Verifico se rotina nova esta ativa
+////////////////////////////////////
+SZ3->(dbSetOrder(1))
+SZ3->(dbSeek(xFilial("SZ3")+M->C5_num,.T.))
+While !SZ3->(Eof()).and.(xFilial("SZ3") == SZ3->Z3_filial).and.(SZ3->Z3_pedido == M->C5_num)
+	Reclock("SZ3",.F.)
+	SZ3->(dbDelete())
+	MsUnlock("SZ3")
+	SZ3->(dbSkip())
+Enddo
+
+Return

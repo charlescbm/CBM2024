@@ -1,0 +1,431 @@
+#include "rwmake.ch"        
+#include "TbiConn.ch"
+#include "TbiCode.ch"
+#include "Topconn.ch"
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณRH        บAutor  ณMarcio A.Zechetti   บ Data ณ  18/10/08   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDesc.     ณ WORKFLOW RH                          	                  บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP6                                                        บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+*/
+
+User Function RH(aParam)
+Private cFil  := ""  
+Private cBrasMail := ""
+
+Prepare Environment Empresa aParam[1] Filial "01"
+
+ConOut(" ")
+ConOut("> RH - Workflow... Inicio: "+Time()) 
+
+CHKFILE("SM0")
+DBSelectArea("SM0")
+DBSetOrder(1)
+DBSeek(aParam[1],.F.)
+If !SM0->(Eof()) .AND. SM0->M0_CODIGO == aParam[1]
+	cFilAnt	:= SM0->M0_CODFIL		
+	RHFUNC(aParam[2])	
+EndIf
+
+ConOut("> RH - Workflow... Fim: "+Time())
+RESET ENVIRONMENT
+Return
+
+/****************************/
+Static Function RHFUNC(nOpcao)
+/****************************/        
+If nOpcao == NIL
+   nOpcao := 0          
+End
+Do Case
+   Case nOpcao == 0
+   		GPE_EXP()     //Vencimento 1 Experiencia
+   Case nOpcao == 1
+		GPE_2EXP()    //Vencimento 2 Experiencia
+   Case nOpcao == 2
+		GPE_ANIVER()  //Lista de Aniversariantes
+   Case nOpcao == 3
+		GPE_FERIAS1() //F้rias a Vencer  
+   Case nOpcao == 4
+		GPE_FER2PER() //F้rias Vencidas
+End             	
+Return		
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณGPE_EXP   บ Autor ณ Marcio A.Zechetti  บ Data ณ  18/10/08   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDescricao ณ Gerar Notifica็ใo via WF Vencimento 1 Experiencia          บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP6 IDE                                                    บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+/*/
+Static Function GPE_EXP
+  
+CHKFILE("SRA")
+CHKFILE("SRJ")   
+CHKFILE("CTT") 
+_cQuery := "SELECT * FROM "+RetSqlName("SRA")+" SRA WHERE "
+_cQuery += " RA_SITFOLH <> 'D' AND "
+_cQuery += " Convert(Varchar,DATEADD(day, 40,RA_ADMISSA),112) = '"+Dtos(dDataBase)+ "' AND "
+_cQuery += " D_E_L_E_T_ <> '*'"			   		   
+
+TCQUERY _cQuery NEW ALIAS "TMP"
+           
+dbSelectArea("TMP")
+dbGotop()                        
+While TMP->(!Eof())
+	cFil := ""
+	If TMP->RA_FILIAL == "01"
+	   cFil := "Matriz-Jlle"
+	ElseIf TMP->RA_FILIAL == "02"
+	   cFil := "N.Hamburgo"
+	ElseIf TMP->RA_FILIAL == "03"
+	   cFil := "Franca"
+	ElseIf TMP->RA_FILIAL == "04" 
+	   cFil := "Filial-Jlle"
+	EndIf
+	oProcess := TWFProcess():New("000001","Ficha: ")   
+	oProcess:NewTask("Exp","\WORKFLOW\Ficha.HTM" )
+	oProcess:cSubject := "Vencimento 1.Experiencia: "+cFil+"-"+TMP->RA_MAT+"-"+TMP->RA_NOME
+	oHTML := oProcess:oHTML
+	oProcess:NewVersion(.T.)        		
+	oHtml:ValByName("NOME",TMP->RA_NOME)
+	oHtml:ValByName("ADMISSAO",Substr(TMP->RA_ADMISSA,7,2)+"/"+Substr(TMP->RA_ADMISSA,5,2)+"/"+Substr(TMP->RA_ADMISSA,1,4))
+	SRJ->(DbSeek(xFilial()+TMP->RA_CODFUNC))
+	oHtml:ValByName("FUNCAO",SRJ->RJ_DESC)
+	CTT->(DbSeek("  "+TMP->RA_CC))
+	oHtml:ValByName("SECAO",CTT->CTT_DESC01)
+	oHtml:ValByName("DATA1",Substr(TMP->RA_VCTOEXP,7,2)+"/"+Substr(TMP->RA_VCTOEXP,5,2)+"/"+Substr(TMP->RA_VCTOEXP,1,4))
+	oHtml:ValByName("DATA2",Substr(TMP->RA_VCTEXP2,7,2)+"/"+Substr(TMP->RA_VCTEXP2,5,2)+"/"+Substr(TMP->RA_VCTEXP2,1,4))
+	oProcess:ClientName(Alltrim(cUsername))
+	if TMP->RA_FILIAL == "01"
+	oProcess:cTo := Trim(GetMV("BR_000043"))//emails usuarios do RH       
+	else
+	oProcess:cTo := Trim(GetMV("BR_000044"))//usuarios que receberใo workflow       
+	endif
+	oProcess:Start()    
+	wfSendMail()        
+	oProcess:Finish()    
+    TMP->(DbSkip())
+End                                                
+dbSelectArea("TMP")
+dbCloseArea()
+Return 
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณGPE_2EXP  บ Autor ณ Marcio A.Zechetti  บ Data ณ  18/10/08   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDescricao ณ Gerar Notifica็ใo via WF Vencimento 2 Experiencia          บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP6 IDE                                                    บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+/*/
+Static Function GPE_2EXP
+    
+CHKFILE("SRA")
+CHKFILE("SRJ")    
+_cQuery := "SELECT * FROM "+RetSqlName("SRA")+" SRA WHERE "
+_cQuery += " RA_SITFOLH <> 'D' AND "
+_cQuery += " Convert(Varchar,DATEADD(day, 80, RA_ADMISSA),112) = '"+Dtos(dDataBase)+ "' AND "
+_cQuery += " D_E_L_E_T_ <> '*'"	
+
+TCQUERY _cQuery NEW ALIAS "TMP"
+           
+dbSelectArea("TMP")
+dbGotop()                        
+While TMP->(!Eof())
+	cFil := ""
+	If TMP->RA_FILIAL == "01"
+	   cFil := "Matriz-Jlle"
+	ElseIf TMP->RA_FILIAL == "02"
+	   cFil := "N.Hamburgo"
+	ElseIf TMP->RA_FILIAL == "03"
+	   cFil := "Franca"
+	ElseIf TMP->RA_FILIAL == "04"
+	   cFil := "Filial-Jlle"
+	EndIf
+	oProcess := TWFProcess():New("000002","Ficha: ")   
+	oProcess:NewTask("Exp2","\WORKFLOW\Ficha.HTM" )
+	oProcess:cSubject := "Vencimento 2.Experiencia: "+cFil+"-"+TMP->RA_MAT+"-"+TMP->RA_NOME
+	oHTML := oProcess:oHTML
+	oProcess:NewVersion(.T.)        		
+	oHtml:ValByName("NOME",TMP->RA_NOME)
+	oHtml:ValByName("ADMISSAO",Substr(TMP->RA_ADMISSA,7,2)+"/"+Substr(TMP->RA_ADMISSA,5,2)+"/"+Substr(TMP->RA_ADMISSA,1,4))
+	SRJ->(DbSeek(xFilial()+TMP->RA_CODFUNC))
+	oHtml:ValByName("FUNCAO",SRJ->RJ_DESC)
+	CTT->(DbSeek("  "+TMP->RA_CC))
+	oHtml:ValByName("SECAO",CTT->CTT_DESC01)
+	oHtml:ValByName("DATA1",Substr(TMP->RA_VCTOEXP,7,2)+"/"+Substr(TMP->RA_VCTOEXP,5,2)+"/"+Substr(TMP->RA_VCTOEXP,1,4))
+	oHtml:ValByName("DATA2",Substr(TMP->RA_VCTEXP2,7,2)+"/"+Substr(TMP->RA_VCTEXP2,5,2)+"/"+Substr(TMP->RA_VCTEXP2,1,4))
+	oProcess:ClientName(Alltrim(cUsername))
+    if TMP->RA_FILIAL == "01"
+	   oProcess:cTo := Trim(GetMV("BR_000043"))//emails usuarios do RH           
+	else
+	   oProcess:cTo := Trim(GetMV("BR_000044"))//usuarios que receberใo workflow           
+	endif
+	
+	oProcess:Start()    
+	wfSendMail()        
+	oProcess:Finish()    
+    TMP->(DbSkip())
+End                                                
+dbSelectArea("TMP")
+dbCloseArea()
+Return  
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณGPE_ANIVERบ Autor ณ Marcio A.Zechetti  บ Data ณ  18/10/08   บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDescricao ณ Gerar Notifica็ใo Lista de Aniversariantes                 บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP6 IDE                                                    บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+/*/
+Static Function GPE_ANIVER
+    
+CHKFILE("SRA")   
+CHKFILE("CTT")
+_cQuery := " SELECT * FROM "+RetSqlName("SRA")+" SRA WHERE "
+_cQuery += " SUBSTRING(RA_NASC,7,2)+SUBSTRING(RA_NASC,5,2) = '"+Substr(Dtos(dDataBase),7,2)+Substr(Dtos(dDataBase),5,2)+ "'AND "
+//_cQuery += " SUBSTRING(RA_NASC,7,2)+SUBSTRING(RA_NASC,5,2) = '"+Substr('20120303',7,2)+Substr('20120303',5,2)+ "'AND "
+_cQuery += " RA_SITFOLH <> 'D' AND "
+_cQuery += " D_E_L_E_T_ <> '*'"			   		   
+
+TCQUERY _cQuery NEW ALIAS "TMP"
+
+
+cBrasMail := 'DGmatrizjoinville@brascola.com.br;supervisores1234@brascola.com.br'//email do grupo brascola e de supervisores
+//cBrasMail := 'fernando.maia@brascola.com.br;charlesm@brascola.com.br'
+dbSelectArea("TMP")
+dbGotop()  
+
+//Fernando - 02/04/12: adicionado trecho para buscar emails de terceiros
+_cQuery3 := "SELECT * FROM "+RetSqlName("ZZD")+" ZZD WHERE "
+_cQuery3 += " SUBSTRING(ZZD_DTNASC,7,2)+SUBSTRING(ZZD_DTNASC,5,2) = '"+Substr(Dtos(dDataBase),7,2)+Substr(Dtos(dDataBase),5,2)+ "'AND "
+_cQuery3 += " D_E_L_E_T_ = ''
+
+TCQUERY _cQuery3 NEW ALIAS "TMD"
+
+DBSELECTAREA("TMD")
+DBGOTOP()
+  
+If TMP->(!Eof()) .OR. TMD->(!EOF()) 
+	oProcess := TWFProcess():New( "000003", "Aniversariantes ")   
+	oProcess:NewTask("Aniver", "\WORKFLOW\aniver.HTM" )
+	oProcess:cSubject := "Lista de Aniversariantes: "+Substr(Dtos(dDataBase),7,2)+"/"+Substr(Dtos(dDataBase),5,2)+"/"+Substr(Dtos(dDataBase),1,4)
+	oHTML := oProcess:oHTML
+	oProcess:NewVersion(.T.)        		                    
+	oHtml:ValByName("DATA",Substr(Dtos(dDataBase),7,2)+"/"+Substr(Dtos(dDataBase),5,2)+"/"+Substr(Dtos(dDataBase),1,4))
+	While TMP->(!Eof())
+	      cFil := ""
+		  If TMP->RA_FILIAL == "01"
+		     cFil := "Matriz-Jlle"
+	      ElseIf TMP->RA_FILIAL == "02"
+		     cFil := "N.Hamburgo"
+		  ElseIf TMP->RA_FILIAL == "03"
+		     cFil := "Franca"
+	      ElseIf TMP->RA_FILIAL == "04"
+		     cFil := "Joinville"
+	      ElseIf TMP->RA_FILIAL == "08"
+		     cFil := "Filial-Jlle"
+	      EndIf
+	      AAdd((oHtml:ValByName("T1.1")),cFil)	      	  
+	      AAdd((oHtml:ValByName("T1.2")),TMP->RA_NOME)
+	      CTT->(DbSeek("  "+TMP->RA_CC))
+	      AAdd((oHtml:ValByName("T1.3")),CTT->CTT_DESC01)
+	      TMP->(DbSkip())
+	End                
+   
+	
+    DBSELECTAREA("TMD")
+    DBGOTOP()
+    
+    WHILE TMD->(!EOF())
+    cFil := ""
+    
+    If TMD->ZZD_FILIAL == "01"
+        cFil := "Matriz-Jlle"
+    ElseIf TMD->ZZD_FILIAL == "02"
+        cFil := "N.Hamburgo"
+    ElseIf TMD->ZZD_FILIAL == "03"
+        cFil := "Franca"
+    ElseIf TMD->ZZD_FILIAL == "04"
+         cFil := "Joinville"
+    EndIf
+	
+	AAdd((oHtml:ValByName("T1.1")),cFil)	      	  
+	AAdd((oHtml:ValByName("T1.2")),TMD->ZZD_NOME)
+	AAdd((oHtml:ValByName("T1.3")),TMD->ZZD_DEPTO)
+	
+	TMD->(DbSkip())
+	End     
+	
+	oProcess:ClientName(Alltrim(cUsername)) 
+	oProcess:cBCC := cBrasMail   
+	oProcess:Start()    
+	wfSendMail()        
+	oProcess:Finish()    
+EndIf                                
+dbSelectArea("TMP")
+dbCloseArea()
+dbSelectArea("TMC")
+dbCloseArea()
+dbSelectArea("TMD")
+dbCloseArea()
+
+
+Return      
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณGPE_FERIAS1บ Autor ณ Marcio A.Zechetti  บ Data ณ  18/10/08  บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDescricao ณ Gerar Notifica็ใo F้rias a Vencer                          บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP6 IDE                                                    บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+/*/
+Static Function GPE_FERIAS1
+    
+CHKFILE("SRA")   
+CHKFILE("CTT")
+_cQuery := "SELECT * FROM "+RetSqlName("SRF")+" SRF "
+_cQuery += " INNER JOIN "+RetSqlName("SRA")+" SRA ON(SRA.RA_FILIAL = '"+xFilial("SRA")+"' AND SRA.D_E_L_E_T_ <> '*' AND RA_MAT = RF_MAT) WHERE "
+_cQuery += " Convert(Varchar,DATEADD(day, 303, RF_DATABAS),112) = '"+Dtos(dDataBase)+ "' AND "
+_cQuery += " RF_DFERVAT = 0 AND "
+_cQuery += " RA_SITFOLH <> 'D' AND "
+_cQuery += " SRF.D_E_L_E_T_ <> '*'"			   		   
+
+TCQUERY _cQuery NEW ALIAS "TMP"
+           
+dbSelectArea("TMP")
+dbGotop()    
+If TMP->(!Eof())
+	oProcess := TWFProcess():New("000004","Ferias 1 periodo ")   
+	oProcess:NewTask("Ferias", "\WORKFLOW\Ferias.HTM" )
+	oProcess:cSubject := "F้rias 1 Periodo: "+Substr(TMP->RF_DATABAS,7,2)+"/"+Substr(TMP->RF_DATABAS,5,2)+"/"+Alltrim(Str(Val(Substr(TMP->RF_DATABAS,1,4))+1))
+	oHTML := oProcess:oHTML
+	oProcess:NewVersion(.T.)        		                    
+	oHtml:ValByName("DATA",+Substr(TMP->RF_DATABAS,7,2)+"/"+Substr(TMP->RF_DATABAS,5,2)+"/"+Alltrim(Str(Val(Substr(TMP->RF_DATABAS,1,4))+1)))
+	While TMP->(!Eof())
+	      cFil := ""
+		  If TMP->RA_FILIAL == "01"
+		     cFil := "Matriz-Jlle"
+	      ElseIf TMP->RA_FILIAL == "02"
+		     cFil := "N.Hamburgo"
+		  ElseIf TMP->RA_FILIAL == "03"
+		     cFil := "Franca"
+	      ElseIf TMP->RA_FILIAL == "04"
+		     cFil := "Filial-Jlle"
+	      EndIf
+	      AAdd((oHtml:ValByName("T1.1")),cFil)	      	  
+	      AAdd((oHtml:ValByName("T1.2")),TMP->RA_MAT+"-"+TMP->RA_NOME)
+	      CTT->(DbSeek("  "+TMP->RA_CC))
+	      AAdd((oHtml:ValByName("T1.3")),CTT->CTT_DESC01)
+	      AAdd((oHtml:ValByName("T1.4")),Substr(TMP->RA_ADMISSA,7,2)+"/"+Substr(TMP->RA_ADMISSA,5,2)+"/"+Substr(TMP->RA_ADMISSA,1,4))
+	      TMP->(DbSkip())
+	End                
+	oProcess:ClientName(Alltrim(cUsername))
+	If TMP->RA_FILIAL == "01"
+	    oProcess:cTo := Trim(GetMV("BR_000043"))      
+	else
+	    oProcess:cTo := Trim(GetMV("BR_000044"))      
+	endif
+		oProcess:Start()    
+	
+	wfSendMail()        
+	oProcess:Finish()    
+EndIf                                
+dbSelectArea("TMP")
+dbCloseArea()
+Return     
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+ฑฑษออออออออออัออออออออออหอออออออัออออออออออออออออออออหออออออัอออออออออออออปฑฑ
+ฑฑบPrograma  ณGPE_FER2PERบ Autor ณ Marcio A.Zechetti  บ Data ณ  18/10/08  บฑฑ
+ฑฑฬออออออออออุออออออออออสอออออออฯออออออออออออออออออออสออออออฯอออออออออออออนฑฑ
+ฑฑบDescricao ณ Gerar Notifica็ใo F้rias Vencidas                          บฑฑ
+ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP6 IDE                                                    บฑฑ
+ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
+ฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑฑ
+฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿฿
+/*/
+Static Function GPE_FER2PER
+    
+CHKFILE("SRA")   
+CHKFILE("CTT")
+_cQuery := "SELECT * FROM "+RetSqlName("SRF")+" SRF "
+_cQuery += " INNER JOIN "+RetSqlName("SRA")+" SRA ON(SRA.RA_FILIAL = '"+xFilial("SRA")+"' AND SRA.D_E_L_E_T_ <> '*' AND RA_MAT = RF_MAT) WHERE "
+_cQuery += " Convert(Varchar,DATEADD(day, 660, RF_DATABAS),112) = '"+Dtos(dDataBase)+ "' AND "
+_cQuery += " RF_DFERVAT  <> 0 AND "
+_cQuery += " RA_SITFOLH <> 'D' AND "
+_cQuery += " SRF.D_E_L_E_T_ <> '*'"			   		   
+
+TCQUERY _cQuery NEW ALIAS "TMP"
+           
+dbSelectArea("TMP")
+dbGotop()    
+If TMP->(!Eof())
+	oProcess := TWFProcess():New( "000005", "Ferias 2 Periodo ")   
+	oProcess:NewTask("Ferias2", "\WORKFLOW\Ferias2.HTM" )
+	oProcess:cSubject := "F้rias 2 Periodo: "+Substr(TMP->RF_DATABAS,7,2)+"/"+Substr(TMP->RF_DATABAS,5,2)+"/"+Alltrim(Str(Val(Substr(TMP->RF_DATABAS,1,4))+2))
+	oHTML := oProcess:oHTML
+	oProcess:NewVersion(.T.)        		                    
+	oHtml:ValByName("DATA",+Substr(TMP->RF_DATABAS,7,2)+"/"+Substr(TMP->RF_DATABAS,5,2)+"/"+Alltrim(Str(Val(Substr(TMP->RF_DATABAS,1,4))+2)))
+	While TMP->(!Eof())
+	      cFil := ""
+		  If TMP->RA_FILIAL == "01"
+		     cFil := "Matriz-Jlle"
+	      ElseIf TMP->RA_FILIAL == "02"
+		     cFil := "N.Hamburgo"
+		  ElseIf TMP->RA_FILIAL == "03"
+		     cFil := "Franca"
+	      ElseIf TMP->RA_FILIAL == "04"
+		     cFil := "Filial-Jlle"
+	      EndIf
+	      AAdd((oHtml:ValByName("T1.1")),cFil)	      	  
+	      AAdd((oHtml:ValByName("T1.2")),TMP->RA_MAT+"-"+TMP->RA_NOME)
+	      CTT->(DbSeek("  "+TMP->RA_CC))
+	      AAdd((oHtml:ValByName("T1.3")),CTT->CTT_DESC01)
+	      AAdd((oHtml:ValByName("T1.4")),Substr(TMP->RA_ADMISSA,7,2)+"/"+Substr(TMP->RA_ADMISSA,5,2)+"/"+Substr(TMP->RA_ADMISSA,1,4))
+	      AAdd((oHtml:ValByName("T1.5")),TMP->RF_DFERVAT)
+	      TMP->(DbSkip())
+	End                
+	oProcess:ClientName(Alltrim(cUsername))
+	oProcess:cTo := Trim(GetMV("BR_000043"))    
+	oProcess:Start()    
+	wfSendMail()        
+	oProcess:Finish()    
+EndIf                                
+dbSelectArea("TMP")
+dbCloseArea()
+Return

@@ -1,0 +1,86 @@
+#include "rwmake.ch"
+#include "topconn.ch"
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³ FA580LIB ºAutor  ³ Marcelo da Cunha   º Data ³  28/01/13   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Validacao para informar Adiantamentos                      º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+User Function FA580LIB()
+*********************
+LOCAL aBusca := {}, lAD := .F., cMsg := ""
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se existe Adiantamento ou Devolucao ³
+//³ para o Fornecedor do título a ser baixado.   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If GetNewPar("MV_VLTITAD",.F.) .And. !(SE2->E2_TIPO $ MVPAGANT+"/"+MV_CPNEG)
+	aBusca := FBuscAD(SE2->E2_FORNECE,SE2->E2_LOJA)
+	If (aBusca[1] <> 0)
+		lAD := .T.
+		cMsg := "O Fornecedor deste titulo possui "
+		Do Case 
+			Case (aBusca[1] == 1) // Adiantamento
+				cMsg += "o Adiantamento "
+			Case (aBusca[1] == 2) // Devolucao
+				cMsg += "a Devolucao "
+		End Case                      
+		cMsg += Alltrim(aBusca[2])+", no valor de "
+		cMsg += Alltrim(Transform(aBusca[3],PesqPict("SE2","E2_SALDO")))+"."
+		cMsg += chr(13)+chr(10)
+		cMsg += "Deseja mesmo assim libera-lo ?"
+		If !MsgYesNo(cMsg)
+			Return (.F.)
+		Endif
+	Endif
+Endif
+
+Return (.T.)
+
+Static Function FBuscAD(xFornece,xLoja)
+**********************************
+LOCAL aRetu := {0,"",0}, cQuery := ""
+
+//Busco informacoes no banco
+////////////////////////////
+cQuery := "SELECT E2_NUM,E2_TIPO,E2_SALDO FROM "+RetSqlName("SE2")+" "
+cQuery += "WHERE D_E_L_E_T_ = '' AND E2_FILIAL BETWEEN '' AND 'ZZ' "
+cQuery += "AND E2_FORNECE = '"+xFornece+"' AND E2_LOJA = '"+xLoja+"' AND E2_SALDO > 0 "
+cQuery := ChangeQuery(cQuery)
+If (Select("MAR") <> 0)
+	dbSelectArea("MAR")
+	dbCloseArea()
+Endif
+TCQuery cQuery NEW ALIAS "MAR"
+dbSelectArea("MAR")
+While !MAR->(Eof())
+	// Adiantamento
+	If (MAR->E2_tipo $ MVPAGANT)
+		aRetu[1] := 1
+	Endif
+	// Devolucao
+	If (MAR->E2_tipo $ MV_CPNEG)
+		aRetu[1] := 2
+	Endif
+	If (aRetu[1] != 0)
+		aRetu[2] := MAR->E2_num
+		aRetu[3] := MAR->E2_saldo
+		Exit
+	Endif
+	MAR->(dbSkip())
+Enddo
+If (Select("MAR") <> 0)
+	dbSelectArea("MAR")
+	dbCloseArea()
+Endif
+
+Return aRetu

@@ -1,0 +1,8 @@
+#include "rwmake.ch" 
+
+User Function M460QRY()
+Local cQuery :=paramixb[1]
+
+cQuery+= " AND C6_TIPOOP = '04' AND C6_TIPOOP = '7' AND C5_NUM <> '002675'"
+
+Return(cQuery) 

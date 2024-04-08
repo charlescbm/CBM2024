@@ -69,7 +69,7 @@ If File("\workflow\variacao_custo.htm") .and. dow(dDataBase) <> 7 .and. dow(dDat
 		oProcess:ClientName(cUserName)
 		oHTML := oProcess:oHTML
 
-		cStrFil := iif(_f==1,"%SB2.B2_FILIAL IN ('0101','0102')%", "%SB2.B2_FILIAL IN ('0103','0104')%")
+		cStrFil := iif(_f==1,"%SB2.B2_FILIAL IN ('0102')%", "%SB2.B2_FILIAL IN ('0101','0103','0104')%")
 
 		//Saldo Atual - Almoxarifado 01
 		If (Select("QRYSLD") <> 0)
@@ -106,7 +106,7 @@ If File("\workflow\variacao_custo.htm") .and. dow(dDataBase) <> 7 .and. dow(dDat
 			QRYSLD->(dbSkip())
 		End
 
-		cStrFil := iif(_f==1,"%SB2.B2_FILIAL IN ('0101','0102')%", "%SB2.B2_FILIAL IN ('0103','0104')%")
+		cStrFil := iif(_f==1,"%SB2.B2_FILIAL IN ('0102')%", "%SB2.B2_FILIAL IN ('0101','0103','0104')%")
 		//Saldo Atual - Almoxarifado 03
 		If (Select("QRYSLD") <> 0)
 			QRYSLD->(dbCloseArea())
@@ -142,7 +142,7 @@ If File("\workflow\variacao_custo.htm") .and. dow(dDataBase) <> 7 .and. dow(dDat
 			QRYSLD->(dbSkip())
 		End
 
-		cStrFil := iif(_f==1,"%SB9.B9_FILIAL IN ('0101','0102')%", "%SB9.B9_FILIAL IN ('0103','0104')%")
+		cStrFil := iif(_f==1,"%SB9.B9_FILIAL IN ('0102')%", "%SB9.B9_FILIAL IN ('0101','0103','0104')%")
 
 		cCrele := ""
 		TRB1->(dbGoTop())

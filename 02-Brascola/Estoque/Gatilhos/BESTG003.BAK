@@ -1,0 +1,41 @@
+#INCLUDE "Protheus.ch" 
+#include "rwmake.ch"
+#INCLUDE "TopConn.ch" 
+  
+/*/
+----------------------------------------------------------------------------
+PROGRAMA: BESTG001         AUTOR: CHARLES B. MEDEIROS      DATA: 13/12/11
+----------------------------------------------------------------------------
+
+DESCRICAO: Controla numeração no cadastro de Produto
+
+----------------------------------------------------------------------------
+CONTROLE DE ALTERACOES
+
+DATA:                     AUTOR:
+OBJETIVO:
+----------------------------------------------------------------------------
+/*/
+
+ 
+User Function BESTG003()
+**********************
+
+Local nSeq	 := 0
+Local cSeq	 := '0001'
+Local cCod	 := GDFieldGet("D1_COD")
+Local Ddtvalid := "//"
+
+DbSelectArea("SB1")
+DbSetOrder(1)
+DbSeek(xFilial("SB1")+cCod)
+
+Private cprval := (SB1->B1_PRVALID)
+
+If !(Empty(GDFieldGet("D1_DFABRIC"))) 
+	Ddtvalid := (GDFieldGet("D1_DFABRIC")+cprval)
+Else
+	Ddtvalid := CTOD("")
+Endif
+
+Return(Ddtvalid)

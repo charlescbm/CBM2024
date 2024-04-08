@@ -1,0 +1,44 @@
+#include "rwmake.ch"
+#include "topconn.ch"
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³ TK070INC ºAutor  ³ Marcelo da Cunha   º Data ³  31/07/13   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Criar amarracao do Contato com o Cliente                   º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+User Function TK070INC()
+*********************
+LOCAL cCodCont, cCodEnti, cQuery1
+                              
+If !Empty(SU5->U5_codcli).and.!Empty(SU5->U5_lojacli)
+	cCodEnti := SU5->U5_codcli+SU5->U5_lojacli
+	cCodEnti := cCodEnti+Space(TamSX3("AC8_CODENT")[1]-Len(cCodEnti))
+	cCodCont := SU5->U5_codcont
+	cCodCont := cCodCont+Space(TamSX3("AC8_CODCON")[1]-Len(cCodCont))
+	AC8->(dbSetOrder(2))
+	If !AC8->(dbSeek(xFilial("AC8")+"SA1"+xFilial("SA1")+cCodEnti+cCodCont))
+		Reclock("AC8",.T.)
+		AC8->AC8_filial := xFilial("AC8")
+		AC8->AC8_filent := xFilial("SA1")
+		AC8->AC8_entida := "SA1"
+		AC8->AC8_codent := cCodEnti //Codigo da Entidade
+		AC8->AC8_codcon := cCodCont //Codigo do Contato
+		MsUnlock("AC8")
+	Endif
+	If !Empty(SU5->U5_agbcom)
+		cQuery1 := "DELETE FROM "+RetSqlName("AGB")+" WHERE D_E_L_E_T_ = '' AND AGB_FILIAL = '"+xFilial("AGB")+"' "
+		cQuery1 += "AND AGB_ENTIDA = 'SU5' AND AGB_CODENT = '"+SU5->U5_codcont+"' AND AGB_CODIGO <> '"+SU5->U5_agbcom+"' AND AGB_TIPO = '1' "
+		TCSQLExec(cQuery1)
+	Endif
+Endif
+
+Return

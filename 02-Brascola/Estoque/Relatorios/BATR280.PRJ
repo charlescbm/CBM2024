@@ -1,0 +1,1178 @@
+Group BRASCOLA
+   Version=7.0
+   VSSDB=
+   HasProperties=1
+   Properties
+      BeforeApply=
+      AfterApply=
+      Icon=
+      ID=
+      Version=
+      PalmName=
+      OutPut=
+   End
+   ProjectsCount=15
+   Project Financeiro
+      FoldersCount=5
+      Folder Pontos de Entrada
+         VSSPath=Fontes
+         FilesCount=11
+         File \Protheus11\my projects\Financeiro\Ponto de Entrada\BFINPE001 - Botao visualiza data embarque do material.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Ponto de Entrada\F060VLOK.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Ponto de Entrada\FA580LIB.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Ponto de Entrada\F010CQPE.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Ponto de Entrada\F010CQTA.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Ponto de Entrada\F010CQTR.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Ponto de Entrada\F050ROT.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Ponto de Entrada\FA750BRW.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Ponto de Entrada\F040ROT.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Ponto de Entrada\FA740BRW.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Ponto de Entrada\F100BROW.prw
+             Type=T
+         End
+      End
+      Folder Atualizações
+         VSSPath=Definições
+         FilesCount=4
+         File \Protheus11\my projects\Financeiro\Atualizações\BFINA001.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Atualizações\PRDTE1.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Atualizações\BFINA002.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Atualizações\BFINA003.PRW
+             Type=T
+         End
+      End
+      Folder Cnab
+         VSSPath=Nova Pasta3
+         FilesCount=6
+         File \Protheus11\my projects\Financeiro\cnab\DacCta.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\cnab\DelChrEsp.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Ponto de Entrada\BFINPE001.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Ponto de Entrada\BFINPE002.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\cnab\Ntitulo.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\cnab\SISPAG.prw
+             Type=T
+         End
+      End
+      Folder Relatorios
+         VSSPath=Nova Pasta4
+         FilesCount=4
+         File \Protheus11\my projects\Financeiro\Relatorios\BFINR001 - Carta de TED-DOC.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Relatorios\BoletoHSBC.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Relatorios\AFAT012.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Relatorios\BLTCDBAR.prw
+             Type=T
+         End
+      End
+      Folder Job
+         VSSPath=Nova Pasta5
+         FilesCount=2
+         File \Protheus11\my projects\Financeiro\Jobs\BFINJ001.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Financeiro\Jobs\BFINJ002.prw
+             Type=T
+         End
+      End
+   End
+   Project Call Center
+      FoldersCount=3
+      Folder Relatorios
+         VSSPath=Nova Pasta1
+         FilesCount=1
+         File \Protheus11\my projects\Call Center\Relatorios\BMTKR001.prw
+             Type=T
+         End
+      End
+      Folder Pontos de entrada
+         VSSPath=Nova Pasta2
+         FilesCount=2
+         File \Protheus11\my projects\Call Center\Ponto de entrada\BTMKPE001 - Ponto entrada integracao TMK X QNC.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Call Center\Ponto de entrada\BTMKPE002 - Leva especie para C5.PRW
+             Type=T
+         End
+      End
+      Folder Atualizacoes
+         VSSPath=Nova Pasta3
+         FilesCount=2
+         File \Protheus11\my projects\Call Center\Atualizacoes\BMTKA001.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Call Center\Atualizacoes\UTMKA271.PRW
+             Type=T
+         End
+      End
+   End
+   Project Configurador
+      FoldersCount=4
+      Folder Validacao
+         VSSPath=Nova Pasta1
+         FilesCount=2
+         File \Protheus11\my projects\Configurador\BCFGV002.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Configurador\MBRWBTN.prw
+             Type=T
+         End
+      End
+      Folder Funcões
+         VSSPath=Nova Pasta2
+         FilesCount=1
+         File \Protheus11\my projects\Configurador\GENXFUN.prw
+             Type=T
+         End
+      End
+      Folder Atualizacoes
+         VSSPath=Nova Pasta4
+         FilesCount=4
+         File \Protheus11\my projects\Configurador\Atualizacoes\BCFGA001.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Configurador\JOB0101.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Configurador\Atualizacoes\BCFGA002.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Configurador\ANALISE.PRW
+             Type=T
+         End
+      End
+      Folder Scheduler
+         VSSPath=Nova Pasta5
+         FilesCount=2
+         File \Protheus11\my projects\Faturamento\Jobs\RFATM07.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Jobs\RFATM13.prw
+             Type=T
+         End
+      End
+   End
+   Project Estoque
+      FoldersCount=6
+      Folder Atualizacoes
+         VSSPath=Nova Pasta1
+         FilesCount=36
+         File \Protheus11\my projects\Estoque\Atualizacoes\BESTA001 - Cadastro de Armazem.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\TRANPRODTRANSPORTADORA.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\TRANSFTELA.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\BESTA002 - Conferencia cega.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\BESTA011.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\RESTR11.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\BESTA006 - Imprime relatorio de separacao de pedido.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\ETIQNF.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\EXPGKO.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\ROM_TRANSP.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\RESTA08A.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Funcoes\EXPGKO2.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\RESTA09.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\ConsNF.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\BESTA008 - Kardex por lote.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\BESTA009 - Consulta lotes a vencer.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\BESTA003 - Gera GNRE.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\BESTA004 - Gera nota fiscal de debito.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\BESTA005 - Altera data saida da nota.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\BESTA010 - Etiqueta de recebimento.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\ZeraCus.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\ETIQREC1.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\Atucusa.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\grvstdd.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\rfatc12.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\MEDV.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\GERLOTE.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\RESTA03.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\RESTA01.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\RESTA06.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\RESTIZ.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Relatorios\RESTR02.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Funcoes\DIFSALDO.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Funcoes\ACESALDO.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\BESTA014.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\BESTA015.prw
+             Type=T
+         End
+      End
+      Folder Gatilhos
+         VSSPath=Nova Pasta2
+         FilesCount=2
+         File \Protheus11\my projects\Estoque\Gatilhos\BESTG001.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Gatilhos\BESTG002.prw
+             Type=T
+         End
+      End
+      Folder Relatorios
+         VSSPath=Nova Pasta3
+         FilesCount=20
+         File \Protheus11\my projects\Estoque\Relatorios\BESTR001.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Relatorios\REISEP.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Relatorios\RelCurvaEst.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Relatorios\BMTR340A.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Relatorios\RESTC07.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Relatorios\RESTC06.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Relatorios\RESTC04.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Relatorios\FormCusto.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\restr12.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Relatorios\matr450BRA.prx
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\RESTR20.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Relatorios\BMTR340.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Relatorios\PCPG002.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Atualizacoes\rfatc12.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Relatorios\RESTR22.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Relatorios\RESTC02.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Relatorios\EVOLCST.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Relatorios\RESTR23.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Relatorios\RELATOAVISO.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Relatorios\BATR280.PRW
+             Type=T
+         End
+      End
+      Folder Ponto de Entrada
+         VSSPath=Nova Pasta4
+         FilesCount=6
+         File \Protheus11\my projects\Estoque\Pontos de entrada\Mt103LDV.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Pontos de entrada\MT100LOK.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Pcp\Ponto de entrada\EMP650.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Pontos de entrada\MC010CUS.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Pontos de entrada\A320CUSTR.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Estoque\Pontos de entrada\SD3250R.prw
+             Type=T
+         End
+      End
+      Folder Funcoes
+         VSSPath=Nova Pasta5
+         FilesCount=1
+         File \Protheus11\my projects\Estoque\Funcoes\SEQSZC.PRW
+             Type=T
+         End
+      End
+      Folder Jobs
+         VSSPath=Nova Pasta6
+         FilesCount=1
+         File \Protheus11\my projects\Estoque\Jobs\RESTM01.prw
+             Type=T
+         End
+      End
+   End
+   Project Faturamento
+      FoldersCount=7
+      Folder Pontos de entrada
+         VSSPath=Nova Pasta1
+         FilesCount=42
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\M460FIM.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MT410BRW.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\BFATPE005.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\BFATPE003.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\BFATPE004.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\BFATPE002.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\M410STTS.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MT440FIL.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MMENS031.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\M410LIOK.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\M440FIL.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MMENS032.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\M450CMAN.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MTA440C9.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\M460RAT.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MT340IN.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\M460MARK.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MA010BUT.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MA020BUT.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MA030BUT.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\A010TOK.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MA020TOK.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MA030TOK.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MA080BUT.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MA080VLD.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MA040BUT.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MA040TOK.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MA020TDOK.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\SF2520E.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\FC010BRW.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\FC010BTN.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MT010BRW.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MTA456R.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MTA450R.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MTA450RP.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\M410AGRV.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MTA410I.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MTA410DEL.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MS520VLD.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MSD2460.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\MT410ROD.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Ponto de entrada\BFATPR001 - Visualiza situacao do pedido de venda.PRW
+             Type=T
+         End
+      End
+      Folder NFE
+         VSSPath=Nova Pasta2
+         FilesCount=5
+         File \Protheus11\my projects\Faturamento\NFE\EICNFE.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\NFE\danfeii.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\NFE\danfeIII.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\NFE\PE01NFESEFAZ.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\NFE\nfesefaz.prw
+             Type=T
+         End
+      End
+      Folder Relatorios
+         VSSPath=Nova Pasta3
+         FilesCount=43
+         File \Protheus11\my projects\Faturamento\Relatorios\BFATR001 - Revendas por cidade.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\SEPPED.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\BFATR002 - Relatorio de vendas por segmento.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\PEDVEN.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\BFATR003 - Relatorio html tabela preco - envia por email.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\RELFATRP.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\CLMR680.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\RFATR23.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\CLMR540.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\RFATR10.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\RFATR14.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\CLMR580.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\CLMR780.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\CERT2.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\IMPRCERT.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\RFATR17.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\RFATPRODABC.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\RFATR13.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\BFATR004 - Relatorio html tabela preco exportacao - envia email.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\RFATC01.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\RFATA02.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\RelComercio.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\RFATM09.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\RFATM08.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\RELFATMES.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\BFATR006.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\BFATG007.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\RelPerVen.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\BFATR007.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\RELFATM.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\BFATR009.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\ORCFATX.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\BFATR011.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\BFATR012.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\RNFCANCEL.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\MATR780X.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\BFATR013.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\CertEmail.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\BFATR014.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\BFATR015.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\BFATR017.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\BFATR018.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Relatorios\BFATR019.prw
+             Type=T
+         End
+      End
+      Folder Atualizacoes
+         VSSPath=Nova Pasta4
+         FilesCount=17
+         File \Protheus11\my projects\Faturamento\Atualizacoes\BFATA001.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Atualizacoes\BFATA002.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Atualizacoes\EFATA04.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Atualizacoes\BrcA410.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Atualizacoes\BFATA003.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Atualizacoes\FILTRAREPSXB.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Atualizacoes\A410Cons.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Atualizacoes\BFATA005.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Atualizacoes\BFATA006.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Configurador\Atualizacoes\BFATA004.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Atualizacoes\RFATA101.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Atualizacoes\BONPROC.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Atualizacoes\BFATA007.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Atualizacoes\BFATA008.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Atualizacoes\BFATA009.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Atualizacoes\BFATA010.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Atualizacoes\BFATA011.prw
+             Type=T
+         End
+      End
+      Folder Consultas
+         VSSPath=Nova Pasta5
+         FilesCount=7
+         File \Protheus11\my projects\Faturamento\Consultas\BFATC001.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Consultas\RFATC10.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Consultas\CLASSE_MYGRID.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Consultas\RETCODREPRE.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Consultas\SALDO_PRODUTO.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Consultas\PED_ABERTO.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Consultas\RFATC02.prw
+             Type=T
+         End
+      End
+      Folder Gatilhos
+         VSSPath=Nova Pasta7
+         FilesCount=19
+         File \Protheus11\my projects\Faturamento\Gatilhos\EFATA10.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\EFATA02.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\EFATA06.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\EFATA17.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\EFATA05.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\EFATA09.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\EFATA07.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\BFATG001.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\BFATG002.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\EFATA08.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\EFATA03.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\BFATG003.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\BFATG004.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\BFATG005.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\BFATG006.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\BFATG007.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\BFATG008.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\BFATG009.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Gatilhos\BFATG010.prw
+             Type=T
+         End
+      End
+      Folder Jobs
+         VSSPath=Nova Pasta8
+         FilesCount=5
+         File \Protheus11\my projects\Faturamento\Jobs\GERAENTP.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Jobs\RFATM01.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Jobs\RFATM02.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Jobs\RFATM03.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Faturamento\Jobs\BFATJ001.prw
+             Type=T
+         End
+      End
+   End
+   Project Qualidade
+      FoldersCount=3
+      Folder Atualizacoes
+         VSSPath=Nova Pasta1
+         FilesCount=1
+         File \Protheus11\my projects\Qualidade\Atualizacoes\BQNCA001 - Calcula dados para nota devolucao - envia wf.PRW
+             Type=T
+         End
+      End
+      Folder Relatorios
+         VSSPath=Nova Pasta2
+         FilesCount=0
+      End
+      Folder Workflow
+         VSSPath=Nova Pasta3
+         FilesCount=1
+         File \Protheus11\my projects\Qualidade\Workflow\RWF004.PRW
+             Type=T
+         End
+      End
+   End
+   Project PCP
+      FoldersCount=5
+      Folder Gatilhos
+         VSSPath=Nova Pasta1
+         FilesCount=1
+         File \Protheus11\my projects\Pcp\Gatilhos\RPCPR01.PRW
+             Type=T
+         End
+      End
+      Folder Atualizacoes
+         VSSPath=Nova Pasta2
+         FilesCount=2
+         File \Protheus11\my projects\Pcp\Atualizacao\BPCPA001.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Pcp\Atualizacao\EXPL ESTRU.PRW
+             Type=T
+         End
+      End
+      Folder Relatorios
+         VSSPath=Nova Pasta3
+         FilesCount=4
+         File \Protheus11\my projects\Pcp\Relatorios\MATROP.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Pcp\Relatorios\PLISTBRA.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Pcp\Relatorios\BPCPR001.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Pcp\Relatorios\BPCPR002.PRW
+             Type=T
+         End
+      End
+      Folder Funcoes
+         VSSPath=Nova Pasta4
+         FilesCount=2
+         File \Protheus11\my projects\Pcp\Funcoes\PROXLOTEOP.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Pcp\Funcoes\GeraLote.prw
+             Type=T
+         End
+      End
+      Folder Ponto de Entrada
+         VSSPath=Nova Pasta5
+         FilesCount=2
+         File \Protheus11\my projects\Pcp\Ponto de entrada\A650LEMP.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Pcp\Ponto de entrada\MTA650I.prw
+             Type=T
+         End
+      End
+   End
+   Project Contabil-Fiscal
+      FoldersCount=4
+      Folder Atualizacoes
+         VSSPath=Nova Pasta1
+         FilesCount=5
+         File \Protheus11\my projects\Contabil-Fiscal\Atualizacoes\RCTBA01.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Contabil-Fiscal\Atualizacoes\RCTBA02.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Contabil-Fiscal\Atualizacoes\RCTBA03.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Contabil-Fiscal\Atualizacoes\CADUSRCST.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Contabil-Fiscal\Atualizacoes\RELORC2.PRW
+             Type=T
+         End
+      End
+      Folder Gatilhos
+         VSSPath=Nova Pasta2
+         FilesCount=1
+         File \Protheus11\my projects\Contabil-Fiscal\Gatilhos\ESTESINT.PRW
+             Type=T
+         End
+      End
+      Folder Relatorios
+         VSSPath=Nova Pasta3
+         FilesCount=3
+         File \Protheus11\my projects\Contabil-Fiscal\Relatorios\BFISR003.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Contabil-Fiscal\Relatorios\RFINR02.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Contabil-Fiscal\Relatorios\BFISR002.prw
+             Type=T
+         End
+      End
+      Folder Ponto de entrada
+         VSSPath=Nova Pasta4
+         FilesCount=2
+         File \Protheus11\my projects\Contabil-Fiscal\Ponto de entrada\MA900BTN.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Contabil-Fiscal\Ponto de entrada\MA900TOK.prw
+             Type=T
+         End
+      End
+   End
+   Project Compras
+      FoldersCount=4
+      Folder Workflow
+         VSSPath=Nova Pasta1
+         FilesCount=1
+         File \Protheus11\my projects\Compras\Workflow\BCOMW01.PRW
+             Type=T
+         End
+      End
+      Folder Ponto de Entrada
+         VSSPath=Nova Pasta2
+         FilesCount=7
+         File \Protheus11\my projects\Compras\Ponto de entrada\ENVCQQUA.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Compras\Ponto de entrada\MT100AGR.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Compras\Ponto de entrada\MA120BUT.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Compras\Ponto de entrada\MT120OK.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Compras\Ponto de entrada\MT100TOK.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Compras\Ponto de entrada\MT110TOK.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Compras\Ponto de entrada\MT120LOK.PRW
+             Type=T
+         End
+      End
+      Folder Relatorios
+         VSSPath=Nova Pasta3
+         FilesCount=2
+         File \Protheus11\my projects\Compras\Relatorios\RQIER02.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Compras\Relatorios\COMR001.PRW
+             Type=T
+         End
+      End
+      Folder Atualizacoes
+         VSSPath=Nova Pasta4
+         FilesCount=1
+         File \Protheus11\my projects\Compras\Atualizacoes\PreNotaXML.prw
+             Type=T
+         End
+      End
+   End
+   Project RH
+      FoldersCount=4
+      Folder Miscelanea
+         VSSPath=Nova Pasta1
+         FilesCount=2
+         File \Protheus11\my projects\Rh\Miscelanea\BUSCAAG.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Rh\Miscelanea\BUSCAP74.prw
+             Type=T
+         End
+      End
+      Folder Relatorios
+         VSSPath=Nova Pasta2
+         FilesCount=6
+         File \Protheus11\my projects\Rh\Relatorios\Rec_TXT.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Rh\Relatorios\RGPE003.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Rh\Relatorios\Rec_131.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Rh\Relatorios\Rec_13S.PRW
+             Type=T
+         End
+         File \Protheus11\my projects\Rh\Relatorios\BGPER003.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Rh\Relatorios\BPONR001.prw
+             Type=T
+         End
+      End
+      Folder Workflow
+         VSSPath=Nova Pasta3
+         FilesCount=1
+         File \Protheus11\my projects\Rh\Workflow\RH.PRW
+             Type=T
+         End
+      End
+      Folder Atualizacoes
+         VSSPath=Nova Pasta4
+         FilesCount=1
+         File \Protheus11\my projects\Rh\Atualizacoes\BGPEA001.prw
+             Type=T
+         End
+      End
+   End
+   Project Controle Documentos
+      FoldersCount=6
+      Folder Atualizacoes
+         VSSPath=Nova Pasta1
+         FilesCount=0
+      End
+      Folder Consultas
+         VSSPath=Nova Pasta2
+         FilesCount=0
+      End
+      Folder Relatorios
+         VSSPath=Nova Pasta3
+         FilesCount=2
+         File \Protheus11\my projects\Controle Documentos\Relatorios\qdom710.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Controle Documentos\Relatorios\qdom720.prw
+             Type=T
+         End
+      End
+      Folder Miscelanea
+         VSSPath=Nova Pasta4
+         FilesCount=0
+      End
+      Folder Ponto de Entrada
+         VSSPath=Nova Pasta5
+         FilesCount=0
+      End
+      Folder Gatilhos
+         VSSPath=Nova Pasta6
+         FilesCount=0
+      End
+   End
+   Project Manutencao
+      FoldersCount=1
+      Folder Workflow
+         VSSPath=Nova Pasta1
+         FilesCount=0
+      End
+   End
+   Project Funcoes
+      FoldersCount=1
+      Folder Genericas
+         VSSPath=Nova Pasta1
+         FilesCount=4
+         File \Protheus11\my projects\Funcoes\Genericas\MrkOpcoes.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Funcoes\Genericas\TstMrkOpcoes.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Funcoes\Genericas\BRAXFUN.prw
+             Type=T
+         End
+         File \Protheus11\my projects\Funcoes\Genericas\BRAXCUS.prw
+             Type=T
+         End
+      End
+   End
+   Project Componentes
+      FoldersCount=1
+      Folder resources
+         VSSPath=Nova Pasta1
+         FilesCount=0
+      End
+   End
+   Project InspecaoProcesso
+      FoldersCount=2
+      Folder Atualizacoes
+         VSSPath=Nova Pasta1
+         FilesCount=0
+      End
+      Folder Relatorios
+         VSSPath=Nova Pasta2
+         FilesCount=1
+         File \Protheus11\my projects\InspecaoProcessos\Relatorios\QIPR041.prw
+             Type=T
+         End
+      End
+   End
+   BatchBuild_Item0=Fontes · Producao
+   BatchBuild_Item1=Fontes · Paralelo
+   BatchBuild_Item2=Fontes · Compila
+End

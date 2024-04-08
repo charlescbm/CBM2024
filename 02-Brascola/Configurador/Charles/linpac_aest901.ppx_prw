@@ -1,0 +1,418 @@
+#line 1 "N:\PROTHEUS10\INCLUDE\totvs.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\Dialog.ch"
+#line 25 "totvs.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\Font.ch"
+#line 26 "totvs.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\Menu.ch"
+#line 27 "totvs.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\Print.ch"
+#line 28 "totvs.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\Colors.ch"
+#line 29 "totvs.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\Folder.ch"
+#line 30 "totvs.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\TotvsObject.ch"
+#line 31 "totvs.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\VKey.ch"
+#line 32 "totvs.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\WinApi.ch"
+#line 34 "totvs.ch"
+#line 22 "n:\protheus10\my projects\configurador\charles\linpac_aest901.prw"
+#line 1 "N:\PROTHEUS10\INCLUDE\protheus.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\Dialog.ch"
+#line 27 "protheus.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\Font.ch"
+#line 28 "protheus.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\PTMenu.ch"
+#line 30 "protheus.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\Print.ch"
+#line 32 "protheus.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\Colors.ch"
+#line 34 "protheus.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\Folder.ch"
+#line 36 "protheus.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\msobject.ch"
+#line 37 "protheus.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\VKey.ch"
+#line 41 "protheus.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\WinApi.ch"
+#line 43 "protheus.ch"
+#line 1 "N:\PROTHEUS10\INCLUDE\FWCommand.ch"
+#line 47 "protheus.ch"
+#line 24 "n:\protheus10\my projects\configurador\charles\linpac_aest901.prw"
+Function U_AEST901()
+
+Processa({ || fImporta() }, "[AEST901] - AGUARDE")
+
+Return
+
+Static Function fImporta()
+
+Local aFilial    := {"01","03","04","05","06","07"}
+Local cArq       := "\produtos.txt"
+Local cArqOld    := SUBSTR(cArq,1,Len(cArq)-3)+"#tx"
+Local cLinha     := ""
+Local lPrim      := .T. 
+Local aCampos    := {}
+Local aDados     := {}
+Local aProduto   := {}
+Local nPosEst    := 0
+Local nPosCodMun := 0
+Local cFilBkp    := cFilAnt
+
+Private aErro := {}
+
+If !File(cArq)
+	MsgStop("O arquivo " +cArq + " não foi encontrado. A importação será abortada!","[AEST901] - ATENCAO")
+	Return
+EndIf
+
+FT_FUSE(cArq)
+ProcRegua(FT_FLASTREC())
+FT_FGOTOP()
+While !FT_FEOF()
+
+	IncProc("Lendo arquivo texto...")
+
+	cLinha := FT_FREADLN()
+	cLinha := ALLTRIM(cLinha)
+
+	If lPrim
+		aCampos := Separa(cLinha,";", .T. )
+		lPrim := .F. 
+	Else
+		AADD(aDados,Separa(cLinha,";", .T. ))
+	EndIf
+
+	FT_FSKIP()
+EndDo
+
+FT_FUSE()
+
+nPosProd  := aScan(aCampos,{ |x| ALLTRIM(x) == "B1_COD" })
+nPosDescr := aScan(aCampos,{ |x| ALLTRIM(x) == "B1_DESC" })
+
+ProcRegua(Len(aDados))
+For i:=1 to Len(aDados)
+
+	IncProc("Filial: " + cFilAnt + " - Importando produtos...")
+
+	If Len(aCampos) <> Len(aDados[i])
+		GravaErro("","Linha: " + ALLTRIM(STR(i)),"Linha: " + ALLTRIM(STR(i)),"Formato dos dados inválido!")
+		Loop
+	EndIf
+
+	aProduto := {}
+
+	dbSelectArea("SB1")
+	dbSetOrder(1)
+	dbGoTop()
+	If !dbSeek(xFilial("SB1")+aDados[i,nPosProd])
+		For j:=1 to Len(aCampos)
+			dbSelectArea("SX3")
+			dbSetOrder(2)
+			dbGoTop()
+			If dbSeek(ALLTRIM(aCampos[j]))
+				If ALLTRIM(aCampos[j]) <> "B1_FILIAL"
+					Do Case
+						Case SX3->X3_TIPO == "N"
+							AADD(aProduto,{ALLTRIM(aCampos[j]), VAL(aDados[i,j]), NIL})
+						Case SX3->X3_TIPO == "D"
+							AADD(aProduto,{ALLTRIM(aCampos[j]), CTOD(aDados[i,j]), NIL})
+						Otherwise
+							AADD(aProduto,{ALLTRIM(aCampos[j]), aDados[i,j], NIL})
+					EndCase
+				ElseIf ALLTRIM(aCampos[j]) <> "B1_LOCPAD"
+					AADD(aProduto,{ALLTRIM(aCampos[j]), STRZERO(aDados[i,j],2), NIL})
+				EndIf
+			EndIf
+		next
+
+		Begin Sequence; BeginTran()
+			lMsErroAuto := .F. 
+			MSExecAuto({|x,y| mata010(x,y)},aProduto,3)
+
+			If lMsErroAuto
+				MostraErro("\SYSTEM\","AEST901.LOG")
+				GravaErro(cFilAnt,aDados[i,nPosProd],aDados[i,nPosDescr],NIL)
+				DisarmTransaction()
+			Else
+				aMata220 := {}
+				aAdd(aMata220,{"B9_COD"   , SB1->B1_COD , nil})
+				aAdd(aMata220,{"B9_LOCAL" , SB1->B1_LOCPAD , nil})
+				aAdd(aMata220,{"B9_DATA"  , CTOD("01/01/2012") , nil})
+				aAdd(aMata220,{"B9_QINI"  , 1000000 , nil})
+				aAdd(aMata220,{"B9_VINI1" , 0 , nil})
+
+				lMsErroAuto := .F. 
+				MsExecAuto({|x,y|mata220(x,y)},aMata220,3)
+
+				If lMsErroAuto
+					MostraErro("\SYSTEM\","AEST901.LOG")
+					GravaErro(cFilAnt,"SB9","Saldo Inicial",NIL)
+					DisarmTransaction()
+				EndIf
+
+				Reclock("SB1", .F. )
+				SB1->B1_MSBLQL := "1"
+				SB1->(MsUnlock())
+			EndIf
+		EndTran(); end
+	Else
+
+	EndIf
+next
+
+If File(cArqOld)
+	fErase(cArqOld)
+EndIf
+
+fRename(cArq,cArqOld)
+
+If Len(aErro) > 0
+	MostraLog()
+Else
+	ApMsgInfo("Importação de produtos efetuada com sucesso!","[AEST901] - SUCESSO")
+EndIf
+
+cFilAnt := cFilBkp
+
+Return
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function GravaErro(cFil,cProd,cDescr,cMsg)
+
+Local cFile := "\SYSTEM\AEST901.LOG"
+Local cLine := ""
+
+cMsg := If( cMsg == nil, NIL, cMsg ) ;
+
+If cMsg == NIL
+	Begin Sequence
+	IF !( lOk := File( cFile ) )
+		Break
+	EndIF
+
+	FT_FUSE(cFile)
+	FT_FGOTOP()
+
+	While !FT_FEOF()
+
+		cLine += FT_FREADLN() + CHR(13)+CHR(10)
+
+		FT_FSKIP()
+	end
+
+	FT_FUSE()
+	end
+
+	cMsg := cLine
+EndIf
+
+AADD(aErro,{cFil,cProd,cDescr,cMsg})
+
+Return
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function MostraLog()
+
+Local oDlg
+Local oFont
+Local cMemo := ""
+
+oFont := TFont():New( "Courier New", 5, 0,.F.,,,,,,,,,,,, )
+
+oDlg = MsDialog():New( 3, 0, 400, 417, "[AEST901] - Importação Cadastro Produtos",,,.F.,,,,,,.T.,, ,.F. )
+
+aCabec := {"Filial","Produto","Descrição"}
+cCabec := "{aErro[oBrw:nAT][1],aErro[oBrw:nAT][2],aErro[oBrw:nAT][3]}"
+bCabec := &( "{ || " + cCabec + " }" )
+
+oBrw := TWBrowse():New( 005,005,200,090,,aCabec,,oDlg,,,,,,,,,,,, .F. ,, .T. ,, .F. ,,,)
+oBrw:SetArray(aErro)
+oBrw:bChange    := { || cMemo := aErro[oBrw:nAT][4], oMemo:Refresh()}
+oBrw:bLDblClick := { || cMemo := aErro[oBrw:nAT][4], oMemo:Refresh()}
+oBrw:bLine := bCabec
+
+ oMemo := TMultiGet():New( 100, 005, { | u | If( PCount() == 0, cMemo, cMemo := u ) },oDlg, 200, 080,,.F.,,,,.T.,,.F.,,.F.,.F.,.F.,,,.F.,, )
+
+oMemo:bRClicked := {||AllwaysTrue()}
+oMemo:lReadOnly := .T. 
+oMemo:oFont := oFont
+
+oImprimir :=tButton():New(185,120,"Imprimir" ,oDlg,{|| fImprimeLog() },40,12,,,, .T. )
+oSair     :=tButton():New(185,165,"Sair"     ,oDlg,{|| Self:End() },40,12,,,, .T. )
+
+oDlg:Activate( oDlg:bLClicked, oDlg:bMoved, oDlg:bPainted,.T.,,,, oDlg:bRClicked, )
+
+Return
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Static Function fImprimeLog()
+
+Local oReport
+
+If TRepInUse()
+	oReport := ReportDef()
+	oReport:PrintDialog()
+EndIf
+
+Return
+
+Static Function ReportDef()
+
+Local oReport
+Local oSection
+
+oReport := TReport():New("AEST901","Importação Cadastro de Produtos",,{|oReport| PrintReport(oReport)},"Este relatorio ira imprimir a relacao de erros encontrados durante o processo de importação dos dados.")
+oReport:SetLandscape()
+
+oSection := TRSection():New(oReport,,{})
+
+TRCell():New(oSection,"FILIAL" ,,"Filial")
+TRCell():New(oSection,"PROD"   ,,"Produto")
+TRCell():New(oSection,"DESC"   ,,"Descrição")
+TRCell():New(oSection,"DESCRI" ,,"Descrição do Erro")
+
+Return oReport
+
+Static Function PrintReport(oReport)
+
+Local oSection := oReport:Section(1)
+
+oReport:SetMeter(Len(aErro))
+
+oSection:Init()
+
+For i:=1 to Len(aErro)
+
+	If oReport:Cancel()
+		Exit
+	EndIf
+
+	oReport:IncMeter()
+
+	oSection:Cell("FILIAL"):SetValue(aErro[i,1])
+	oSection:Cell("FILIAL"):SetSize(20)
+	oSection:Cell("PROD"):SetValue(aErro[i,2])
+	oSection:Cell("PROD"):SetSize(20)
+	oSection:Cell("DESC"):SetValue(aErro[i,3])
+	oSection:Cell("DESC"):SetSize(70)
+	oSection:Cell("DESCRI"):SetValue(aErro[i,4])
+	oSection:Cell("DESCRI"):SetSize(200)
+
+	nTamLin := 200
+	nTab := 3
+	lWrap := .T. 
+
+	lPrim := .T. 
+
+	cObsMemo := aErro[i,4]
+	nLines   := MLCOUNT(cObsMemo, nTamLin, nTab, lWrap)
+
+	For nCurrentLine := 1 to nLines
+		If lPrim
+			oSection:Cell("DESCRI"):SetValue(MEMOLINE(cObsMemo, nTamLin, nCurrentLine, nTab, lWrap))
+			oSection:Cell("DESCRI"):SetSize(300)
+			oSection:PrintLine()
+			lPrim := .F. 
+		Else
+			oSection:Cell("FILIAL"):SetValue("")
+			oSection:Cell("PROD"):SetValue("")
+			oSection:Cell("DESC"):SetValue("")
+			oSection:Cell("DESCRI"):SetValue(MEMOLINE(cObsMemo, nTamLin, nCurrentLine, nTab, lWrap))
+			oSection:Cell("DESCRI"):SetSize(300)
+			oSection:PrintLine()
+		EndIf
+	next
+
+	oReport:SkipLine()
+next
+
+oSection:Finish()
+
+Return

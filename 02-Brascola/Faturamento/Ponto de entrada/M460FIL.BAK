@@ -1,0 +1,8 @@
+#include "RwMake.ch"
+
+User Function M460FIL()
+Local cRetorno := ""
+
+   cRetorno += "C9_LOCAL >= '" + MV_PAR13 + "' .AND. C9_LOCAL <= '" + MV_PAR14 + "'"
+
+Return cRetorno 

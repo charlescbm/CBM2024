@@ -1,0 +1,1482 @@
+#INCLUDE "PROTHEUS.CH"
+#INCLUDE "MNTR676.CH"
+#INCLUDE "TOPCONN.CH"
+
+#DEFINE _nVERSAO 15 //Versao do fonte
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³MNTR676    ³ Autor ³Inacio Luiz Kolling   ³ Data ³01/09/2008³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Chamada da impressao da ordem de servico por modelo         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³MENU                                                        ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+User Function BMNTR001(lVPERG,cDEPLANO,cATEPLANO,aMATOS,aMATSX1)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Guarda conteudo e declara variaveis padroes ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local aNGBEGINPRM := NGBEGINPRM(_nVERSAO)
+Private oDlgC,nOpRe := 1,nOpca := 0
+Private lPERGUN     := If(lVPERG = Nil,.t.,.f.)
+Private cNomFil  := SM0->M0_FILIAL
+
+DEFINE MSDIALOG oDlgC FROM 00,00 TO 200,350 TITLE STR0051 PIXEL
+
+oPnlPai := TPanel():New(00,00,,oDlgC,,,,,,350,200,.F.,.F.)
+	oPnlPai:Align := CONTROL_ALIGN_ALLCLIENT
+
+@ 005,007 TO 80,170 LABEL STR0052 of oPnlPai Pixel
+@ 020,012 RADIO oRad VAR nOpRe ITEMS STR0047,STR0002,STR0049+" "+STR0053,;
+                                     STR0049+" "+STR0054,STR0050+" "+STR0053,;
+                                     STR0050+" "+STR0054 of SIZE 60,10 of oPnlPai Pixel
+
+
+Activate MsDialog oDlgC On Init EnchoiceBar(oDlgC,{|| nOPCA := 1,oDlgC:End()},{||oDlgC:End()}) Centered
+
+If nOpca == 0
+   Return
+Endif
+
+If nOpRe = 1
+   U_MNTBA676(lPERGUN,,aMATOS)
+ElseIf nOpRe = 2
+   U_MNTSI676(lPERGUN,,aMATOS)
+ElseIf nOpRe = 3
+   U_BMNTR002(lPERGUN,cDEPLANO,cATEPLANO,aMATOS,1)
+ElseIf nOpRe = 4
+   U_BMNTR002(lPERGUN,cDEPLANO,cATEPLANO,aMATOS,2)
+ElseIf nOpRe = 5
+   U_BMNTR002(lPERGUN,cDEPLANO,cATEPLANO,aMATOS,3)
+Else
+   U_BMNTR002(lPERGUN,cDEPLANO,cATEPLANO,aMATOS,4)
+Endif
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Retorna conteudo de variaveis padroes       ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	NGRETURNPRM(aNGBEGINPRM)
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ MNTSI676 ³ Autor ³In cio Luiz Kolling    ³ Data ³02/09/2008³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Ordem de Servico Simplificada                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ _lPerg (logico) - Trava ou nao o botao de parametros       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³MENU                                                        ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+/*/
+User Function MNTSI676(_lPerg,nRecOs,aMATOS)
+Local cString  := "STJ"
+Local lImp     := .F.
+Private cPerg  := "MNT676"
+Private Titulo := STR0001+" "+STR0002
+Private oPrint
+
+Default _lPerg := .t.
+Default nRecOs := 0
+
+oFontMM := TFont():New("Courier New",10,10,,.T.,,,,.F.,.F.)
+oFontPN := TFont():New("Courier New",10,10,,.F.,,,,.F.,.F.)
+oFontMN := TFont():New("Courier New",10,10,,.T.,,,,.F.,.F.)
+oFontGN := TFont():New("Courier New",20,20,,.T.,,,,.F.,.F.)
+
+/*
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³ Variaveis utilizadas para parametros                         ³
+³ mv_par01     // De Plano de Manutenção ?                     ³
+³ mv_par02     // Até Plano de Manutenção ?                    ³
+³ mv_par03     // Do Bem                                       ³
+³ mv_par04     // Até o Bem                                    ³
+³ mv_par05     // Da Ordem                                     ³
+³ mv_par06     // Ate a Ordem                                  ³
+³ mv_par07     // Da Data                                      ³
+³ mv_par08     // Ate a Data                                   ³
+³ mv_par09     // Imprimir Localização ?                       ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+*/
+
+//Cria SX1
+If !_lPerg
+	Pergunte(cPerg,.f.,,,,.f.)
+Else
+	U_MNT676SX1(cPerg)
+	If !Pergunte(cPerg,.t.)
+   	Return
+ 	EndIf
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Cria o Objeto o Print do TmsPrinter                          ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+oPrint := TMSPrinter():New(OemToAnsi(STR0001))
+lImp   := oPrint:Setup()
+oPrint:SetPortrait()
+
+If !lImp
+   Return
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Inicia a Impressao do Relatorio                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Processa({ |lEnd| MNTRSIMImp(oPrint,nRecOs,aMATOS)},STR0055)
+
+Return NIL
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³MNTRSIMImp ³ Autor ³In cio Luiz Kolling    ³ Data ³05/09/2008³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Inicializa a Impressao                                      ³±±
+±±³Parametros³ Objeto do TMS oPrint                                        ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function MNTRSIMImp(oPrint,nRecOs,aMATOS)
+Local xQuery  := "", nFo := 0
+Local aArInsu := {}, aArInsR := {}, aArEtap := {}, aArOpEt := {}
+Private m_pag := 0,nLin := 0
+
+Default nRecOs := 0
+
+If nRecOs == 0
+	xQuery += "SELECT TJ_FILIAL,TJ_ORDEM,TJ_PLANO,TJ_TIPOOS,TJ_CODBEM,TJ_SERVICO,TJ_SEQRELA "
+	xQuery += "FROM "+RetSqlName("STJ")+" TJ "
+	xQuery += "WHERE TJ_ORDEM   >= '"+MV_PAR05+"' "
+	xQuery += "  AND TJ_ORDEM   <= '"+MV_PAR06+"' "
+	xQuery += "  AND TJ_CODBEM  >= '"+MV_PAR03+"' "
+	xQuery += "  AND TJ_CODBEM  <= '"+MV_PAR04+"' "
+	xQuery += "  AND TJ_PLANO   >= '"+MV_PAR01+"' "
+	xQuery += "  AND TJ_PLANO   <= '"+MV_PAR02+"' "
+	xQuery += "  AND TJ_DTMPINI >= '"+Dtos(MV_PAR07)+"' "
+	xQuery += "  AND TJ_DTMPINI <= '"+Dtos(MV_PAR08)+"' "
+	xQuery += "  AND TJ_TIPOOS   = 'B' "
+	xQuery += "  AND TJ_TERMINO  = 'N' "
+	If MV_PAR10 == 1
+		xQuery += "  AND TJ_SITUACA  = 'L' "
+	EndIf
+	If MV_PAR10 == 2
+		xQuery += "  AND TJ_SITUACA  = 'P' "
+	EndIf
+	If MV_PAR10 == 3
+		xQuery += "  AND TJ_SITUACA  <> 'C' "
+	EndIf
+	xQuery += "  AND TJ_FILIAL   = '"+STJ->(xFilial("STJ"))+"' "
+	xQuery += "  AND TJ.D_E_L_E_T_ <> '*' "
+	xQuery += "ORDER BY TJ_ORDEM "
+Endif
+
+If (Select("TRBSTJ") <> 0)
+   TRBSTJ->(dbSelectArea("TRBSTJ"))
+   TRBSTJ->(dbCloseArea())
+Endif
+
+If nRecOs == 0
+	xQuery := ChangeQuery(xQuery)
+	TCQuery xQuery NEW ALIAS "TRBSTJ"
+Else
+	dbSelectArea("STJ")
+	dbGoTo(nRecOS)
+	aCampos  := {}
+	AAdd(aCAMPOS,{"TJ_FILIAL" ,"C",02,0})
+	AAdd(aCAMPOS,{"TJ_ORDEM"  ,"C",06,0})
+	AAdd(aCAMPOS,{"TJ_PLANO"  ,"C",06,0})
+	AAdd(aCAMPOS,{"TJ_TIPOOS" ,"C",01,0})
+	AAdd(aCAMPOS,{"TJ_CODBEM" ,"C",06,0})
+	AAdd(aCAMPOS,{"TJ_SERVICO","C",06,0})
+	AAdd(aCAMPOS,{"TJ_SEQRELA","C",03,0})
+	
+	cTrb := CriaTrab(aCampos)
+	dbUseArea(.T.,,cTrb,"TRBSTJ",.f.)
+	DbSelectArea("TRBSTJ")
+	TRBSTJ->(DbAppend())
+	TRBSTJ->TJ_FILIAL  := STJ->TJ_FILIAL
+	TRBSTJ->TJ_ORDEM   := STJ->TJ_ORDEM
+	TRBSTJ->TJ_PLANO   := STJ->TJ_PLANO
+	TRBSTJ->TJ_TIPOOS  := STJ->TJ_TIPOOS
+	TRBSTJ->TJ_CODBEM  := STJ->TJ_CODBEM
+	TRBSTJ->TJ_SERVICO := STJ->TJ_SERVICO
+	TRBSTJ->TJ_SEQRELA := STJ->TJ_SEQRELA
+Endif
+
+TRBSTJ->(dbGotop())
+ProcRegua(LastRec())
+While !TRBSTJ->(Eof())
+   IncProc()
+   DbSelectArea("STJ")
+   DbSetOrder(1)
+   If DbSeek(xFilial("STJ")+TRBSTJ->TJ_ORDEM+TRBSTJ->TJ_PLANO)
+      m_pag   := 0
+      Lin     := 4000
+      aArInsu := {}
+      aArInsR := {}
+	  If aMATOS <> Nil
+		  nPosOs := aSCAN(aMATOS, {|x| x[1]+x[2] == TRBSTJ->TJ_PLANO+TRBSTJ->TJ_ORDEM})
+      
+	  	  If nPosOs > 0
+      
+		      MNTRSIMCAB() // CABECALHO
+		      oPrint:Say(Lin-45,020,STR0019+"..: ",oFontMN)
+		      MNTRSIMMEM()
+		      MNTRSIMCAB()
+		
+		      oPrint:Line(Lin,0010,Lin,2335)
+		
+		      DbSelectArea("STL")
+		      DbSetOrder(1)
+		      If DbSeek(xFilial("STL")+TRBSTJ->TJ_ORDEM+TRBSTJ->TJ_PLANO)
+		         While !Eof() .And. STL->TL_FILIAL = xFILIAL('STL') .And. STL->TL_ORDEM = STJ->TJ_ORDEM;
+		            .And. STL->TL_PLANO = STJ->TJ_PLANO
+		            
+		            //TESTE   
+		            If STL->TL_TIPOREG <> "P"	
+			            vVETHORAS := NGTQUATINS(STL->TL_CODIGO,STL->TL_TIPOREG,STL->TL_USACALE,;
+															STL->TL_QUANTID,STL->TL_TIPOHOR,STL->TL_DTINICI,;
+															STL->TL_HOINICI,STL->TL_DTFIM,STL->TL_HOFIM,STL->TL_UNIDADE)
+							nQTDIns := NGRHODSEXN(vVETHORAS[1],"D")
+						Else
+							nQTDIns := STL->TL_QUANTID
+		            EndIf
+		            //FIM TESTE
+		            
+		            If Alltrim(STL->TL_SEQRELA) = '0'
+		               Aadd(aArInsu,{stl->tl_tarefa,stl->tl_tiporeg,stl->tl_codigo,;
+		                             stl->tl_quanrec,nQTDIns,stl->tl_unidade,;
+		                             stl->tl_dtinici,stl->tl_hoinici,stl->tl_dtfim,;
+		                             stl->tl_hofim})
+		            Else
+		               Aadd(aArInsR,{stl->tl_tarefa,stl->tl_tiporeg,stl->tl_codigo,;
+		                             stl->tl_quanrec,nQTDIns,stl->tl_unidade,;
+		                             stl->tl_dtinici,stl->tl_hoinici,stl->tl_dtfim,;
+		                             stl->tl_hofim})
+		            Endif
+		            Dbskip()
+		         End
+		      Endif
+		      nReal := 2
+		      If Len(aArInsu) >=  Len(aArInsR)
+			      nReal := Len(aArInsu) + 2
+			   Else
+			   	nReal := Len(aArInsR) + 2
+			   EndIf
+		      
+		      MNTRSIMITL(STR0020,If(Len(aArInsu) == 0,1,Len(aArInsu)),aArInsu)
+		      MNTRSIMITL(STR0021,nReal,aArInsR)
+		
+		      aArEtap := {}
+		      DbSelectArea("STQ")
+		      DbSetOrder(1)
+		      If DbSeek(xFilial("STQ")+TRBSTJ->TJ_ORDEM+TRBSTJ->TJ_PLANO)
+		         While !Eof() .And. STQ->TQ_FILIAL = xFILIAL('STQ') .And. STQ->TQ_ORDEM = STJ->TJ_ORDEM;
+		            .And. STQ->TQ_PLANO = STJ->TJ_PLANO
+		            Aadd(aArEtap,{stq->tq_tarefa,stq->tq_etapa,stq->tq_ok})
+		            Dbskip()
+		         End
+		      Endif
+		
+		      MNTRSIMCAB(80)
+		
+		      MNTRSIMIET(aArEtap)
+		
+		      If Len(aArEtap) > 0
+		         aArOpEt := {}
+		         For nFo := 1 To Len(aArEtap)
+		            DbSelectArea("TPC")
+		            DbSetOrder(1)
+		            If DbSeek(xFilial("TPC")+aArEtap[nFo,2])
+		               While !Eof() .And. TPC->TPC_FILIAL = xFILIAL('TPC') .And.;
+		                  TPC->TPC_ETAPA = aArEtap[nFo,2]
+		                  DbSelectArea("TPQ")
+		                  DbSetOrder(1)
+		                  DbSeek(xFilial("TPQ")+STJ->TJ_ORDEM+STJ->TJ_PLANO+aArEtap[nFo,1];
+		                                 +aArEtap[nFo,2]+tpc->tpc_opcao)
+		 
+		                  Aadd(aArOpEt,{aArEtap[nFo,1],aArEtap[nFo,2],tpc->tpc_opcao,;
+		                                tpc->tpc_tipres,tpc->tpc_condin,tpq->tpq_respos,;
+		                                tpq_ok})
+		                  DbSelectArea("TPC")
+		                  Dbskip()
+		               End
+		            Endif
+		         Next nFo
+		         If Len(aArOpEt) > 0
+		            MNTRSIMOPC(aArOpEt)
+		         Endif
+		      Endif
+		
+		      MNTRSIMCAB(45)
+		
+		      oPrint:Say(Lin,100,STR0039,oFontMN)
+		      MNTRSIMCAB()
+		      oPrint:Say(Lin,100,STR0040,oFontMN)
+		      oPrint:EndPage()
+		   Endif
+		Else
+			MNTRSIMCAB() // CABECALHO
+		    oPrint:Say(Lin-45,020,STR0019+"..: ",oFontMN)
+		    MNTRSIMMEM()
+		    MNTRSIMCAB()
+		
+		    oPrint:Line(Lin,0010,Lin,2335)
+		
+		    DbSelectArea("STL")
+		    DbSetOrder(1)
+		    If DbSeek(xFilial("STL")+TRBSTJ->TJ_ORDEM+TRBSTJ->TJ_PLANO)
+		    	While !Eof() .And. STL->TL_FILIAL = xFILIAL('STL') .And. STL->TL_ORDEM = STJ->TJ_ORDEM;
+		        	.And. STL->TL_PLANO = STJ->TJ_PLANO
+		            
+		            //TESTE   
+		          If STL->TL_TIPOREG <> "P"	
+			            vVETHORAS := NGTQUATINS(STL->TL_CODIGO,STL->TL_TIPOREG,STL->TL_USACALE,;
+															STL->TL_QUANTID,STL->TL_TIPOHOR,STL->TL_DTINICI,;
+															STL->TL_HOINICI,STL->TL_DTFIM,STL->TL_HOFIM,STL->TL_UNIDADE)
+				     nQTDIns := NGRHODSEXN(vVETHORAS[1],"D")
+			   	  Else
+					nQTDIns := STL->TL_QUANTID
+		          EndIf
+		          //FIM TESTE
+		          
+		          If Alltrim(STL->TL_SEQRELA) = '0'
+		             Aadd(aArInsu,{stl->tl_tarefa,stl->tl_tiporeg,stl->tl_codigo,;
+		                           stl->tl_quanrec,nQTDIns,stl->tl_unidade,;
+		                           stl->tl_dtinici,stl->tl_hoinici,stl->tl_dtfim,;
+		                           stl->tl_hofim})
+		          Else
+		             Aadd(aArInsR,{stl->tl_tarefa,stl->tl_tiporeg,stl->tl_codigo,;
+		                           stl->tl_quanrec,nQTDIns,stl->tl_unidade,;
+		                           stl->tl_dtinici,stl->tl_hoinici,stl->tl_dtfim,;
+		                           stl->tl_hofim})
+		          Endif
+		          Dbskip()
+		       End
+		    Endif
+		    nReal := 2
+		    If Len(aArInsu) >=  Len(aArInsR)
+			    nReal := Len(aArInsu) + 2
+			Else
+				nReal := Len(aArInsR) + 2
+			EndIf
+		      
+		    MNTRSIMITL(STR0020,If(Len(aArInsu) == 0,1,Len(aArInsu)),aArInsu)
+		    MNTRSIMITL(STR0021,nReal,aArInsR)
+		
+            aArEtap := {}
+		    DbSelectArea("STQ")
+		    DbSetOrder(1)
+		    If DbSeek(xFilial("STQ")+TRBSTJ->TJ_ORDEM+TRBSTJ->TJ_PLANO)
+		       While !Eof() .And. STQ->TQ_FILIAL = xFILIAL('STQ') .And. STQ->TQ_ORDEM = STJ->TJ_ORDEM;
+		          .And. STQ->TQ_PLANO = STJ->TJ_PLANO
+		          Aadd(aArEtap,{stq->tq_tarefa,stq->tq_etapa,stq->tq_ok})
+		          Dbskip()
+		       End
+		    Endif
+		
+		    MNTRSIMCAB(80)
+		
+		    MNTRSIMIET(aArEtap)
+		
+		    If Len(aArEtap) > 0
+		       aArOpEt := {}
+		       For nFo := 1 To Len(aArEtap)
+		          DbSelectArea("TPC")
+		          DbSetOrder(1)
+		          If DbSeek(xFilial("TPC")+aArEtap[nFo,2])
+		             While !Eof() .And. TPC->TPC_FILIAL = xFILIAL('TPC') .And.;
+		                TPC->TPC_ETAPA = aArEtap[nFo,2]
+		                DbSelectArea("TPQ")
+		                DbSetOrder(1)
+		                DbSeek(xFilial("TPQ")+STJ->TJ_ORDEM+STJ->TJ_PLANO+aArEtap[nFo,1];
+		                               +aArEtap[nFo,2]+tpc->tpc_opcao)
+		 	                  Aadd(aArOpEt,{aArEtap[nFo,1],aArEtap[nFo,2],tpc->tpc_opcao,;
+		                              tpc->tpc_tipres,tpc->tpc_condin,tpq->tpq_respos,;
+		                              tpq_ok})
+		                DbSelectArea("TPC")
+		                Dbskip()
+		             End
+		          Endif
+		       Next nFo
+		       If Len(aArOpEt) > 0
+		          MNTRSIMOPC(aArOpEt)
+		       Endif
+		    Endif
+		
+		    MNTRSIMCAB(45)
+		
+		    oPrint:Say(Lin,100,STR0039,oFontMN)
+		    MNTRSIMCAB()
+		    oPrint:Say(Lin,100,STR0040,oFontMN)
+		    oPrint:EndPage()
+		EndIf
+   EndIf
+   DbSelectArea("TRBSTJ")
+   DbSkip()
+
+End
+oPrint:Preview()
+dbSelectArea("TRBSTJ")
+dbCloseArea()
+
+dbSelectArea("STJ")
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³MNTRSIMMEM ³ Autor ³In cio Luiz Kolling    ³ Data ³05/09/2008³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Impressao do campo memo                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function MNTRSIMMEM()
+Local xInc := 0, xLMemo := 0, lTeme := .f.
+
+If NGCADICBASE("TJ_MMSYP","A","STJ",.F.)
+	cObs := NGMEMOSYP(STJ->TJ_MMSYP)
+Else
+   cObs := STJ->TJ_OBSERVA
+EndIf     
+xLMemo := MlCount(cObs,69)
+For xInc := 1 To xLMemo
+   If !Empty(MemoLine(cObs,69,xInc))
+   	If Lin == 460
+   		Lin-=45
+   	Endif
+   	oPrint:Say(Lin,400,MemoLine(cObs,69,xInc),oFontPN)
+      lTeme := .t.
+      MNTRSIMCAB(40)
+   Endif
+Next xInc
+Return lTeme
+
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³MNTRSIMITL ³ Autor ³In cio Luiz Kolling    ³ Data ³05/09/2008³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Impressao dos insumos                                        ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function MNTRSIMITL(cTIn,nVf,aVArI)
+Local nF1 := 0,nQtdI := 0
+Private cTpInsu := cTin
+MNTRSIM1CA()
+
+If Len(aVArI) > 0
+   aAOrdIR := Asort(aVArI,,,{|x,y| x[1]+x[2]+x[3] < y[1]+y[2]+y[3]})
+   For nQtdI := 1 To  Len(aAOrdIR)
+      cTarefa := aAOrdIR[nQtdI,1]
+		oPrint:Say(Lin,020,cTarefa,oFontPN)
+      cTipoI := aAOrdIR[nQtdI,2]
+      oPrint:Say(Lin,0210,Substr(NGRETSX3BOX("TL_TIPOREG",cTipoI),1,3)+".",oFontPN)
+      MNTRSIMVER()
+
+      oPrint:Line(Lin,0010,Lin,2335)
+
+      oPrint:Say(Lin,0340,aAOrdIR[nQtdI,3],oFontPN)       // produto
+      oPrint:Say(Lin,1025,TransForm(aAOrdIR[nQtdI,5],"@E 999,999.99"),oFontPN)  // quandidade
+      oPrint:Say(Lin,1300,aAOrdIR[nQtdI,6],oFontPN)       // unidade
+      oPrint:Say(Lin,1430,Dtoc(aAOrdIR[nQtdI,7]),oFontPN) // data inicio
+      oPrint:Say(Lin,1710,aAOrdIR[nQtdI,8],oFontPN)       // hora inicio
+      oPrint:Say(Lin,1927,Dtoc(aAOrdIR[nQtdI,9]),oFontPN) // data fim
+      oPrint:Say(Lin,2190,aAOrdIR[nQtdI,10],oFontPN)      // hora fim
+      MNTRSIMCAB(,'I',.T.)
+   Next
+   oPrint:Line(Lin,0010,Lin,2335)
+Endif
+If Len(aVArI) == 0 
+	For nF1 := 1 To nVf
+	   MNTRSIMVER()
+	   MNTRSIMCAB(,'I',.T.)
+	   oPrint:Line(Lin,0010,Lin,2335)
+	Next nF1
+Else
+	For nF1 := 1 to (nVf-Len(aVArI))
+		MNTRSIMVER()
+	   MNTRSIMCAB(,'I',.T.)
+	   oPrint:Line(Lin,0010,Lin,2335)
+	Next nF1
+EndIf
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³MNTRSIMIET ³ Autor ³In cio Luiz Kolling    ³ Data ³05/09/2008³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Impressao das etapas                                         ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function MNTRSIMIET(aVArI)
+Local nFv := 0, nQtdI := 0, cEtpDesc := "", cEtpDesc2 := "", nPosi := 0, nPosi2 := 0
+MNTRSIM2CA()
+If Len(aVArI) > 0
+   aAOrdIR := Asort(aVArI,,,{|x,y| x[1]+x[2] < y[1]+y[2]})
+   For nQtdI := 1 To Len(aAOrdIR)
+      cTarefa := aAOrdIR[nQtdI,1]
+      oPrint:Say(Lin,020,cTarefa,oFontPN)
+      cEtapa := aAOrdIR[nQtdI,2]
+      oPrint:Say(Lin,0220,cEtapa,oFontPN)
+
+      MNTRSIMVE2()
+
+      oPrint:Line(Lin,0010,Lin,2335)
+
+      cEtpDesc := NGSEEK("TPA",cEtapa,1,"TPA->TPA_DESCRI")
+      cEtpDesc := AllTrim(cEtpDesc)
+      
+      If Len(cEtpDesc) > 130 //quebra de duas linhas
+       
+      	cEtpDesc2 	:= SubStr(cEtpDesc,50,15)
+      	nPosi			:= At(" ",cEtpDesc2)
+      	If nPosi <> 0 .And. nPosi <= 15
+      		nPosi += 50
+      	Else
+      		nPosi :=	65
+      	EndIf  
+
+			cEtpDesc2	:= ""			
+      	cEtpDesc2 	:= SubStr(cEtpDesc,nPosi+50,30)
+      	nPosi2		+= At(" ",cEtpDesc2)
+      	If nPosi2 <> 0 .And. nPosi <= 30      		
+      		nPosi2	+= 50
+      	Else      	
+      		nPosi2 	:= 65
+      	EndIf
+      	
+      	oPrint:Say(Lin,0430,SubStr(cEtpDesc,1,nPosi-1),oFontPN)
+       	MNTRSIMCAB(,'E',.T.)
+        	MNTRSIMVE2()
+        	oPrint:Say(Lin,0430,SubStr(cEtpDesc,nPosi,nPosi2),oFontPN)
+       	MNTRSIMCAB(,'E',.T.)
+        	MNTRSIMVE2()
+        	oPrint:Say(Lin,0430,SubStr(cEtpDesc,nPosi+nPosi2+1,Len(cEtpDesc)),oFontPN)      
+      
+      ElseIf Len(cEtpDesc) > 65 .And. Len(cEtpDesc) <= 130  //quebra de uma linha
+      
+      	cEtpDesc2 	:= SubStr(cEtpDesc,50,Len(cEtpDesc))
+      	nPosi			:= At(" ",cEtpDesc2)
+      	If nPosi <> 0 .And. nPosi <= 15
+      		nPosi += 50
+      	Else
+      		nPosi :=	65
+      	EndIf
+      	
+      	oPrint:Say(Lin,0430,SubStr(cEtpDesc,1,nPosi-1),oFontPN)
+       	MNTRSIMCAB(,'E',.T.)
+        	MNTRSIMVE2()
+        	oPrint:Say(Lin,0430,SubStr(cEtpDesc,nPosi,Len(cEtpDesc)),oFontPN)
+        	
+      Else   //etapa com apenas uma linha
+      	oPrint:Say(Lin,0430,cEtpDesc,oFontPN)
+      EndIf
+
+      If !Empty(aAOrdIR[nQtdI,3])
+         oPrint:Say(Lin,2080,STR0035,oFontPN)
+      Endif
+
+      MNTRSIMCAB(,'E',.T.)
+  Next
+  oPrint:Line(Lin,0010,Lin,2335)
+Endif
+
+For nFv := 1 To 5
+   MNTRSIMVE2()
+   MNTRSIMCAB(,'E',.T.)
+   oPrint:Line(Lin,0010,Lin,2335)
+Next nF1
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³MNTRSIMTLD ³ Autor ³In cio Luiz Kolling    ³ Data ³05/09/2008³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Cabecalho dos insumos                                        ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function MNTRSIMTLD()
+
+oPrint:Say(Lin,020 ,STR0022,oFontMN)
+oPrint:Say(Lin,210 ,STR0023,oFontMN)
+oPrint:Say(Lin,340 ,STR0024,oFontMN)
+oPrint:Say(Lin,1025,STR0025,oFontMN)
+oPrint:Say(Lin,1300,STR0026,oFontMN)
+oPrint:Say(Lin,1430,STR0027,oFontMN)
+oPrint:Say(Lin,1710,STR0028,oFontMN)
+oPrint:Say(Lin,1930,STR0029,oFontMN)
+oPrint:Say(Lin,2192,STR0030,oFontMN)
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³MNTRSIMVER ³ Autor ³In cio Luiz Kolling    ³ Data ³05/09/2008³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Impressao das linhas verticais para insumos                  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function MNTRSIMVER()
+
+oPrint:Line(Lin-20,200 ,Lin+45,200)
+oPrint:Line(Lin-20,325 ,Lin+45,325)
+oPrint:Line(Lin-20,995 ,Lin+45,995)
+oPrint:Line(Lin-20,1290,Lin+45,1290)
+oPrint:Line(Lin-20,1380,Lin+45,1380)
+oPrint:Line(Lin-20,1670,Lin+45,1670)
+oPrint:Line(Lin-20,1890,Lin+45,1890)
+oPrint:Line(Lin-20,2160,Lin+45,2160)
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³MNTRSIMTQD ³ Autor ³In cio Luiz Kolling    ³ Data ³05/09/2008³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Cabecalho das etapas                                         ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function MNTRSIMTQD()
+oPrint:Say(Lin,020 ,STR0022,oFontMN)
+oPrint:Say(Lin,220 ,STR0032,oFontMN)
+oPrint:Say(Lin,430 ,STR0033,oFontMN)
+oPrint:Say(Lin,2090,STR0034,oFontMN)
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³MNTRSIMVE2 ³ Autor ³In cio Luiz Kolling    ³ Data ³05/09/2008³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Impressao das linhas verticais para etapas                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function MNTRSIMVE2()
+
+oPrint:Line(Lin-20,200 ,Lin+45,200)
+oPrint:Line(Lin-20,405 ,Lin+45,405)
+oPrint:Line(Lin-20,2060,Lin+45,2060)
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³MNTRSIMOPC ³ Autor ³In cio Luiz Kolling    ³ Data ³05/09/2008³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Impressao das opcoes das etapas                              ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function MNTRSIMOPC(aVArOp)
+Local nQtdI := 0
+MNTRSIM3CA()
+
+aAOrdIR := Asort(aVArOp,,,{|x,y| x[1]+x[2] < y[1]+y[2]})
+For nQtdI := 1 To Len(aAOrdIR)
+   cTarefa := aAOrdIR[nQtdI,1]
+   oPrint:Say(Lin,020,cTarefa,oFontPN)
+   cEtapa := aAOrdIR[nQtdI,2]
+   oPrint:Say(Lin,0210,cEtapa,oFontPN)
+
+   oPrint:Line(Lin,0010,Lin,2335)
+  
+   MNTRSIMVPC()
+
+   oPrint:Say(Lin,0430,aAOrdIR[nQtdI,3],oFontPN)
+
+   oPrint:Say(Lin,0840,NGRETSX3BOX("TPC_TIPRES",aAOrdIR[nQtdI,4]),oFontPN)
+
+   oPrint:Say(Lin,1140,aAOrdIR[nQtdI,5],oFontPN)
+
+   oPrint:Say(Lin,1520,aAOrdIR[nQtdI,6],oFontPN)
+
+   If !Empty(aAOrdIR[nQtdI,7])
+      oPrint:Say(Lin,2050,STR0046,oFontPN)
+   Endif
+
+   MNTRSIMCAB(,'O')
+Next
+oPrint:Line(Lin+15,0010,Lin+15,2335)
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³MNTRSIMTPC ³ Autor ³In cio Luiz Kolling    ³ Data ³05/09/2008³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Cabecalho das opcoes                                         ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+User Function MNTRSIMTPC()
+oPrint:Say(Lin,020 ,STR0022,oFontMN) //TARE
+oPrint:Say(Lin,210 ,STR0032,oFontMN) //ETA
+oPrint:Say(Lin,430 ,STR0042,oFontMN) //OP
+
+oPrint:Say(Lin,840 ,STR0023,oFontMN) //TIP
+
+oPrint:Say(Lin,1140,STR0043,oFontMN) //CONT
+oPrint:Say(Lin,1520,STR0044,oFontMN) //RESP
+oPrint:Say(Lin,2050,STR0045,oFontMN) //MARC
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³MNTRSIMVPC ³ Autor ³In cio Luiz Kolling    ³ Data ³05/09/2008³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Verticais das opcoes                                         ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function MNTRSIMVPC()
+
+oPrint:Line(Lin-20,200 ,Lin+60,200)
+oPrint:Line(Lin-20,405 ,Lin+60,405)
+oPrint:Line(Lin-20,800 ,Lin+60,800)
+
+oPrint:Line(Lin-20,1100,Lin+60,1100)
+
+oPrint:Line(Lin-20,1480,Lin+60,1480)
+oPrint:Line(Lin-20,2000,Lin+60,2000)
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao     ³MNTRSIMCAB³ Autor ³ Equipe NG             ³ Data ³ 08/07/08 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o  ³ Inicializa a Impressao de uma nova pagina                  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function MNTRSIMCAB(nLSoma,cTiCa,lPrintVer)
+Local nSoma := If(nLSoma = Nil,45,nLSoma)
+Local cLoc
+Local cLogo
+Local cBARRAS    := If(isSRVunix(),"/","\")
+Local cRootPath  := Alltrim(GetSrvProfString("RootPath",cBARRAS))
+Local cStartPath := AllTrim(GetSrvProfString("StartPath",cBARRAS))
+Local cDirExeTh  := cRootPath+cStartPath 
+Default lPrintVer := .F.
+
+cLogo := cStartPath+"LGRL"+SM0->M0_CODIGO+SM0->M0_CODFIL+".BMP" // Empresa+Filial
+If !File(cLogo)
+	If File(cStartPath+"LGRL"+SM0->M0_CODIGO+".BMP")
+		cLogo := cStartPath+"LGRL"+SM0->M0_CODIGO+".BMP" // Empresa
+	ElseIf File(cDIREXETH+"LGRL"+SM0->M0_CODIGO+SM0->M0_CODFIL+".BMP")
+		cLogo := cDIREXETH+"LGRL"+SM0->M0_CODIGO+SM0->M0_CODFIL+".BMP"
+	ElseIf File(cDIREXETH+"LGRL"+SM0->M0_CODIGO+".BMP")
+		cLogo := cDIREXETH+"LGRL"+SM0->M0_CODIGO+".BMP"
+	ElseIf File("LGRL"+SM0->M0_CODIGO+SM0->M0_CODFIL+".BMP")
+		cLogo := "LGRL"+SM0->M0_CODIGO+SM0->M0_CODFIL+".BMP"
+	ElseIf File("LGRL"+SM0->M0_CODIGO+".BMP")
+		cLogo := "LGRL"+SM0->M0_CODIGO+".BMP"
+	ElseIf File("\SIGAADV\LGRL"+SM0->M0_CODIGO+SM0->M0_CODFIL+".BMP")
+		cLogo := "\SIGAADV\LGRL"+SM0->M0_CODIGO+SM0->M0_CODFIL+".BMP"
+	ElseIf File("\SIGAADV\LGRL"+SM0->M0_CODIGO+".BMP")
+		cLogo := "\SIGAADV\LGRL"+SM0->M0_CODIGO+".BMP"
+	Endif
+Endif
+Lin += nSoma
+If Lin > 3200
+	nSoma := 45
+	If lPrintVer
+		oPrint:Line(Lin,0010,Lin,2335)
+	Endif
+   Lin := 60
+   m_pag ++
+   oPrint:EndPage()
+   oPrint:StartPage()
+   oPrint:Box(Lin,10,3300,2335)
+
+   Lin += 20
+   If File(cLogo)
+		oPrint:SayBitMap(Lin,40,cLogo,250,73)
+	EndIf
+   oPrint:Say(Lin,0600,STR0001+"  "+STJ->TJ_ORDEM,oFontGN)
+   oPrint:Say(Lin-20,2050,STR0009+" "+Alltrim(Str(m_pag,3)),oFontMM)
+   oPrint:Say(Lin+20,2050,If(nOpRe = 1,STR0047,STR0002),oFontMM)
+
+   Lin += 70
+   oPrint:Line(Lin,0010,Lin,2335)
+
+   Lin += 40
+	
+	cLoc := NGLocComp(STJ->TJ_CODBEM,'1')
+   If cLoc <> AllTrim(STJ->TJ_CODBEM)  .And. ( Type("MV_PAR09") == "N" .And. MV_PAR09 == 1) //Para tratar caso o mv_par09 seja nulo
+   //If cLoc <> AllTrim(STJ->TJ_CODBEM)  .And. MV_PAR09 == 1
+		oPrint:Say(Lin,020,STR0056,oFontMM) //"Localização.:"
+		oPrint:Say(Lin,020,Space(Len(STR0056)) + Space(1) + cLoc,oFontPN)  
+   		Lin += nSoma
+	EndIf	
+   If STJ->TJ_TIPOOS $ "B/M"
+	oPrint:Say(Lin,020,STR0010+".........:",oFontMN)
+   oPrint:Say(lin,020,Space(Len(STR0010+".........:"))+;
+   					   Space(1) + Alltrim(STJ->TJ_CODBEM)+' - '+;
+   					       NGSEEK('ST9',STJ->TJ_CODBEM,1,'ST9->T9_NOME'),oFontPN)
+   Else
+   oPrint:Say(Lin,020,STR0024+"......:",oFontMN)
+   oPrint:Say(lin,020,Space(Len(STR0024+"......:"))+;
+   					   Space(1) + Alltrim(STJ->TJ_CODBEM)+' - '+;
+   					   NGSEEK("TAF","X2"+Substr(STJ->TJ_CODBEM,1,3),7,"SUBSTR(TAF_NOMNIV,1,40)"),oFontPN)
+   EndIf
+   If !Empty(ST9->T9_LOCAL)
+	   Lin += nSoma
+      oPrint:Say(Lin,015,STR0057,oFontPN) //"Local.......:"
+      oPrint:Say(lin,015,Space(Len(STR0057))+;
+      						Space(1) + ST9->T9_LOCAL,oFonTPN)
+   EndIf
+   oPrint:Say(Lin,1650,STR0036+"..:",oFontMN)
+   oPrint:Say(lin,1650,Space(Len(STR0036+"..:"))+;
+   							Space(1) + Dtoc(DdataBase)+" "+SubStr(Time(),1,5),oFontPN)
+
+   Lin += nSoma
+   oPrint:Say(Lin,020,STR0011+".....:",oFontMN)
+
+   oPrint:Say(Lin,020,Space(Len(STR0011+".....:"))+;
+                      Space(1) + Alltrim(STJ->TJ_SERVICO)+' - '+;
+                      NGSEEK('ST4',STJ->TJ_SERVICO,1,'ST4->T4_NOME'),oFontPN)
+
+   oPrint:Say(Lin,1650,STR0012+": ",oFontMN)
+   oPrint:Say(Lin,1650,Space(Len(STR0012+": "))+;
+   							Space(1) + STJ->TJ_SEQRELA,oFontPN)
+
+   Lin += nSoma
+   oPrint:Say(Lin,020,STR0018+"........:",oFontMN)
+   oPrint:Say(Lin,020,Space(Len(STR0018+"........:"))+; 
+   							Space(1) + Alltrim(STJ->TJ_CODAREA)+' - '+;
+         					NGSEEK('STD',STJ->TJ_CODAREA,1,'STD->TD_NOME'),oFontPN)
+
+   oPrint:Say(Lin,1650,STR0014+":",oFontMN)
+   oPrint:Say(Lin,1650,Space(Len(STR0014+":"))+; 
+   							Space(1) + Dtoc(STJ->TJ_DTMPINI),oFontPN)
+   
+	Lin += nSoma
+
+   oPrint:Say(Lin,1650,STR0015+".....:",oFontMN)
+   oPrint:Say(Lin,1650,Space(Len(STR0015+".....:"))+; 
+   							Space(1) + STJ->TJ_HOMPINI,oFontPN)
+
+   oPrint:Say(Lin,020,STR0013+"..:",oFontMN)
+   oPrint:Say(Lin,020,Space(Len(STR0013+"..:"))+; 
+   						 Space(1) + If(STJ->TJ_PLANO <> "000000",NGSEEK('STF',STJ->TJ_CODBEM+;
+                      STJ->TJ_SERVICO+STJ->TJ_SEQRELA,1,'STF->TF_NOMEMAN'),STR0017),oFontPN)
+
+   Lin += nSoma
+   oPrint:Line(Lin,0010,Lin,2335)
+
+   Lin := 460
+
+   If cTiCa <> Nil
+      If cTiCa = 'I'
+         MNTRSIM1CA()
+      ElseIf cTiCa = 'E'
+         MNTRSIM2CA()
+      ElseIf cTiCa = 'O'
+         MNTRSIM3CA()
+      Endif
+      //Lin := 700
+   Endif
+Endif
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao     ³MNTRSIM1CA³ Autor ³In cio Luiz Kolling    ³ Data ³ 08/07/08 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o  ³ Cabecalho dos insumos                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function MNTRSIM1CA()
+MNTRSIMCAB()
+oPrint:Say(Lin,450,STR0016+"    "+cTpInsu,oFontGN)
+MNTRSIMCAB(80)
+oPrint:Line(Lin,0010,Lin,2335)
+
+MNTRSIMCAB(20)
+MNTRSIMVER()
+
+MNTRSIMTLD()
+
+MNTRSIMCAB()
+oPrint:Line(Lin,0010,Lin,2335)
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao     ³MNTRSIM2CA³ Autor ³In cio Luiz Kolling    ³ Data ³ 08/07/08 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o  ³ Cabecalho das etapas                                       ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function MNTRSIM2CA()
+MNTRSIMCAB()
+oPrint:Say(Lin,50,STR0031+"   "+STR0037+'/'+STR0038,oFontGN)
+MNTRSIMCAB(80)
+oPrint:Line(Lin,0010,Lin,2335)
+
+MNTRSIMCAB(20)
+MNTRSIMVE2()
+
+MNTRSIMTQD()
+
+MNTRSIMCAB()
+oPrint:Line(Lin,0010,Lin,2335)
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao     ³MNTRSIM3CA³ Autor ³In cio Luiz Kolling    ³ Data ³ 08/07/08 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o  ³ Cabecalho das opcoes da etapa                              ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function MNTRSIM3CA()
+MNTRSIMCAB(80)
+oPrint:Say(Lin,250,STR0041,oFontGN)
+MNTRSIMCAB(80)
+oPrint:Line(Lin,0010,Lin,2335)
+
+MNTRSIMCAB(20)
+MNTRSIMVPC()
+
+U_MNTRSIMTPC()
+MNTRSIMCAB()
+oPrint:Line(Lin,0010,Lin,2335)
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³MNTBA676   ³ Autor ³Inacio Luiz Kolling   ³ Data ³04/09/2008³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Impressao da ordem de servico BASICA                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ _lPerg (logico) - Trava ou nao o botao de parametros       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³MENU                                                        ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+User Function MNTBA676(_lPerg,nRecOs,aMATOS)
+Local cString  := "STJ"
+Local lImp     := .F.
+Private cPerg  := "MNT676"
+Private Titulo := STR0001+" "+STR0047
+Private oPrint
+
+Default _lPerg := .t.
+Default nRecOs := 0
+
+oFontMM := TFont():New("Courier New",10,10,,.T.,,,,.F.,.F.)
+oFontPN := TFont():New("Courier New",10,10,,.F.,,,,.F.,.F.)
+oFontMN := TFont():New("Courier New",10,10,,.T.,,,,.F.,.F.)
+oFontGN := TFont():New("Courier New",20,20,,.T.,,,,.F.,.F.)
+
+/*
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³ Variaveis utilizadas para parametros                         ³
+³ mv_par01     // De Plano de Manutenção ?                     ³
+³ mv_par02     // Até Plano de Manutenção ?                    ³
+³ mv_par03     // Do Bem                                       ³
+³ mv_par04     // Até o Bem                                    ³
+³ mv_par05     // Da Ordem                                     ³
+³ mv_par06     // Ate a Ordem                                  ³
+³ mv_par07     // Da Data                                      ³
+³ mv_par08     // Ate a Data                                   ³
+³ mv_par09     // Imprimir Localização ?                       ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+*/
+
+//Cria SX1
+If !_lPerg
+	Pergunte(cPerg,.f.,,,,.f.)
+Else
+	U_MNT676SX1(cPerg)	
+	If !Pergunte(cPerg,.t.)
+   	Return
+ 	EndIf
+Endif
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Cria o Objeto o Print do TmsPrinter                          ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+oPrint := TMSPrinter():New(OemToAnsi(STR0001))
+lImp   := oPrint:Setup()
+oPrint:SetPortrait()
+
+If !lImp
+   Return
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Inicia a Impressao do Relatorio                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Processa({ |lEnd| MNTRBASImp(oPrint,nRecOs,aMATOS)},STR0055)
+
+Return NIL
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³MNTRBASImp ³ Autor ³In cio Luiz Kolling    ³ Data ³05/09/2008³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Inicializa a Impressao                                      ³±±
+±±³Parametros³ Objeto do TMS oPrint                                        ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function MNTRBASImp(oPrint,nRecOs,aMATOS)
+Local xQuery  := ""
+Local aArInsu := {}, aArInsR := {}
+Local cTRB, aCampos
+Private m_pag := 0,nLin := 0
+
+Default nRecOs := 0
+
+If nRecOs == 0
+	xQuery += "SELECT TJ_FILIAL,TJ_ORDEM,TJ_PLANO,TJ_TIPOOS,TJ_CODBEM,TJ_SERVICO,TJ_SEQRELA "
+	xQuery += "FROM "+RetSqlName("STJ")+" TJ "
+	xQuery += "WHERE TJ_ORDEM   >= '"+MV_PAR05+"' "
+	xQuery += "  AND TJ_ORDEM   <= '"+MV_PAR06+"' "
+	xQuery += "  AND TJ_CODBEM  >= '"+MV_PAR03+"' "
+	xQuery += "  AND TJ_CODBEM  <= '"+MV_PAR04+"' "
+	xQuery += "  AND TJ_PLANO   >= '"+MV_PAR01+"' "
+	xQuery += "  AND TJ_PLANO   <= '"+MV_PAR02+"' "
+	xQuery += "  AND TJ_DTMPINI >= '"+Dtos(MV_PAR07)+"' "
+	xQuery += "  AND TJ_DTMPINI <= '"+Dtos(MV_PAR08)+"' "
+	xQuery += "  AND TJ_TIPOOS   = 'B' "
+	xQuery += "  AND TJ_TERMINO  = 'N' "
+		If MV_PAR10 == 1
+		xQuery += "  AND TJ_SITUACA  = 'L' "
+	EndIf
+	If MV_PAR10 == 2
+		xQuery += "  AND TJ_SITUACA  = 'P' "
+	EndIf
+	If MV_PAR10 == 3
+		xQuery += "  AND TJ_SITUACA  <> 'C' "
+	EndIf
+	xQuery += "  AND TJ_FILIAL   = '"+STJ->(xFilial("STJ"))+"' "
+	xQuery += "  AND TJ.D_E_L_E_T_ <> '*' "
+	xQuery += "ORDER BY TJ_ORDEM "
+Endif
+
+If (Select("TRBSTJ") <> 0)
+   TRBSTJ->(dbSelectArea("TRBSTJ"))
+   TRBSTJ->(dbCloseArea())
+Endif
+
+If nRecOs == 0
+	xQuery := ChangeQuery(xQuery)
+	TCQuery xQuery NEW ALIAS "TRBSTJ"
+Else
+	dbSelectArea("STJ")
+	dbGoTo(nRecOS)
+	aCampos  := {}
+	AAdd(aCAMPOS,{"TJ_FILIAL" ,"C",02,0})
+	AAdd(aCAMPOS,{"TJ_ORDEM"  ,"C",06,0})
+	AAdd(aCAMPOS,{"TJ_PLANO"  ,"C",06,0})
+	AAdd(aCAMPOS,{"TJ_TIPOOS" ,"C",01,0})
+	AAdd(aCAMPOS,{"TJ_CODBEM" ,"C",06,0})
+	AAdd(aCAMPOS,{"TJ_SERVICO","C",06,0})
+	AAdd(aCAMPOS,{"TJ_SEQRELA","C",03,0})
+	
+	cTrb := CriaTrab(aCampos)
+	dbUseArea(.T.,,cTrb,"TRBSTJ",.f.)
+	DbSelectArea("TRBSTJ")
+	TRBSTJ->(DbAppend())
+	TRBSTJ->TJ_FILIAL  := STJ->TJ_FILIAL
+	TRBSTJ->TJ_ORDEM   := STJ->TJ_ORDEM
+	TRBSTJ->TJ_PLANO   := STJ->TJ_PLANO
+	TRBSTJ->TJ_TIPOOS  := STJ->TJ_TIPOOS
+	TRBSTJ->TJ_CODBEM  := STJ->TJ_CODBEM
+	TRBSTJ->TJ_SERVICO := STJ->TJ_SERVICO
+	TRBSTJ->TJ_SEQRELA := STJ->TJ_SEQRELA
+Endif
+
+TRBSTJ->(dbGotop())
+ProcRegua(LastRec())
+While !TRBSTJ->(Eof())
+   IncProc()
+   DbSelectArea("STJ")
+   DbSetOrder(1)
+   If DbSeek(xFilial("STJ")+TRBSTJ->TJ_ORDEM+TRBSTJ->TJ_PLANO)
+      If aMATOS <> Nil
+		  nPosOs := aSCAN(aMATOS, {|x| x[1]+x[2] == TRBSTJ->TJ_PLANO+TRBSTJ->TJ_ORDEM})
+      
+	  	  If nPosOs > 0
+	  	     m_pag   := 0
+		      Lin     := 4000
+		      aArInsu := {}
+		      aArInsR := {}
+		
+		      MNTRSIMCAB() // CABECALHO
+		      oPrint:Say(Lin-45,020,STR0019+"..: ",oFontMN)
+		      MNTRSIMMEM()
+		      MNTRSIMCAB()
+		
+		      oPrint:Line(Lin,0010,Lin,2335)
+		
+		      DbSelectArea("STL")
+		      DbSetOrder(1)
+		      If DbSeek(xFilial("STL")+TRBSTJ->TJ_ORDEM+TRBSTJ->TJ_PLANO)
+		         While !Eof() .And. STL->TL_FILIAL = xFILIAL('STL') .And. STL->TL_ORDEM = STJ->TJ_ORDEM;
+		            .And. STL->TL_PLANO = STJ->TJ_PLANO
+		            
+		            //TESTE   
+		            If STL->TL_TIPOREG <> "P"	
+			            vVETHORAS := NGTQUATINS(STL->TL_CODIGO,STL->TL_TIPOREG,STL->TL_USACALE,;
+															STL->TL_QUANTID,STL->TL_TIPOHOR,STL->TL_DTINICI,;
+															STL->TL_HOINICI,STL->TL_DTFIM,STL->TL_HOFIM,STL->TL_UNIDADE)
+							nQTDIns := NGRHODSEXN(vVETHORAS[1],"D")
+						Else
+							nQTDIns := STL->TL_QUANTID
+		            EndIf
+		            //FIM TESTE           
+		            
+		            If Alltrim(STL->TL_SEQRELA) = '0'
+		               Aadd(aArInsu,{stl->tl_tarefa,stl->tl_tiporeg,stl->tl_codigo,;
+		                             stl->tl_quanrec,nQTDIns,stl->tl_unidade,;
+		                             stl->tl_dtinici,stl->tl_hoinici,stl->tl_dtfim,;
+		                             stl->tl_hofim})
+		            Else
+		               Aadd(aArInsR,{stl->tl_tarefa,stl->tl_tiporeg,stl->tl_codigo,;
+		                             stl->tl_quanrec,nQTDIns,stl->tl_unidade,;
+		                             stl->tl_dtinici,stl->tl_hoinici,stl->tl_dtfim,;
+		                             stl->tl_hofim})
+		            Endif
+		            Dbskip()
+		         End
+		      Endif
+		
+		      nReal := 2
+		      If Len(aArInsu) >=  Len(aArInsR)
+			      nReal := Len(aArInsu) + 2
+			   Else
+			   	nReal := Len(aArInsR) + 2
+			   EndIf
+		      
+		      MNTRSIMITL(STR0020,If(Len(aArInsu) == 0,1,Len(aArInsu)),aArInsu)
+		      MNTRSIMITL(STR0021,nReal,aArInsR)
+		      
+		      MNTRSIMCAB(100)
+		
+		      oPrint:Say(Lin,100,STR0039,oFontMN)
+		      MNTRSIMCAB()
+		      oPrint:Say(Lin,100,STR0040,oFontMN)
+	  	  EndIf
+	  Else
+		  Lin     := 4000
+		  aArInsu := {}
+		  aArInsR := {}
+		
+		  MNTRSIMCAB() // CABECALHO
+		  oPrint:Say(Lin-45,020,STR0019+"..: ",oFontMN)
+		  MNTRSIMMEM()
+		  MNTRSIMCAB()
+		
+		  oPrint:Line(Lin,0010,Lin,2335)
+		
+		  DbSelectArea("STL")
+		  DbSetOrder(1)
+		  If DbSeek(xFilial("STL")+TRBSTJ->TJ_ORDEM+TRBSTJ->TJ_PLANO)
+		     While !Eof() .And. STL->TL_FILIAL = xFILIAL('STL') .And. STL->TL_ORDEM = STJ->TJ_ORDEM;
+		         .And. STL->TL_PLANO = STJ->TJ_PLANO
+		            
+		         //TESTE   
+		         If STL->TL_TIPOREG <> "P"	
+			        vVETHORAS := NGTQUATINS(STL->TL_CODIGO,STL->TL_TIPOREG,STL->TL_USACALE,;
+													STL->TL_QUANTID,STL->TL_TIPOHOR,STL->TL_DTINICI,;
+													STL->TL_HOINICI,STL->TL_DTFIM,STL->TL_HOFIM,STL->TL_UNIDADE)
+					nQTDIns := NGRHODSEXN(vVETHORAS[1],"D")
+				Else
+					nQTDIns := STL->TL_QUANTID
+		        EndIf
+		        //FIM TESTE           
+		            
+		        If Alltrim(STL->TL_SEQRELA) = '0'
+		             Aadd(aArInsu,{stl->tl_tarefa,stl->tl_tiporeg,stl->tl_codigo,;
+		                           stl->tl_quanrec,nQTDIns,stl->tl_unidade,;
+		                           stl->tl_dtinici,stl->tl_hoinici,stl->tl_dtfim,;
+		                           stl->tl_hofim})
+		        Else
+		             Aadd(aArInsR,{stl->tl_tarefa,stl->tl_tiporeg,stl->tl_codigo,;
+		                           stl->tl_quanrec,nQTDIns,stl->tl_unidade,;
+		                           stl->tl_dtinici,stl->tl_hoinici,stl->tl_dtfim,;
+		                           stl->tl_hofim})
+		        Endif
+		        Dbskip()
+		     End
+		  Endif
+		
+		  nReal := 2
+		  If Len(aArInsu) >=  Len(aArInsR)
+		     nReal := Len(aArInsu) + 2
+		  Else
+		  	nReal := Len(aArInsR) + 2
+		  EndIf
+		      
+		  MNTRSIMITL(STR0020,If(Len(aArInsu) == 0,1,Len(aArInsu)),aArInsu)
+		  MNTRSIMITL(STR0021,nReal,aArInsR)
+		      
+		  MNTRSIMCAB(100)
+		
+		  oPrint:Say(Lin,100,STR0039,oFontMN)
+		  MNTRSIMCAB()
+		  oPrint:Say(Lin,100,STR0040,oFontMN)	
+	  EndIf
+   Endif
+
+   oPrint:EndPage()
+   DbSelectArea("TRBSTJ")
+   DbSkip()
+
+End
+oPrint:Preview()
+dbSelectArea("TRBSTJ")
+dbCloseArea()
+dbSelectArea("STJ")
+Return
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³MNT676SX1 ºAutor  ³Roger Rodrigues     º Data ³  16/12/10   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³Faz criacao do SX1 do relatorio                             º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³MNTR676                                                     º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+User Function MNT676SX1(cPerg)
+Local aPerg := {}
+Local aArea := GetArea()
+
+dbSelectArea("SX1")
+dbSetOrder(1)
+If !dbSeek(cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"01") .Or. SX1->X1_PERGUNT <> STR0058
+	If NGSX1ORDEM("01",2,"MNT676")	
+	   RecLock("SX1",.T.)
+	   SX1->X1_GRUPO   := cPerg
+	   SX1->X1_ORDEM   := "01"
+	   SX1->X1_PERGUNT := STR0058
+	   SX1->X1_PERSPA  := STR0058
+	   SX1->X1_PERENG  := STR0058
+	   SX1->X1_VARIAVL := "MV_CH1"
+	   SX1->X1_TIPO    := "C"
+	   SX1->X1_TAMANHO := 06
+	   SX1->X1_GSC     := "G"
+	   SX1->X1_VALID   := "If(empty(mv_par01),.t.,ExistCpo('STI',mv_par01))"
+	   SX1->X1_VAR01   := "MV_PAR01"
+	   SX1->X1_CNT01   := ""
+	   SX1->X1_F3      := "STI"
+	   SX1->X1_PYME    := "N"
+	   MsUnLock("SX1")
+	   NgHelp("."+cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"01.","Informe a partir de qual Plano de Manutenção deve constar no relatório. Pressione a tecla [F3]+[Enter] para selecionar um Plano de Manutenção ou deixe em branco para selecionar a partir do primeiro disponivel.",.T.)
+	EndIf
+EndIf
+If !dbSeek(cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"02") .Or. SX1->X1_PERGUNT <> STR0059
+   RecLock("SX1",.T.)
+   SX1->X1_GRUPO   := cPerg
+   SX1->X1_ORDEM   := "02"
+   SX1->X1_PERGUNT := STR0059
+   SX1->X1_PERSPA  := STR0059
+   SX1->X1_PERENG  := STR0059
+   SX1->X1_VARIAVL := "MV_CH2"
+   SX1->X1_TIPO    := "C"
+   SX1->X1_TAMANHO := 06
+   SX1->X1_GSC     := "G"
+   SX1->X1_VALID   := "If(atecodigo('STI',mv_par01,mv_par02),.t.,.f.)"
+   SX1->X1_VAR01   := "MV_PAR02"
+   SX1->X1_CNT01   := "ZZZZZZ"
+   SX1->X1_F3      := "STI"
+   SX1->X1_PYME    := "N"
+   MsUnLock("SX1")
+   NgHelp("."+cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"02.","Informe até qual Plano de Manutenção deve constar no relatório. Pressione a tecla [F3] para selecionar um Plano de Manutenção ou digite ZZZZZZ neste campo e o acima em branco para considerar todos os Planos de Manutenção.",.T.)
+EndIf
+If !Dbseek(cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"03")
+   Aadd(aPerg,{STR0003,"C",16,0,"If(empty(mv_par03),.t.,ExistCpo('ST9',mv_par03))"  ,"ST9","G"})
+   Aadd(aPerg,{STR0004,"C",16,0,"If(atecodigo('ST9',mv_par03,mv_par04,16),.t.,.f.)" ,"ST9","G"})
+   Aadd(aPerg,{STR0005,"C",06,0,"If(empty(mv_par05),.t.,ExistCpo('STJ',mv_par05))"  ,"STJ","G"})
+   Aadd(aPerg,{STR0006,"C",06,0,"If(atecodigo('STJ',mv_par05,mv_par06,6),.t.,.f.)"  ,"STJ","G"})
+   Aadd(aPerg,{STR0007,"D",08,0,"naovazio()"                                        ,""   ,"G"})
+   Aadd(aPerg,{STR0008,"D",08,0,"(mv_par08 >= mv_par07)"                            ,""   ,"G"})
+   NgChkSx1(cPerg,aPerg)
+EndIf
+If dbSeek(cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"03") .and. SX1->X1_PERGUNT <> STR0003
+	RecLock("SX1",.F.)
+	SX1->X1_PERGUNT := STR0003
+   SX1->X1_PERSPA  := STR0003
+   SX1->X1_PERENG  := STR0003
+	MsUnLock("SX1")
+Endif
+If dbSeek(cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"04") .and. SX1->X1_PERGUNT <> STR0004
+	RecLock("SX1",.F.)
+	SX1->X1_PERGUNT := STR0004
+   SX1->X1_PERSPA  := STR0004
+   SX1->X1_PERENG  := STR0004
+	MsUnLock("SX1")
+EndIf
+if dbSeek(cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"05") .and. SX1->X1_PERGUNT <> STR0005
+	RecLock("SX1",.F.)
+	SX1->X1_PERGUNT := STR0005
+   SX1->X1_PERSPA  := STR0005
+   SX1->X1_PERENG  := STR0005
+	MsUnLock("SX1")
+EndIf
+if dbSeek(cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"06") .and. SX1->X1_PERGUNT <> STR0006
+	RecLock("SX1",.F.)
+	SX1->X1_PERGUNT := STR0006
+   SX1->X1_PERSPA  := STR0006
+   SX1->X1_PERENG  := STR0006
+	MsUnLock("SX1")
+EndIf
+if dbSeek(cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"07") .and. SX1->X1_PERGUNT <> STR0007
+	RecLock("SX1",.F.)
+	SX1->X1_PERGUNT := STR0007
+   SX1->X1_PERSPA  := STR0007
+   SX1->X1_PERENG  := STR0007
+	MsUnLock("SX1")
+EndIf
+if dbSeek(cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"08") .and. SX1->X1_PERGUNT <> STR0008
+	RecLock("SX1",.F.)
+	SX1->X1_PERGUNT := STR0008
+   SX1->X1_PERSPA  := STR0008
+   SX1->X1_PERENG  := STR0008
+	MsUnLock("SX1")
+Endif
+If !dbSeek(cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"09")
+   RecLock("SX1",.T.)
+   SX1->X1_GRUPO   := cPerg
+   SX1->X1_ORDEM   := "09"
+   SX1->X1_PERGUNT := "Imprimir Localização ?"
+   SX1->X1_PERSPA  := "Imprimir Localização ?"
+   SX1->X1_PERENG  := "Imprimir Localização ?"
+   SX1->X1_VARIAVL := "MV_CH7"
+   SX1->X1_TIPO    := "N"
+   SX1->X1_TAMANHO := 01 
+   SX1->X1_PRESEL  := 0
+   SX1->X1_GSC     := "C"
+   SX1->X1_VALID   := "naovazio()"
+   SX1->X1_DEF01   := "Sim"
+   SX1->X1_DEFSPA1 := "Si"
+   SX1->X1_DEFENG1 := "Yes"
+   SX1->X1_DEF02   := "Nao"
+   SX1->X1_DEFSPA2 := "No"
+   SX1->X1_DEFENG2 := "No"
+   SX1->X1_VAR01   := "MV_PAR09"
+   SX1->X1_PYME    := "N"
+   SX1->X1_HELP    := ".MNT67609."
+   MsUnLock("SX1")
+   NgHelp("."+cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"09.","Informe se deve imprimir a localização:"+chr(13)+chr(10)+"- Sim"+chr(10)+"- Não",.T.)
+Else
+	If SX1->X1_HELP <> "."+cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"09."
+		NgHelp("."+cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"09.","Informe se deve imprimir a localização:"+chr(13)+chr(10)+"- Sim"+chr(10)+"- Não",.T.)
+	Endif
+EndIf
+If !dbSeek(cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"10")
+   RecLock("SX1",.T.)
+   SX1->X1_GRUPO   := cPerg
+   SX1->X1_ORDEM   := "10"
+   SX1->X1_PERGUNT := STR0060
+   SX1->X1_PERSPA  := STR0060
+   SX1->X1_PERENG  := STR0060
+   SX1->X1_VARIAVL := "MV_CHA"
+   SX1->X1_TIPO    := "N"
+   SX1->X1_TAMANHO := 01 
+   SX1->X1_PRESEL  := 3
+   SX1->X1_GSC     := "C"
+   SX1->X1_VALID   := "naovazio()"
+   SX1->X1_DEF01   := "Liberada"
+   SX1->X1_DEFSPA1 := "Liberada"
+   SX1->X1_DEFENG1 := "Liberada"
+   SX1->X1_DEF02   := "Pendente"
+   SX1->X1_DEFSPA2 := "Pendente"
+   SX1->X1_DEFENG2 := "Pendente"
+   SX1->X1_DEF03   := "Todas"
+   SX1->X1_DEFSPA3 := "Todas"
+   SX1->X1_DEFENG3 := "Todas"
+   SX1->X1_VAR01   := "MV_PAR10"
+   SX1->X1_PYME    := "N"
+   SX1->X1_HELP    := ".MNT67610."
+   MsUnLock("SX1")
+   NgHelp("."+cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"10.","Informe que tipo de O.S.deve ser impressa: "+chr(13)+chr(10)+"- Liberada"+chr(10)+"- Pendente"+chr(10)+"- Todas",.T.) 
+EndIf
+NgHelp('.'+cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"03"+'.',"Informe a partir de qual Bem deve constar no relatório. Pressione a tecla [F3] para selecionar um Bem.",.T.)
+NgHelp('.'+cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"04"+'.',"Informe até qual Bem deve constar no relatório. Pressione a tecla [F3] para selecionar um Bem ou digite ZZZZZZ neste campo e o acima em branco para considerar todos os Bens.",.T.)
+NgHelp('.'+cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"05"+'.',"Informe a partir de qual Ordem de Serviço deve constar no relatório. Pressione a tecla [F3] para selecionar uma Ordem de Serviço.",.T.)
+NgHelp('.'+cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"06"+'.',"Informe até qual Ordem de Serviço deve constar no relatório. Pressione a tecla [F3] para selecionar a Ordem de Serviço desejada ou digite ZZZZZZ neste campo e o acima em branco para considerar todas as Ordens de Serviço.",.T.)
+NgHelp('.'+cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"07"+'.',"Informe um determinado período de data início da Ordem de Serviço.",.T.)
+NgHelp('.'+cPerg+Space(Len(SX1->X1_GRUPO)-Len(cPerg))+"08"+'.',"Informe um determinado período de data fim da Ordem de Serviço.",.T.)
+
+RestArea(aArea)
+
+Return .T.

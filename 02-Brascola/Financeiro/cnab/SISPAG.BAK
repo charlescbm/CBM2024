@@ -1,0 +1,308 @@
+#include "rwmake.ch"  
+
+//Funcoes para o SisPag do Itau, desenvolvido por Rafael
+
+User Function SISPAG()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+
+dbselectarea("SE2")
+
+If SUBSTR(SE2->E2_CODBAR,34,4) <> "0" .AND. Len(ALLTRIM(SE2->E2_CODBAR)) == 47
+	V_Return := SUBSTR(SE2->E2_CODBAR,5,5) + SUBSTR(SE2->E2_CODBAR,11,10) + SUBSTR(SE2->E2_CODBAR,22,10)
+ELSE
+	V_Return := SUBSTR(SE2->E2_CODBAR,20,25)
+ENDIF
+
+Return (V_Return)
+
+******************************************************************************************************************
+
+User Function ACHABCO()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+
+dbselectarea("SA6")
+dbsetorder(1)
+
+dbseek(xFilial("SA6")+"399",.t.)
+
+V_Return := SA6->A6_COD
+
+Return (V_Return)
+
+******************************************************************************************************************
+
+User Function SISDTATU()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+
+
+V_Return := STRZERO(DAY(DDATABASE),2) + STRZERO(MONTH(DDATABASE),2) + STRZERO(YEAR(DDATABASE),4)
+
+
+Return (V_Return)
+
+******************************************************************************************************************
+
+User Function DTSE2VEN()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+
+
+V_Return := STRZERO(DAY(SE2->E2_VENCREA),2) + STRZERO(MONTH(SE2->E2_VENCREA),2) + STRZERO(YEAR(SE2->E2_VENCREA),4)
+
+
+Return (V_Return)
+
+******************************************************************************************************************
+
+User Function DTSE2EMIS()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+
+
+V_Return := STRZERO(DAY(SE2->E2_EMISSAO),2) + STRZERO(MONTH(SE2->E2_EMISSAO),2) + STRZERO(YEAR(SE2->E2_EMISSAO),4)
+
+
+Return (V_Return)
+
+******************************************************************************************************************
+
+User Function ACHABCOF()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+
+dbselectarea("SA2")
+dbsetorder(1)
+
+dbseek(xFilial("SA2")+SE2->E2_FORNECE+SE2->E2_LOJA)
+
+V_Return := SA2->A2_BANCO
+
+Return (V_Return)
+
+******************************************************************************************************************
+
+User Function ACHAAGEF()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+
+dbselectarea("SA2")
+dbsetorder(1)
+
+dbseek(xFilial("SA2")+SE2->E2_FORNECE+SE2->E2_LOJA)
+
+/*
+If SA2->A2_BANCO = "341"
+	V_Return := "0" + SUBSTR(SA2->A2_AGENCIA,1,4) + " " + "0000000" +  SUBSTR(SA2->A2_NUMCON,1,5) + " " + SUBSTR(SA2->A2_CCDIGIT,1,1)
+Else
+	V_Return := STRZERO(Val(SA2->A2_AGENCIA),5) + " " + STRZERO(Val(SA2->A2_NUMCON),12) + " " + SUBSTR(SA2->A2_CCDIGIT,1,1)
+EndIf
+*/
+
+If SA2->A2_BANCO = "399"
+	V_Return := "0" + SUBSTR(SA2->A2_AGENCIA,1,4) + " " + "0000000" +  SUBSTR(SA2->A2_NUMCON,1,5) + " " + SUBSTR(SA2->A2_NUMCON,7,1)
+Else
+	V_Return := STRZERO(Val(SA2->A2_AGENCIA),5) + " " + STRZERO(Val(SUBSTR(SA2->A2_NUMCON,1,7)),12) + " " + SUBSTR(SA2->A2_NUMCON,9,1)
+EndIf
+
+
+Return (V_Return)
+
+******************************************************************************************************************
+
+User Function ACHACCF()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+
+dbselectarea("SA2")
+dbsetorder(1)
+
+dbseek(xFilial("SA2")+SE2->E2_FORNECE+SE2->E2_LOJA)
+V_Return := "0" + STRZERO(VAL(SA2->A2_AGENCIA),4) + " " + StrZero(Val(StrTran(SUBSTR(SA2->A2_NUMCON,1,AT("-", SA2->A2_NUMCON) - 1), ".", "")), 12) + " " + SUBSTR(SA2->A2_NUMCON,AT("-", SA2->A2_NUMCON) + 1,1)
+
+Return (V_Return)
+
+******************************************************************************************************************
+
+User Function ACHACGCF()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+
+dbselectarea("SA2")
+dbsetorder(1)
+
+dbseek(xFilial("SA2")+SE2->E2_FORNECE+SE2->E2_LOJA)
+
+V_Return := SA2->A2_CGC
+
+Return (V_Return)
+
+******************************************************************************************************************
+
+User Function ACHATIME()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+
+TIME := TIME()
+V_Return := SUBSTR(TIME,1,2) + SUBSTR(TIME,4,2) + SUBSTR(TIME,7,2)
+
+Return (V_Return)
+
+******************************************************************************************************************
+
+User Function ACHANOMF()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+
+dbselectarea("SA2")
+dbsetorder(1)
+
+dbseek(xFilial("SA2")+SE2->E2_FORNECE+SE2->E2_LOJA)
+
+V_Return := SA2->A2_NOME
+
+Return (V_Return)
+
+******************************************************************************************************************
+
+User Function SDESCONT()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+
+dbselectarea("SE2")
+
+V_Return := SE2->E2_VALOR - SE2->E2_DESCONT - SE2->E2_DECRESC + SE2->E2_MULTA + SE2->E2_ACRESC
+V_R := STRZERO(V_Return*100,15)
+
+Return (V_R)
+
+******************************************************************************************************************
+
+User Function SDESCON2()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+
+dbselectarea("SE2")
+
+V_Return := SE2->E2_VALOR
+V_R := STRZERO(V_Return*100,10)
+
+Return (V_R)
+
+******************************************************************************************************************
+
+User Function SVALCODS()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+
+dbselectarea("SE2")
+
+
+If VAL(SUBSTR(SE2->E2_CODBAR,38,10)) <> 0 .AND. Len(ALLTRIM(SE2->E2_CODBAR)) == 47
+		V_Return := Val(SUBSTR(SE2->E2_CODBAR,38,10))
+		V_R := alltrim(STRZERO(V_Return,10))
+ELSEIF VAL(SUBSTR(SE2->E2_CODBAR,10,10)) <> 0 .AND. Len(ALLTRIM(SE2->E2_CODBAR)) == 44
+		V_Return := Val(SUBSTR(SE2->E2_CODBAR,10,10))
+		V_R := alltrim(STRZERO(V_Return,10))
+Else
+	V_R := "0000000000"   //STRZERO(SE2->E2_SALDO*100,10)
+EndIf
+
+Return (V_R)
+
+******************************************************************************************************************
+
+User Function SVENCCOD()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+
+dbselectarea("SE2")
+
+If SUBSTR(SE2->E2_CODBAR,34,4) <> "0" .AND. Len(ALLTRIM(SE2->E2_CODBAR)) == 47
+	V_Return := Val(SUBSTR(SE2->E2_CODBAR,34,4))
+	V_R := alltrim(STRZERO(V_Return,4))
+ELSEIF SUBSTR(SE2->E2_CODBAR,6,4) <> "0" .AND. Len(ALLTRIM(SE2->E2_CODBAR)) == 44
+	V_Return := Val(SUBSTR(SE2->E2_CODBAR,6,4))
+	V_R := alltrim(STRZERO(V_Return,4))
+Else
+//	_cvrdti:=ctod("07/10/97")
+	V_R := "0000"    //SE2->E2_VENCTO-_cvrdti
+EndIf
+
+Return (V_R)
+
+******************************************************************************************************************
+User Function SDAC()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+
+dbselectarea("SE2")
+
+IF Len(ALLTRIM(SE2->E2_CODBAR)) == 47
+	V_R := SUBSTR(SE2->E2_CODBAR,33,1)
+ELSE
+	V_R := SUBSTR(SE2->E2_CODBAR,5,1)
+ENDIF
+
+Return (V_R)
+
+******************************************************************************************************************
+
+User Function Inclote1()
+
+SetPrvt("v_lote1")
+
+dbselectarea("SEE")
+dbseek(xFilial("SEE") + SEA->EA_PORTADO + SEA->EA_AGEDEP + SEA->EA_NUMCON)
+
+if Alltrim(SEE->EE_LOTE) == ""
+	RecLock("SEE",.f.)
+	SEE->EE_LOTE := "0000"
+	MsUnlock()
+Endif
+
+RecLock("SEE",.f.)
+SEE->EE_LOTE := strzero(Val(SEE->EE_LOTE) + 1,4)
+MsUnlock()
+
+v_lote1 := SEE->EE_LOTE
+
+Return(v_lote1)
+
+*****************************************************************************************
+
+User Function LoteFinal()
+
+SetPrvt("v_lote")
+
+v_lote := "9999"
+
+dbselectarea("SEE")
+
+RecLock("SEE",.f.)
+SEE->EE_LOTE := "0000"
+MsUnlock()
+
+Return(v_lote)
+
+
+
+User Function ACHACNPJ()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+
+V_RETURN := ""
+
+DO CASE
+	CASE SM0->M0_CODIGO = "01"
+		V_Return := "48865828000139"
+	CASE SM0->M0_CODIGO = "08"
+		V_Return := "05599283000153"
+	CASE SM0->M0_CODIGO = "09"
+		V_Return := "55063333000151"
+	CASE SM0->M0_CODIGO = "10"
+		V_Return := "08758103000127"
+ENDCASE		
+
+Return (V_Return)
+
+
+User Function ACHANOM()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+V_RETURN := SM0->M0_NomeCom
+Return (V_Return)
+
+******************************************************************************************************************
+
+User Function ACHATRIB()        // incluido pelo assistente de conversao do AP6 IDE em 16/07/02
+
+SEA->(dbsetorder(1))
+SEA->(dbseek(xFilial("SEA") + SE2->E2_NUMBOR + SE2->E2_PREFIXO + SE2->E2_NUM + SE2->E2_PARCELA + SE2->E2_TIPO + SE2->E2_FORNECE + SE2->E2_LOJA))
+v_Return := ""
+
+If SEA->Ea_Modelo == "17"
+	v_Return := "01"
+ElseIf SEA->Ea_Modelo == "16"
+	v_Return := "02" + SE2->E2_CodRet + "2" + SM0->M0_CGC 
+	v_Return += Right(SE2->(DtoS(E2_Vencto)), 2) + Substr(SE2->(DtoS(E2_Vencto)), 5, 2)  + Left(SE2->(DtoS(E2_Vencto)), 4)	
+	v_Return += Replicate("0", 17) + SE2->(StrZero(E2_Valor * 100, 14))
+	v_Return += StrZero(0, 14) + StrZero(0, 14) + SE2->(StrZero(E2_Valor * 100, 14)) 
+	v_Return += Right(SE2->(DtoS(E2_Vencto)), 2) + Substr(SE2->(DtoS(E2_Vencto)), 5, 2)  + Left(SE2->(DtoS(E2_Vencto)), 4)
+	v_Return += Right(SE2->(DtoS(E2_VencRea)), 2) + Substr(SE2->(DtoS(E2_VencRea)), 5, 2) + Left(SE2->(DtoS(E2_VencRea)), 4)
+	v_Return += Space(30) + SM0->(Left(M0_NOMECOM, 30))
+ElseIf SEA->Ea_Modelo == "18"
+	v_Return := "03"
+ElseIf SEA->Ea_Modelo == "21"
+	v_Return := "04"
+EndIf
+
+Return (V_Return)
+
+******************************************************************************************************************

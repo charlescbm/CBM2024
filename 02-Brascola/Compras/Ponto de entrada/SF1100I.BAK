@@ -1,0 +1,13 @@
+User Function SF1100I()
+********************
+
+MsgStop("PASSEI AKI")
+
+If (Type("oWS") != "U")
+      
+	MsgStop("ACHEI AKI")
+	
+Endif
+
+
+Return

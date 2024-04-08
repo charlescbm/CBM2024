@@ -1,0 +1,137 @@
+#include "rwmake.ch"
+#include "protheus.ch"
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³ME4_COND  ºAutor  ³Microsiga           º Data ³  29/12/11   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Ponto de entrada para validar e alterar a condicao de      º±±
+±±º          ³ pagamento, caso a parcela for inferior ao definido no      º±±
+±±º          ³ parametro  BR_VALMIN.                                      º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP                                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+User Function ME4_COND(lAuton)
+**************************
+
+
+
+Local aArea   := GetArea()
+
+Local oBtnSE4 := Nil
+Local oSaySE4 := Nil
+Local aSizFrm := {}
+
+Local lAuton       := If(lAuton == NIL,{.F.},lAuton)
+
+Private cCond   := SF2->F2_COND
+Private nTotFat := 0
+Private oDlgSE4
+Private oListBox := Nil
+Private aParc := {}  
+
+
+return
+
+
+if !Upper(AllTrim(FunName())) $  "MATA460/MATA460A"
+    RETURN
+ENDIF
+    
+
+
+
+//CRIA O PARAMETRO CASO NÃO EXISTA.
+SX6->(DbSetOrder(1))
+If !SX6->(dbSeek(xFilial("sx6")+"BR_VALMIN"))
+	RecLock("SX6",.t.)
+	SX6->X6_FIL     := ""
+	SX6->X6_VAR     := "BR_VALMIN"
+	SX6->X6_DESCRIC := "ESPECIFICO BRASCOLA - DEFINE O VALOR MINIMO DA    "
+	SX6->X6_DESC1   := "FPARCELA. UTLIZADO NO FATURAMENTO (MATA461), PONTO"
+	SX6->X6_DESC2   := "DE ENTRADA ME4_COND."
+	SX6->X6_TIPO    := "N"
+	SX6->X6_CONTEUD := "0.01"
+	MsUnLock()()
+EndIf
+
+dbSelectArea("SD2")
+dbSetOrder(3)
+dbGoTop()
+If dbSeek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE)
+	While !Eof() .And. SD2->D2_FILIAL == xFilial("SD2");
+				 .And. SD2->D2_DOC == SF2->F2_DOC;
+				 .And. SD2->D2_SERIE == SF2->F2_SERIE
+			
+		If SUBSTR(SD2->D2_CF,2,3) $ GetMv("BR_VALCFOP") .And. SD2->D2_TP == '3 '
+			nTotFat += SD2->D2_TOTAL
+		EndIf
+		
+		dbSelectArea("SD2")
+		SD2->(dbSkip())
+	EndDo
+EndIf
+
+If GetMV("BR_VALMIN") > 0 .And. nTotFat > 0  //se o valor minimo for zero não faz sentido.
+	aSizFrm := MsAdvSize()  
+	
+	If cCond <> '000' .and. cCond <> '001'.and. cCond <> '060'
+	
+		aParc :=  Condicao(nTotFat,cCond,0)
+		While .t.
+			If aParc[1,2] < GetMV("BR_VALMIN")
+				
+				DEFINE FONT oFont NAME "Arial" SIZE 000,-012 BOLD
+				DEFINE MSDIALOG oDlgSE4 TITLE "Condição de pagamento" FROM 000, 000 TO aSizFrm[6]*60/110 ,aSizFrm[5]*50/110 COLORS 0, 15658734 PIXEL
+				
+				@ 010, 015 SAY oSaySE4 prompt "O valor da Parcela deve ser maior que R$ " + Alltrim(Transform(GetMV("BR_VALMIN"),"@E 999,999,999.99"))+"." SIZE 275, 007 OF oDlgSE4 PIXEL FONT oFont
+				@ 025, 015 Say oSaySE4 prompt "Escolha outra Condição de pagamento:" SIZE 175, 007 OF oDlgSE4 PIXEL FONT oFont
+				@ 043, 017 MSGET cCond F3 "SE4" Valid VldCond() SIZE 050, 011 OF oDlgSE4 PIXEL PIXEL FONT oFont
+				
+				@ 025, 135 LISTBOX oListBox Fields,;
+				HEADER           "Vencimento",		"Valor"		SIZE 160, 150 OF oDlgSE4 PIXEL ColSizes 50,50
+				/*Largura*//*Altura*/
+				oListBox:SetArray(aParc)
+				oListBox:bLine := {|| {	aParc[oListBox:nAt][1],;
+				Transform(aParc[oListBox:nAt][2],"@E 999,999,999,999.99") }}
+				oListBox:Refresh()
+				
+				@ 070, 030 BUTTON oBtnSE4 PROMPT "Ok" SIZE 046, 013 OF oDlgSE4 Action {|| oDlgSE4:End()}PIXEL
+				
+				ACTIVATE MSDIALOG oDlgSE4 CENTERED
+			EndIf
+			aParc :=  Condicao(nTotFat,cCond,0)
+			If aParc[1,2] >= GetMV("BR_VALMIN")
+				Exit
+			EndIf
+		End
+	Endif
+EndIf
+
+aRet := { SE4->E4_CODIGO, SE4->E4_COND , SE4->E4_TIPO, SE4->E4_DDD, SE4->E4_IPI, SE4->E4_SOLID }
+
+RestArea(aArea)
+
+Return(aRet)
+
+//VALIDA A NOVA CONDICAO DE PAGAMENTO.
+Static Function VldCond()
+SE4->(DbSetOrder(1))
+If SE4->(DbSeek(xFilial("SE4")+cCond))
+	aParc :=  Condicao(nTotFat,cCond,0)
+	oListBox:SetArray(aParc)
+	oListBox:bLine := {|| {	aParc[oListBox:nAt][1],;
+	Transform(aParc[oListBox:nAt][2],"@E 999,999,999,999.99") }}
+	oListBox:Refresh()
+	lRet := .t.
+Else
+	MsgBox ("Condicao de Pagamento invalida.","Atencao","ALERT")
+	lRet := .f.
+EndIf
+Return(lRet)

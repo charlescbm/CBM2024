@@ -1,0 +1,31 @@
+# INCLUDE "RWMAKE.CH"  
+
+/*/
+----------------------------------------------------------------------------
+PROGRAMA: BCFGV003        AUTOR: FERNANDO S. MAIA           DATA: 14/12/11
+----------------------------------------------------------------------------
+
+DESCRICAO: Controla acesso aos cadastros
+
+----------------------------------------------------------------------------
+CONTROLE DE ALTERACOES
+
+DATA:                     AUTOR:
+OBJETIVO:
+----------------------------------------------------------------------------
+/*/ 
+ 
+User Function BCFGV003()  
+
+cTitulo:= "Cadastro de Armazem" 
+cMensagem:= "Usuário sem permissão para movimentar "
+cParam:= "BR_CADASS1"       
+
+If  AllTrim(Upper(cUsername)) $ Upper(GetMv(cParam))
+	MSExecAuto({|x,y,z| MATA020(x,y,z)},,,3)
+Else
+	Aviso(cTitulo,cMensagem+cTitulo,{"&Ok"},,"Usuário : "+AllTrim(cUserName))
+	lOk	:= .f.
+EndIf
+
+Return   

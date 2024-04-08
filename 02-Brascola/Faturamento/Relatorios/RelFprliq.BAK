@@ -1,0 +1,351 @@
+#INCLUDE "Protheus.ch"                        
+#INCLUDE "TopConn.ch"
+#INCLUDE "TbiConn.ch"
+#INCLUDE "Font.ch"
+  
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³Relftpl Rodolfo Gaboardi 06/01/2011                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Relatório de Fatuamento liquido produto                    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Especifico Brascola                                        ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+User Function RelFprliq()
+************************
+Local aAreaAtu	:= GetArea()
+Local cCadastro	:= "Relatório de Faturamento Mensal p/Produto Liquido"
+Local nProcessa	:= 3
+Local lJob		:= .t.
+Local cDesc1    := "Este programa tem como objetivo imprimir relatorio "
+Local cDesc2    := "de acordo com os parametros informados pelo usuario."
+Local cDesc3    := "Relatório de Faturamento Mensal p/ produto liquido"
+Local cPict     := ""
+Local cString   := ""
+
+Private Titulo  := "Relatório de Faturamento Mensal p/ produto liquido"
+Private nLin    := 99
+Private Imprime := .T.
+Private aOrd    := {}
+Private cAnoAx  := ""
+Private Cabec1  := ""
+Private Cabec2  := ""
+Private lEnd         := .F. 
+Private lAbortPrint  := .F.
+Private CbTxt        := ""
+Private limite       := 220
+Private tamanho      := "G"
+Private nomeprog     := "RelFprliq"
+Private nTipo        := 15
+Private aReturn      := { "Zebrado", 1, "Administracao", 2, 2, 1, "", 1}
+Private nLastKey     := 0
+Private cPerg        := U_CriaPerg("RFPLIQ")
+Private cbtxt        := Space(10)
+Private cbcont       := 00
+Private CONTFL       := 01
+Private m_pag        := 01
+Private wnrel        := "RELFPRLIQ"
+Private aRegs        := {}
+
+ValPergunte(cPerg)
+
+wnrel:= SetPrint(cString,wnrel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.f.)
+
+If nLastKey == 27
+	Return
+EndIf
+
+SetDefault(aReturn,cString)
+
+nTipo := If(aReturn[4]==1,15,18)
+
+Processa({ ||U_ProcFPLIQ()}, "Faturamento Mensal p/Produto",,.t.)
+
+RestArea(aAreaAtu)
+
+Return(Nil)
+
+
+ 
+User Function ProcFPLIQ()
+***************************
+Local cQuery     := ""
+Local dDataDe    := CtoD("  /  /  ")
+Local dDataAte   := CtoD("  /  /  ")
+
+cAnoAx  := SubStr(DtoS(mv_par03),3,2)
+
+Cabec1  := "REPRESENTANTE                        JAN/"+cAnoAx+"     FEV/"+cAnoAx+"     MAR/"+cAnoAx+"     ABR/"+cAnoAx+"     MAI/"+cAnoAx+"     JUN/"+cAnoAx+"     JUL/"+cAnoAx+"     AGO/"+cAnoAx+"     SET/"+cAnoAx+"     OUT/"+cAnoAx+"     NOV/"+cAnoAx+"     DEZ/"+cAnoAx+"     T O T A L          SOMA          SOMA         MEDIA"
+Cabec2  := "C L I E N T E                                                                                                                                                                           CART.MES   CART.FUTURA    FATUR. MES"                                                                                                                                 
+//          999999 - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX          
+//          999999/99  XXXXXXXXXXXXXXXXXXXX  99.999.999 99.999.999 99.999.999 99.999.999 99.999.999 99.999.999 99.999.999 99.999.999 99.999.999 99.999.999 99.999.999 99.999.999   999.999.999   999.999.999   999.999.999   999.999.999
+//          0         1         2         3         4         5         6         7         8         9        10        11        12        13        14        15        16        17        18        19        20        21        22
+//          012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901
+
+
+dDataDe  := CtoD("01/01/"+cAnoAx) //mv_par01
+dDataAte := CtoD("31/12/"+cAnoAx) //mv_par02
+dDtMesDe := CtoD("01/01/1990") //FirstDay(dDataBase)  //pega tudo que esta em aberto
+dDtMesAte:= LastDay(mv_par03) 
+
+cQuery:= " SELECT FILIAL,PRODUTO,DESCRIC,GRUPO,MAX(PLIQUI)PLIQUI,FAMCOM,"
+cQuery+= " SUM(MESQL01)  MESQTDL01, " 
+cQuery+= " SUM(MESQL02)  MESQTDL02,  " 
+cQuery+= " SUM(MESQL03)  MESQTDL03,  " 
+cQuery+= " SUM(MESQL04)  MESQTDL04,  " 
+cQuery+= " SUM(MESQL05)  MESQTDL05, " 
+cQuery+= " SUM(MESQL06)  MESQTDL06, " 
+cQuery+= " SUM(MESQL07)  MESQTDL07, " 
+cQuery+= " SUM(MESQL08)  MESQTDL08, " 
+cQuery+= " SUM(MESQL09)  MESQTDL09, " 
+cQuery+= " SUM(MESQL10)  MESQTDL10, " 
+cQuery+= " SUM(MESQL11)  MESQTDL11, " 
+cQuery+= " SUM(MESQL12)  MESQTDL12, " 
+cQuery+= " SUM(MESVL01)  MESVLRL01, " 
+cQuery+= " SUM(MESVL02)  MESVLRL02, " 
+cQuery+= " SUM(MESVL03)  MESVLRL03, " 
+cQuery+= " SUM(MESVL04)  MESVLRL04, " 
+cQuery+= " SUM(MESVL05)  MESVLRL05, " 
+cQuery+= " SUM(MESVL06)  MESVLRL06, " 
+cQuery+= " SUM(MESVL07)  MESVLRL07, " 
+cQuery+= " SUM(MESVL08)  MESVLRL08, " 
+cQuery+= " SUM(MESVL09)  MESVLRL09, " 
+cQuery+= " SUM(MESVL10)  MESVLRL10, " 
+cQuery+= " SUM(MESVL11)  MESVLRL11, " 
+cQuery+= " SUM(MESVL12)  MESVLRL12,"
+cQuery+= "SUM(MESQD01)   MESQD01,    "
+cQuery+= "SUM(MESQD02)   MESQD02,    "
+cQuery+= "SUM(MESQD03)   MESQD03, "
+cQuery+= "SUM(MESQD04)   MESQD04, "
+cQuery+= "SUM(MESQD05)   MESQD05, "
+cQuery+= "SUM(MESQD06)   MESQD06, "
+cQuery+= "SUM(MESQD07)   MESQD07, "
+cQuery+= "SUM(MESQD08)   MESQD08, "
+cQuery+= "SUM(MESQD09)   MESQD09, "
+cQuery+= "SUM(MESQD10)   MESQD10, "
+cQuery+= "SUM(MESQD11)   MESQD11, "
+cQuery+= "SUM(MESQD12)   MESQD12, "
+cQuery+= "SUM(MESVLD01)  MESVLD01,"
+cQuery+= "SUM(MESVLD02)  MESVLD02,"
+cQuery+= "SUM(MESVLD03)  MESVLD03,"
+cQuery+= "SUM(MESVLD04)  MESVLD04,"
+cQuery+= "SUM(MESVLD05)  MESVLD05,"
+cQuery+= "SUM(MESVLD06)  MESVLD06,"
+cQuery+= "SUM(MESVLD07)  MESVLD07,"
+cQuery+= "SUM(MESVLD08)  MESVLD08,"
+cQuery+= "SUM(MESVLD09)  MESVLD09,"
+cQuery+= "SUM(MESVLD10)  MESVLD10,"
+cQuery+= "SUM(MESVLD11)  MESVLD11,"
+cQuery+= "SUM(MESVLD12)  MESVLD12,"
+cQuery+= "SUM (TOTMESQD) TOTMESQD," 
+cQuery+= "SUM (TOTMESVD) TOTMESVD,"
+cQuery+= "SUM (TOTMESQL)  TOTMESQL, " 
+cQuery+= "SUM (TOTMESVL)  TOTMESVLRL "  
+cQuery+= "FROM ( "
+cQuery+= "SELECT SD2.D2_FILIAL FILIAL,SD2.D2_COD PRODUTO,SB1.B1_DESC DESCRIC,SBM.BM_DESC GRUPO,MAX(SB1.B1_PESO) PLIQUI,X5_DESCRI FAMCOM,"
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"01' THEN D2_QUANT ELSE 0 END) AS MESQL01, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"02' THEN D2_QUANT ELSE 0 END) AS MESQL02, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"03' THEN D2_QUANT ELSE 0 END) AS MESQL03, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"04' THEN D2_QUANT ELSE 0 END) AS MESQL04, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"05' THEN D2_QUANT ELSE 0 END) AS MESQL05, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"06' THEN D2_QUANT ELSE 0 END) AS MESQL06, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"07' THEN D2_QUANT ELSE 0 END) AS MESQL07, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"08' THEN D2_QUANT ELSE 0 END) AS MESQL08, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"09' THEN D2_QUANT ELSE 0 END) AS MESQL09, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"10' THEN D2_QUANT ELSE 0 END) AS MESQL10, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"11' THEN D2_QUANT ELSE 0 END) AS MESQL11, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"12' THEN D2_QUANT ELSE 0 END) AS MESQL12, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"01' THEN D2_VALBRUT - D2_VALICM -D2_VALIMP5 - D2_VALIMP6 - D2_ICMSRET - D2_VALIPI ELSE 0 END) AS MESVL01, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"02' THEN D2_VALBRUT - D2_VALICM -D2_VALIMP5 - D2_VALIMP6 - D2_ICMSRET - D2_VALIPI ELSE 0 END) AS MESVL02, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"03' THEN D2_VALBRUT - D2_VALICM -D2_VALIMP5 - D2_VALIMP6 - D2_ICMSRET - D2_VALIPI ELSE 0 END) AS MESVL03, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"04' THEN D2_VALBRUT - D2_VALICM -D2_VALIMP5 - D2_VALIMP6 - D2_ICMSRET - D2_VALIPI ELSE 0 END) AS MESVL04, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"05' THEN D2_VALBRUT - D2_VALICM -D2_VALIMP5 - D2_VALIMP6 - D2_ICMSRET - D2_VALIPI ELSE 0 END) AS MESVL05, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"06' THEN D2_VALBRUT - D2_VALICM -D2_VALIMP5 - D2_VALIMP6 - D2_ICMSRET - D2_VALIPI ELSE 0 END) AS MESVL06, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"07' THEN D2_VALBRUT - D2_VALICM -D2_VALIMP5 - D2_VALIMP6 - D2_ICMSRET - D2_VALIPI ELSE 0 END) AS MESVL07, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"08' THEN D2_VALBRUT - D2_VALICM -D2_VALIMP5 - D2_VALIMP6 - D2_ICMSRET - D2_VALIPI ELSE 0 END) AS MESVL08, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"09' THEN D2_VALBRUT - D2_VALICM -D2_VALIMP5 - D2_VALIMP6 - D2_ICMSRET - D2_VALIPI ELSE 0 END) AS MESVL09, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"10' THEN D2_VALBRUT - D2_VALICM -D2_VALIMP5 - D2_VALIMP6 - D2_ICMSRET - D2_VALIPI ELSE 0 END) AS MESVL10, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"11' THEN D2_VALBRUT - D2_VALICM -D2_VALIMP5 - D2_VALIMP6 - D2_ICMSRET - D2_VALIPI ELSE 0 END) AS MESVL11, "
+cQuery+= " SUM(CASE WHEN SUBSTRING(D2_EMISSAO,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"12' THEN D2_VALBRUT - D2_VALICM -D2_VALIMP5 - D2_VALIMP6 - D2_ICMSRET - D2_VALIPI ELSE 0 END) AS MESVL12, "
+cQuery+= " SUM(CASE WHEN D2_EMISSAO BETWEEN '"+DtoS(dDataDe)+"' AND '"+DtoS(dDataAte)+"' THEN D2_QUANT ELSE 0 END) AS TOTMESQL, "
+cQuery+= " SUM(CASE WHEN D2_EMISSAO BETWEEN '"+DtoS(dDataDe)+"' AND '"+DtoS(dDataAte)+"' THEN D2_VALBRUT - D2_VALICM -D2_VALIMP5 - D2_VALIMP6 - D2_ICMSRET - D2_VALIPI ELSE 0 END) AS TOTMESVL, "
+cQuery+= " 0 AS MESQD01, "
+cQuery+= " 0 AS MESQD02, "
+cQuery+= " 0 AS MESQD03, "
+cQuery+= " 0 AS MESQD04, "
+cQuery+= " 0 AS MESQD05, "
+cQuery+= " 0 AS MESQD06, "
+cQuery+= " 0 AS MESQD07, "
+cQuery+= " 0 AS MESQD08, "
+cQuery+= " 0 AS MESQD09, "
+cQuery+= " 0 AS MESQD10, "
+cQuery+= " 0 AS MESQD11, "
+cQuery+= " 0 AS MESQD12, "
+cQuery+= " 0 AS MESVLD01," 
+cQuery+= " 0 AS MESVLD02," 
+cQuery+= " 0 AS MESVLD03," 
+cQuery+= " 0 AS MESVLD04," 
+cQuery+= " 0 AS MESVLD05," 
+cQuery+= " 0 AS MESVLD06," 
+cQuery+= " 0 AS MESVLD07," 
+cQuery+= " 0 AS MESVLD08," 
+cQuery+= " 0 AS MESVLD09," 
+cQuery+= " 0 AS MESVLD10," 
+cQuery+= " 0 AS MESVLD11," 
+cQuery+= " 0 AS MESVLD12,"  
+cQuery+= " 0 AS TOTMESQD," 
+cQuery+= " 0 AS TOTMESVD"
+cQuery+= " FROM SD2020 SD2 , "
+cQuery+= " SF2020 SF2 , SB1020 SB1 , SBM020 SBM , SF4020 SF4 ,SX5020 SX5 "
+cQuery+= " WHERE D2_EMISSAO BETWEEN '"+DtoS(dDataDe)+"' AND '"+DtoS(dDataAte)+"'   AND SD2.D2_TIPO NOT IN ('D','B') "
+cQuery+= " AND SD2.D_E_L_E_T_ = ' ' AND SF2.F2_FILIAL = SD2.D2_FILIAL AND SF2.F2_DOC = SD2.D2_DOC AND SF2.F2_SERIE = SD2.D2_SERIE AND SF2.D_E_L_E_T_ = ' ' 
+cQuery+= " AND SD2.D2_TP = 'PA' AND SB1.B1_FILIAL = '  ' AND SB1.B1_COD = SD2.D2_COD AND SB1.D_E_L_E_T_ = ' ' AND SBM.BM_FILIAL = '  ' AND SBM.BM_GRUPO = SB1.B1_GRUPO 
+cQuery+= " AND SBM.D_E_L_E_T_ = ' ' AND SF4.F4_FILIAL = '  ' AND SF4.F4_CODIGO = SD2.D2_TES AND SF4.F4_DUPLIC = 'S' AND SF4.D_E_L_E_T_ = ' ' 
+cQuery+= " AND SB1.B1_XFAMCOM=SX5.X5_CHAVE AND SX5.X5_TABELA='Z2' AND SX5.X5_FILIAL='04' AND SX5.D_E_L_E_T_='' 
+cQuery+= " AND D2_COD BETWEEN '"+MV_PAR01+"' AND '"+MV_PAR02+"' "
+cQuery+= " GROUP BY SD2.D2_FILIAL, SD2.D2_COD, SB1.B1_DESC, SBM.BM_DESC,X5_DESCRI "
+cQuery+= " UNION ALL "
+cQuery+= " SELECT SD1.D1_FILIAL FILIAL,SD1.D1_COD PRODUTO,SB1.B1_DESC DESCRIC,SBM.BM_DESC GRUPO,MAX(SB1.B1_PESO) PLIQUI,X5_DESCRI FAMCOM,
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"01' THEN D1_QUANT ELSE 0 END))* (-1) AS MESQL01, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"02' THEN D1_QUANT ELSE 0 END))* (-1) AS MESQL02, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"03' THEN D1_QUANT ELSE 0 END))* (-1) AS MESQL03, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"04' THEN D1_QUANT ELSE 0 END))* (-1) AS MESQL04, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"05' THEN D1_QUANT ELSE 0 END))* (-1) AS MESQL05, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"06' THEN D1_QUANT ELSE 0 END))* (-1) AS MESQL06, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"07' THEN D1_QUANT ELSE 0 END))* (-1) AS MESQL07, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"08' THEN D1_QUANT ELSE 0 END))* (-1) AS MESQL08, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"09' THEN D1_QUANT ELSE 0 END))* (-1) AS MESQL09, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"10' THEN D1_QUANT ELSE 0 END))* (-1) AS MESQL10, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"11' THEN D1_QUANT ELSE 0 END))* (-1) AS MESQL11, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"12' THEN D1_QUANT ELSE 0 END))* (-1) AS MESQL12, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"01' THEN D1_TOTAL ELSE 0 END))* (-1) AS MESVL01, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"02' THEN D1_TOTAL ELSE 0 END))* (-1) AS MESVL02, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"03' THEN D1_TOTAL ELSE 0 END))* (-1) AS MESVL03, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"04' THEN D1_TOTAL ELSE 0 END))* (-1) AS MESVL04, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"05' THEN D1_TOTAL ELSE 0 END))* (-1) AS MESVL05, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"06' THEN D1_TOTAL ELSE 0 END))* (-1) AS MESVL06, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"07' THEN D1_TOTAL ELSE 0 END))* (-1) AS MESVL07, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"08' THEN D1_TOTAL ELSE 0 END))* (-1) AS MESVL08, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"09' THEN D1_TOTAL ELSE 0 END))* (-1) AS MESVL09, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"10' THEN D1_TOTAL ELSE 0 END))* (-1) AS MESVL10, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"11' THEN D1_TOTAL ELSE 0 END))* (-1) AS MESVL11, "
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(MV_PAR03),1,4)+"12' THEN D1_TOTAL ELSE 0 END))* (-1) AS MESVL12, "
+cQuery+= " ( SUM(CASE WHEN D1_DTDIGIT BETWEEN '"+DtoS(dDataDe)+"' AND '"+DtoS(dDataAte)+"' THEN D1_QUANT ELSE 0 END))* (-1) AS TOTMESQL, "
+cQuery+= " ( SUM(CASE WHEN D1_DTDIGIT BETWEEN '"+DtoS(dDataDe)+"' AND '"+DtoS(dDataAte)+"' THEN D1_TOTAL ELSE 0 END))* (-1) AS TOTMESVL, "
+cQuery+= "( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"01' THEN D1_QUANT ELSE 0 END))* (1) AS MESQDL01, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"02' THEN D1_QUANT ELSE 0 END))* (1) AS MESQLD02, 
+ cQuery+= "( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"03' THEN D1_QUANT ELSE 0 END))* (1) AS MESQLD03, 
+ cQuery+= "( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"04' THEN D1_QUANT ELSE 0 END))* (1) AS MESQLD04, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"05' THEN D1_QUANT ELSE 0 END))* (1) AS MESQLD05, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"06' THEN D1_QUANT ELSE 0 END))* (1) AS MESQLD06, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"07' THEN D1_QUANT ELSE 0 END))* (1) AS MESQLD07, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"08' THEN D1_QUANT ELSE 0 END))* (1) AS MESQLD08, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"09' THEN D1_QUANT ELSE 0 END))* (1) AS MESQLD09, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"10' THEN D1_QUANT ELSE 0 END))* (1) AS MESQLD10, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"11' THEN D1_QUANT ELSE 0 END))* (1) AS MESQLD11, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"12' THEN D1_QUANT ELSE 0 END))* (1) AS MESQLD12, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"01' THEN D1_TOTAL ELSE 0 END))* (1) AS MESVLD01, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"02' THEN D1_TOTAL ELSE 0 END))* (1) AS MESVLD02, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"03' THEN D1_TOTAL ELSE 0 END))* (1) AS MESVLD03, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"04' THEN D1_TOTAL ELSE 0 END))* (1) AS MESVLD04, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"05' THEN D1_TOTAL ELSE 0 END))* (1) AS MESVLD05, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"06' THEN D1_TOTAL ELSE 0 END))* (1) AS MESVLD06, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"07' THEN D1_TOTAL ELSE 0 END))* (1) AS MESVLD07, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"08' THEN D1_TOTAL ELSE 0 END))* (1) AS MESVLD08, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"09' THEN D1_TOTAL ELSE 0 END))* (1) AS MESVLD09, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"10' THEN D1_TOTAL ELSE 0 END))* (1) AS MESVLD10, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"11' THEN D1_TOTAL ELSE 0 END))* (1) AS MESVLD11, 
+cQuery+= " ( SUM(CASE WHEN SUBSTRING(D1_DTDIGIT,1,6)='"+SubStr(DtoS(mv_par03),1,4)+"12' THEN D1_TOTAL ELSE 0 END))* (1) AS MESVLD12, 
+cQuery+= " ( SUM(CASE WHEN D1_DTDIGIT  BETWEEN '"+DtoS(dDataDe)+"' AND '"+DtoS(dDataAte)+"' THEN D1_QUANT ELSE 0 END))* (1) AS TOTMESQD, 
+cQuery+= " ( SUM(CASE WHEN D1_DTDIGIT  BETWEEN '"+DtoS(dDataDe)+"' AND '"+DtoS(dDataAte)+"' THEN D1_TOTAL ELSE 0 END))* (1) AS TOTMESVD 
+cQuery+= "  FROM SD1020 SD1, SB1020 SB1,SBM020 SBM ,SF4020 SF4,SX5020 SX5 "
+cQuery+= "  WHERE D1_TIPO = 'D' AND D1_DTDIGIT BETWEEN '"+DtoS(dDataDe)+"' AND '"+DtoS(dDataAte)+"' "
+cQuery+= "  AND D1_TP = 'PA' "
+cQuery+= "  AND SB1.B1_FILIAL = '  ' AND SB1.B1_COD = SD1.D1_COD AND SB1.D_E_L_E_T_ = ' ' AND SBM.BM_FILIAL = '  ' AND SBM.BM_GRUPO = SB1.B1_GRUPO  "
+cQuery+= "  AND SBM.D_E_L_E_T_ = ' ' AND SF4.F4_FILIAL = '  ' AND SF4.F4_CODIGO = SD1.D1_TES AND SF4.F4_DUPLIC = 'S' AND SF4.D_E_L_E_T_ = ' '       "
+cQuery+= "  AND SB1.B1_XFAMCOM=SX5.X5_CHAVE AND SX5.X5_TABELA='Z2' AND SX5.X5_FILIAL='04' AND SX5.D_E_L_E_T_=''" 
+cQuery+= "  AND D1_COD BETWEEN '"+MV_PAR01+"' AND '"+MV_PAR02+"' "
+cQuery+= "  GROUP BY SD1.D1_FILIAL, SD1.D1_COD, SB1.B1_DESC, SBM.BM_DESC,X5_DESCRI  "
+cQuery+= "  )AG1 "
+cQuery+= "  GROUP BY FILIAL, PRODUTO, DESCRIC, GRUPO,FAMCOM "
+
+If Select("TRAB") > 0 
+	TRAB->(dbCloseArea())
+EndIf      
+TCQUERY cQuery NEW ALIAS "TRAB"
+
+dbSelectArea("TRAB")
+dbGotop()
+ProcRegua(RecCount())
+dbGotop()
+
+TCSetField('TRAB', "MESQTDL01"   , "N",16,2)
+TCSetField('TRAB', "MESVLRL01"   , "N",16,2)
+TCSetField('TRAB', "MESQTDL02"   , "N",16,2)
+TCSetField('TRAB', "MESVLRL02"   , "N",16,2)
+TCSetField('TRAB', "MESQTDL03"   , "N",16,2)
+TCSetField('TRAB', "MESVLRL03"   , "N",16,2)
+TCSetField('TRAB', "MESQTDL03"   , "N",16,2)
+TCSetField('TRAB', "MESVLRL03"   , "N",16,2)
+TCSetField('TRAB', "MESQTDL04"   , "N",16,2)
+TCSetField('TRAB', "MESVLRL04"   , "N",16,2) 
+TCSetField('TRAB', "MESQTDL05"   , "N",16,2)
+TCSetField('TRAB', "MESVLRL05"   , "N",16,2)
+TCSetField('TRAB', "MESQTDL06"   , "N",16,2)
+TCSetField('TRAB', "MESVLRL06"   , "N",16,2)
+TCSetField('TRAB', "MESQTDL07"   , "N",16,2)
+TCSetField('TRAB', "MESVLRL07"   , "N",16,2)
+TCSetField('TRAB', "MESQTDL08"   , "N",16,2)
+TCSetField('TRAB', "MESVLRL08"   , "N",16,2)
+TCSetField('TRAB', "MESQTDL09"   , "N",16,2)
+TCSetField('TRAB', "MESVLRL09"   , "N",16,2)
+TCSetField('TRAB', "MESQTDL10"   , "N",16,2)
+TCSetField('TRAB', "MESVLRL10"   , "N",16,2) 
+TCSetField('TRAB', "MESQTDL11"   , "N",16,2)
+TCSetField('TRAB', "MESVLRL11"   , "N",16,2)
+TCSetField('TRAB', "MESQTDL12"   , "N",16,2)
+TCSetField('TRAB', "MESVLRL12"   , "N",16,2)
+TCSetField('TRAB', "TOTMESQL"   , "N",16,2)
+TCSetField('TRAB', "TOTMESVLRL"   , "N",16,2)
+
+U_ProcExcel("TRAB")
+
+dbSelectArea("TRAB")
+dbCloseArea()
+
+
+Return(.T.)
+
+
+
+ 
+
+Static Function ValPergunte(cPerg)
+*********************************
+DbSelectArea("SX1")
+DbSetOrder(1)
+
+aRegs:= {}
+//          Grupo/Ordem/Pergunta/                       Variavel/Tipo/Tamanho/Decimal/Presel/GSC/Valid/Var01     /Def01                    /Cnt01/Var02/Def02                  /Cnt02/Var03/Def03                        /Cnt03/Var04/Def04                    /Cnt04/Var05/Def05         /Cnt05 /F3   /Pyme /GrpSXG /Help /Picture  /IDFil
+aAdd(aRegs,{cPerg,"01" ,"Produto de   ? "        ,"","","mv_ch1","C" ,6      ,0      ,0     ,"G",""   ,"mv_par01",""                ,"","" ,""   ,""   ,""              ,"","" ,""   ,""   ,""                    ,"","" ,""   ,""   ,""                ,"","" ,""   ,""   ,"",     "","" ,""    ,"SB1",""    ,""     ,""   ,""     ,""})
+aAdd(aRegs,{cPerg,"02" ,"Produto Ate  ? "        ,"","","mv_ch2","C" ,6      ,0      ,0     ,"G",""   ,"mv_par02",""                ,"","" ,""   ,""   ,""              ,"","" ,""   ,""   ,""                    ,"","" ,""   ,""   ,""                ,"","" ,""   ,""   ,"",     "","" ,""    ,"SB1",""    ,""     ,""   ,""     ,""})
+aAdd(aRegs,{cPerg,"13" ,"Data Referencia:"       ,"","","mv_chc3","D" ,8      ,0      ,0     ,"G",""  ,"mv_par03",""                ,"","" ,""   ,""   ,""              ,"","" ,""   ,""   ,""                    ,"","" ,""   ,""   ,""                ,"","" ,""   ,""   ,"",     "","" ,""    ,"   ",""    ,""     ,""   ,""     ,""})
+
+For i:=1 to Len(aRegs)
+	If !DbSeek(cPerg+aRegs[i,2])
+		RecLock("SX1",.T.)
+		For j:=1 to Max(FCount(), Len(aRegs[i]))
+			FieldPut(j,aRegs[i,j])
+		Next
+		MsUnlock()
+		DbCommit()
+	Endif
+Next
+
+Return
