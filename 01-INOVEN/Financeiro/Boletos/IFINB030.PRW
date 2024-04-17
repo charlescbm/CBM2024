@@ -360,14 +360,14 @@ Static Function BRPBOLIMP(oPrint,_xAjuste,_xVcto)
 	// | Indica que foi gerado boleto para pelo menos uma parcela |
 	// +----------------------------------------------------------+
 	lPreview   := .T.
-	cDtVencto  := iif(!_xAjuste,SE1->E1_VENCTO,_xVcto)
+	cDtVencto  := iif(!_xAjuste,SE1->E1_VENCREA,_xVcto)
 	nValAbate  := SomaAbat(SE1->E1_PREFIXO,SE1->E1_NUM,SE1->E1_PARCELA,"R",1,,SE1->E1_CLIENTE,SE1->E1_LOJA) 
 	nValorTit  := SE1->E1_VALOR - nValAbate
 	if _xAjuste
 		_xVmulta := (nValorTit * 2)/100
 		_xVmora  := (((nValorTit * 1)/100)/30)
 		nValorTit += _xVmulta	//soma a multa
-		for _d := 1 to (_xVcto - SE1->E1_VENCTO)
+		for _d := 1 to (_xVcto - SE1->E1_VENCREA)
 			nValorTit += _xVmora //aplica a mora por dia de atraso
 		next
 	endif

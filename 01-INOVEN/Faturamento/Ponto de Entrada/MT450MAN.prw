@@ -12,6 +12,7 @@
 */
 //DESENVOLVIDO POR INOVEN
 
+
 User Function MT450MAN()
 ***********************
 
@@ -19,29 +20,17 @@ Local lRet 		:= .F.
 Local pNumRA	:= space(len(SE1->E1_NUM))
 Local cNumRA	:= space(len(SE1->E1_NUM))
 Local _x
-// Marcelo [GDVIEW] - 16/12/2023
-Local cRotina := Upper(Alltrim(Funname()))
-Local cBkpFun := Funname()
-Local cBkpRot := GetRotInteg()
 
 Private aParam	:= {}
 
-// Marcelo [GDVIEW] - 16/12/2023
-If !("FINA040" $ cRotina)
-	SetRotInteg("FINA040") 
-	SetFunName("FINA040")
-Endif
-
 if Type("cGoTitR") == 'U'
-	//_SetNamedPrvt( "cGoTitR" , "" , "MATA450" )
-	PUBLIC cGoTitR := "" // Marcelo [GDVIEW] - 16/12/2023
+	_SetNamedPrvt( "cGoTitR" , "" , "MATA450" )
 endif
 //if Type("nGoTitR") == 'U'
 //	_SetNamedPrvt( "nGoTitR" , 0 , "MATA450" )
 //endif
 if Type("aGoTitR") == 'U'
-	//_SetNamedPrvt( "aGoTitR" , {} , "MATA450" )
-	PUBLIC aGoTitR := {} // Marcelo [GDVIEW] - 16/12/2023
+	_SetNamedPrvt( "aGoTitR" , {} , "MATA450" )
 endif
 if Type("cGoTitR") <> 'U'
 	cGoTitR := space(len(SE1->E1_PREFIXO)) + space(len(SE1->E1_NUM))
@@ -134,9 +123,5 @@ endif
 if !lRet
 	MsgStop("Para liberar este pedido é preciso informar o numero do título referente ao pagamento antecipado (RA)." + chr(13) + chr(10) + "Liberação não autorizada!","INOVEN - Avisos")
 endif
-
-// Marcelo [GDVIEW] - 16/12/2023
-SetFunName(cBkpFun)
-SetRotInteg(cBkpRot)
 
 Return(lRet)

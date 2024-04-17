@@ -22,7 +22,6 @@ User Function IRENT020(cNumOrc,nMargema)
 
 	Private oDlgPrinc,oFWLayer,oPanelUpLeft,oPanelUpRight,oPanelDnLeft
 	Private oCbTipo,oPedido,oBjMargens,oBjLista3,oNumero,oPanel1,oCliente,oNomCli,oEmissao,oVend,oNomVed,oPgto,oNomPgto,oFrete,oDespesa,oTotPP,oTotPL
-	Private oCidade, oTransp
 	Private cCbTipo 	:= ""
 	Private aCbTipo 	:= {}
 	Private cCFrete     := ""
@@ -59,8 +58,6 @@ User Function IRENT020(cNumOrc,nMargema)
 	Private cPTPLO4     := GetMV("LI_PCPLO4",.F.,0)
 	Private cPTPLO7     := GetMV("LI_PCPLO7",.F.,0)
 	Private cPTPLO12    := GetMV("LI_PCPLO12",.F.,0)
-	Private cCidade		:= ""
-	Private cTransp		:= ""
 	
 	Default cNumOrc := ""
 	Default nMargema	:= {0,0}	//0
@@ -160,12 +157,7 @@ User Function IRENT020(cNumOrc,nMargema)
 		@ 116, 10  SAY "Total PL :" SIZE 70,7 PIXEL OF oPanel1 FONT oFont01 
 		@ 115, 50  MSGET oTotPl var nTotPL picture "@E 999,999,999.99" SIZE 080,7  WHEN .F.  PIXEL OF oPanel1
 		
-		@ 131, 10  SAY "Cidade/UF:" SIZE 70,7 PIXEL OF oPanel1 FONT oFont01 
-		@ 130, 50  MSGET oCidade var cCidade SIZE 080,7  WHEN .F.  PIXEL OF oPanel1
-
-		@ 131, 135  SAY "Transp:" SIZE 70,7 PIXEL OF oPanel1 FONT oFont01 
-		@ 130, 165  MSGET oTransp var cTransp SIZE 190,7  WHEN .F.  PIXEL OF oPanel1
-
+		
 		//===================================================================================================================================================
 		//PAINEL 2.Margens
 		//===================================================================================================================================================
@@ -346,8 +338,7 @@ Static Function BuscaDados(cCbTipo,wPedido,lSilenc, nMargema)
 	nPrecoPL	:= 0
 	cTipCli		:= ""
 	cLojaCli	:= ""
-	cCidade		:= ""
-	cTransp		:= ""
+	
 		
 	If wTipo = "1" //Orçamento
 		dbSelectArea("SUA")		
@@ -367,10 +358,6 @@ Static Function BuscaDados(cCbTipo,wPedido,lSilenc, nMargema)
 				cLojaCli	:= SUA->UA_LOJA
 				cData       := SUBSTR(DTOS(dEmissao),1,6)//GILMAR
 				nDescont    =  SUA->UA_DESCONT
-				cCidade		:= alltrim(posicione("SA1",1,xFilial("SA1")+SUA->UA_CLIENTE+SUA->UA_LOJA,"A1_MUN"))
-				cCidade		+= "/" + posicione("SA1",1,xFilial("SA1")+SUA->UA_CLIENTE+SUA->UA_LOJA,"A1_EST")
-				cTransp		:= alltrim(posicione("SA4",1,xFilial("SA4")+SUA->UA_TRANSP,"A4_NOME")) + " "
-				cTransp		+= "(" + posicione("SA4",1,xFilial("SA4")+SUA->UA_TRANSP,"A4_COD") + ")"
 				dbSelectArea("SUB")
 				dbSetOrder(1)
 				If dbseek(xFilial("SUB")+wPedido)
@@ -502,10 +489,6 @@ Static Function BuscaDados(cCbTipo,wPedido,lSilenc, nMargema)
 				cLojaCli	:= SC5->C5_LOJACLI
 				cData       := SUBSTR(DTOS(dEmissao),1,6)//GILMAR    
 				nDescont    := SC5->C5_DESCONT
-				cCidade		:= alltrim(posicione("SA1",1,xFilial("SA1")+SC5->C5_CLIENTE+SC5->C5_LOJACLI,"A1_MUN"))
-				cCidade		+= "/" + posicione("SA1",1,xFilial("SA1")+SC5->C5_CLIENTE+SC5->C5_LOJACLI,"A1_EST")
-				cTransp		:= alltrim(posicione("SA4",1,xFilial("SA4")+SC5->C5_TRANSP,"A4_NOME")) + " "
-				cTransp		+= "(" + posicione("SA4",1,xFilial("SA4")+SC5->C5_TRANSP,"A4_COD") + ")"
 				
 				dbSelectArea("SC6")
 				dbSetOrder(1)

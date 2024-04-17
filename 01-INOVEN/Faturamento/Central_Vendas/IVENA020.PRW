@@ -2859,10 +2859,10 @@ Else
 	If SA1->(DbSeek(xFilial("SA1") + cod_cnpj ))
 		DbSelectArea("SA1")
 		DbSetOrder(1)
-		/*If SA1->A1_MSBLQL == "1"
+		If SA1->A1_MSBLQL == "1"
 			Alert("Cliente bloqueado!")
 			Return(.F.)
-		EndIf*/
+		EndIf
 		cCod_por:= Space(01) 
 		cLoja_por:= Space(04)
 		cod_atend:= POSICIONE("SA3",7,XFILIAL("SA3")+__cUserID,"A3_COD")
@@ -5566,15 +5566,8 @@ Static Function DNYTRANSP(cCOD, cCPO,oOBJ1)
 			DbSelectArea("SA4")
 			DbSetOrder(1)
 			If SA4->(DbSeek( xFilial("SA4") + cCOD ))
-				if SA4->A4_MSBLQL <> '1'
-					cCPO := SA4->A4_NOME
-					oOBJ1:Refresh()   
-				else
-					Alert("Transportadora bloqueada para uso!")
-					lRet       := .F.                     						
-					cCOD       := Space(TamSx3("A1_TRANSP")[1])
-					cCPO       := Space(TamSx3("A4_NOME")  [1])			
-				endif
+				cCPO := SA4->A4_NOME
+				oOBJ1:Refresh()   
 			Else
 				Alert("Transportadora não encontrada")
 				lRet       := .F.                     						
@@ -7618,7 +7611,7 @@ If !Empty(cod_cli) .And. !Empty(coja_cli)
 		_cQuery += " 					  FROM " + RetSqlName("SA1") + " SA1  "+ENTER
 		_cQuery += " 						WHERE SA1.D_E_L_E_T_ <> '*'  "+ENTER
 		_cQuery += " 						  AND SA1.A1_FILIAL  = '"+ xFilial('SA1') +"' "+ENTER
-		//_cQuery += " 						  AND SA1.A1_MSBLQL <> '1'  "+ENTER
+		_cQuery += " 						  AND SA1.A1_MSBLQL <> '1'  "+ENTER
 		_cQuery += " 						  AND SA1.A1_COD     = '"+ cod_cli +"' "+ENTER
 		_cQuery += " 						  AND SA1.A1_LOJA    = '"+ coja_cli +"' "+ENTER
 		//IF _lFilCli
@@ -7631,7 +7624,7 @@ If !Empty(cod_cli) .And. !Empty(coja_cli)
 		_cQuery += " 				  FROM " + RetSqlName("SA1") + " SA1  "+ENTER
 		_cQuery += " 					WHERE SA1.D_E_L_E_T_ <> '*'  "+ENTER
 		_cQuery += " 					  AND SA1.A1_FILIAL  = '"+ xFilial('SA1') +"' "+ENTER
-		//_cQuery += " 					  AND SA1.A1_MSBLQL <> '1'  "+ENTER
+		_cQuery += " 					  AND SA1.A1_MSBLQL <> '1'  "+ENTER
 		_cQuery += " 					  AND SA1.A1_COD     = '"+ cod_cli +"' "+ENTER
 		_cQuery += " 					  AND SA1.A1_LOJA    = '"+ coja_cli +"' "+ENTER
 		//IF _lFilCli

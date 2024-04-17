@@ -7,6 +7,7 @@
 ฑฑบDesc.     ณ APOS ATUALIZACAO DA LIBERACAO DO PEDIDO 
                Executado apos atualizacao da liberacao de pedido.
 ฑฑฬออออออออออุออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออนฑฑ
+ฑฑบUso       ณ AP                                                        บฑฑ
 ฑฑศออออออออออฯออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผฑฑ
 */
 //DESENVOLVIDO POR INOVEN

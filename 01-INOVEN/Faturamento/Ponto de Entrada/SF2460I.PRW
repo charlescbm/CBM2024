@@ -47,6 +47,7 @@ User Function SF2460I()
 	Local aRecSE1 := {}
 	Local aRecRA  := {}
 	Local cCpPed  := ""	//pedido, quando compensacao
+	Local _x
     
 	// Chamada Ponto de Entrada Projetos Corporativos
 	//If ExistBlock("XSF2460I")
@@ -154,7 +155,49 @@ User Function SF2460I()
 				AAdd(aRecRA, QRYE1->E1RECNO)
 				QRYE1->(dbSkip())
 			End
-			MsAguarde({|lEnd| MaIntBxCR(3, aRecSe1,, aRecRA,, {.F.,.F.,.F.,.F.,.F.,.T.},,,,,,,,,,, MV_PAR08 == 1) },"Aguarde...","Realizando o processo de compensação...",.T.)
+
+			//Conferindo os valores
+			lIgual := .F.
+			lToler := .F.
+			lDifer := .F.
+
+			nVlSE1 := 0
+			nVlRA  := 0
+
+			For _x := 1 to len(aRecSe1)
+				SE1->(dbGoto(aRecSe1[_x]))
+				nVlSE1 += SE1->E1_SALDO
+			next
+			For _x := 1 to len(aRecRA)
+				SE1->(dbGoto(aRecRA[_x]))
+				nVlRA += SE1->E1_SALDO
+			next
+
+			if empty(nVlSE1 - nVlRA)
+				lIgual := .T.
+			elseif !empty(nVlSE1 - nVlRA) .and. abs(nVlSE1 - nVlRA) <= SuperGetMV("IN_CPTOLER",.F.,0)
+				lToler := .T.
+			elseif !empty(nVlSE1 - nVlRA) .and. abs(nVlSE1 - nVlRA) > SuperGetMV("IN_CPTOLER",.F.,0)
+				lDifer := iif(SuperGetMV("IN_CPDIFER",.F.,.F.), .T., .F.)
+			endif
+
+			if lIgual .or. lToler .or. lDifer
+
+				if lToler
+					SE1->(dbGoto(aRecSe1[len(aRecSe1)]))
+					SE1->(recLock('SE1', .F.))
+					if (nVlSE1 - nVlRA) > 0
+						SE1->E1_DECRESC := nVlSE1 - nVlRA
+						SE1->E1_SDDECRE := nVlSE1 - nVlRA
+					else
+						SE1->E1_ACRESC := abs(nVlSE1 - nVlRA)
+						SE1->E1_SDACRES := abs(nVlSE1 - nVlRA)
+					endif
+					SE1->(msUnlock())
+				endif
+
+				MsAguarde({|lEnd| MaIntBxCR(3, aRecSe1,, aRecRA,, {.F.,.F.,.F.,.F.,.F.,.T.},,,,,,,,,,, MV_PAR08 == 1) },"Aguarde...","Realizando o processo de compensação...",.T.)
+			endif
 		endif					
 
 	Endif

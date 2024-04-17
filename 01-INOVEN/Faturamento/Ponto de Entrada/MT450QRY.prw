@@ -12,6 +12,7 @@
 */
 //DESENVOLVIDO POR INOVEN
 
+
 User Function MT450QRY()
 ***********************
 Local cQry		:= PARAMIXB[1]
