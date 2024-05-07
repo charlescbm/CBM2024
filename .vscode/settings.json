@@ -1,4 +1,4 @@
 {
     "totvsLanguageServer.welcomePage": false,
-    "totvsLanguageServer.editor.linter.includes": "C:\\Totvs\\includes_P12;C:\\Totvs\\include\\include"
+    "totvsLanguageServer.editor.linter.includes": "C:\\Totvs\\include\\include;C:\\Totvs\\includes_P12"
 }
